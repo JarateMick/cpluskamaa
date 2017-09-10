@@ -1,0 +1,15 @@
+Shopping list
+	Hardware Store
+		Buy nails
+		Buy new hammer
+	Beaty Parlor
+		Buy nail polish remover
+		Buy nails
+
+
+var tally;
+for (counter=1; tally <= 10; tally++)
+{
+
+}
+

@@ -1,0 +1,26 @@
+﻿  KutsuittekO
+  **********************************************************************
+  ** Visual Studio 2017 Developer Command Prompt v15.0.26430.16
+  ** Copyright (c) 2017 Microsoft Corporation
+  **********************************************************************
+  [vcvarsall.bat] Environment initialized for: 'x64'
+  "ehahaha"
+  I:\Dev\Allegro\allegro\bin
+  game.cpp
+i:\dev\allegro\allegro\src\game.h(129): warning C4311: 'type cast': pointer truncation from 'void *' to 'uint32_t'
+i:\dev\allegro\allegro\src\game.h(135): warning C4311: 'type cast': pointer truncation from 'void *' to 'uint32_t'
+i:\dev\allegro\allegro\src\game.h(135): warning C4312: 'type cast': conversion from 'uint32_t' to 'void *' of greater size
+     Creating library game.lib and object game.exp
+  Not running
+  main.cpp
+i:\dev\allegro\allegro\src\game.h(129): warning C4311: 'type cast': pointer truncation from 'void *' to 'uint32_t'
+i:\dev\allegro\allegro\src\game.h(135): warning C4311: 'type cast': pointer truncation from 'void *' to 'uint32_t'
+i:\dev\allegro\allegro\src\game.h(135): warning C4312: 'type cast': conversion from 'uint32_t' to 'void *' of greater size
+i:\dev\allegro\allegro\src\main.cpp(1094): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'std::string'
+main.obj : warning LNK4099: PDB 'vc140.pdb' was not found with 'main.obj' or at 'I:\Dev\Allegro\allegro\bin\vc140.pdb'; linking object as if no debug info
+  Running
+  imguiTools.cpp
+i:\dev\allegro\allegro\src\imguitools.cpp : fatal error C1041: cannot open program database 'I:\Dev\Allegro\allegro\bin\vc140.pdb'; if multiple CL.EXE write to the same .PDB file, please use /FS
+  Done!
+  CTIME: 2.094 seconds (engine.ctm)
+C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.MakeFile.Targets(43,5): error MSB3073: The command "I:\Dev\Allegro\allegro\sln\./build.bat" exited with code -1.

@@ -1,0 +1,10 @@
+﻿  Source.cpp
+i:\dev\allegro\allegro\ctime\source.cpp(394): warning C4244: 'argument': conversion from 'double' to 'unsigned int', possible loss of data
+i:\dev\allegro\allegro\ctime\source.cpp(449): warning C4018: '<': signed/unsigned mismatch
+i:\dev\allegro\allegro\ctime\source.cpp(588): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+i:\dev\allegro\allegro\ctime\source.cpp(696): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+i:\dev\allegro\allegro\ctime\source.cpp(696): warning C4309: 'argument': truncation of constant value
+i:\dev\allegro\allegro\ctime\source.cpp(717): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+i:\dev\allegro\allegro\ctime\source.cpp(717): warning C4309: 'argument': truncation of constant value
+Source.obj : error LNK2019: unresolved external symbol __imp_timeGetTime referenced in function "unsigned int __cdecl GetClock(void)" (?GetClock@@YAIXZ)
+I:\Dev\Allegro\allegro\sln\x64\Debug\Ctime.exe : fatal error LNK1120: 1 unresolved externals

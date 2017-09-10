@@ -1,0 +1,146 @@
+#pragma once
+
+enum Entity_Enum 
+{
+	Entity_Invalid,
+	Entity_ninja,
+	Entity_npc,
+	Entity_unit,
+	Entity_script,
+
+	Entity_MAX
+};
+
+const char *EntityNames[Entity_MAX] =
+{
+	"Invalid",
+	"ninja",
+	"npc",
+	"unit",
+	"script " 
+};
+
+// #include "glm/vec2.hpp"
+// #include "glm/geometric.hpp"
+// #include "glm/glm.hpp"
+//
+//
+
+#include "gl/SpriteBatch.h"
+struct Rect
+{
+    float x, y, w, h;
+
+    bool Contains(float x, float y)
+    {
+        return (this->x > x && this->x < x &&
+            this->y > y && this->y < y );
+    }
+
+    void DrawRect(UpiEngine::SpriteBatch* spriteBatch)
+    {
+        Debug::drawBox(x, y, w, h);
+    }
+};
+
+struct Entity
+{
+	Entity_Enum type;
+	uint32_t	guid;
+
+	// pos
+	// glm::vec2 pos;
+	float x, y;
+	float velX, velY;
+	// vel
+	// acc
+	// radius
+	union
+	{
+		struct
+		{
+			int damage;
+		} ninja;
+		struct
+		{
+			int damage;
+
+		} npc;
+		struct
+		{
+			int damage;
+			int moveSpeed;
+			int strength;
+		} unit;
+        struct 
+        {
+            Rect hitbox;
+            char message[16]; 
+        } script;
+	};
+};
+
+
+#define GET_ENTITY(e, entity_type) ((e)->type == Entity_##entity_type ? &(e)->entity_type : 0)
+#define ENT(e, entity_type)        &((e)->entity_type)
+
+void f(Entity *e, EngineCore* core)
+{
+	if (auto ninja = GET_ENTITY(e, ninja))
+	{
+		int x{ 0 };
+		int y{ 0 };
+		if (core->input->isKeyDown(SDL_SCANCODE_UP))
+			--y;
+		if (core->input->isKeyDown(SDL_SCANCODE_DOWN))
+			++y;
+		if (core->input->isKeyDown(SDL_SCANCODE_LEFT))
+			--x;
+		if (core->input->isKeyDown(SDL_SCANCODE_RIGHT))
+			++x;
+
+		if (x != 0 || y != 0)
+		{
+			// glm::vec2 normal = glm::normalize(glm::vec2{x, y});
+			// e->pos.x += (normal.x * core->deltaTime * 0.5f);
+			// e->pos.y += (normal.y * core->deltaTime * 0.5f);
+			e->x += (float)x * core->deltaTime * 25.f;
+			e->y += (float)y * core->deltaTime * 25.f;
+			//printf("%f", y * core->deltaTime * 0.5f);
+		}
+		//e->y += sinf(e->x) * 5;
+	}
+	else if (auto npc = GET_ENTITY(e, npc))
+	{
+		if (core->input->isKeyPressed(SDL_SCANCODE_SPACE))
+		{
+			printf("ninjas are gays!\n");
+		}
+	}
+}
+
+void r(Entity *e, EngineCore* core)
+{
+	if (auto entity = GET_ENTITY(e, ninja))
+	{
+		//static TextureHolder text;
+		//text.renderer = core->renderer;
+		// static ALLEGRO_BITMAP* bitmap = al_load_bitmap("test.png");
+		// al_draw_bitmap(bitmap, e->x, e->y, 0);
+		// printf("(%i, %i)", e->x, e->y);
+
+		//static LTexture alt2 = text.getTexture(Texture_Infantry);
+		//alt2.render(core->renderer, e->x, e->y);
+	}
+	else if (auto entity = GET_ENTITY(e, unit))
+	{
+		//  entity->texture.render(core->renderer, e->x, e->y);
+#define textoffset 15
+	   // DrawText(core, e->x + textoffset, e->y + textoffset, entity->strength);
+		// static ALLEGRO_FONT* font = al_load_font("rs.ttf", 20, 0);
+		static char buffer[2];
+		ASSERT(entity->strength < 100);
+		sprintf(buffer, "%i", entity->strength);
+		// al_draw_text(font, al_map_rgb(0, 0, 0), e->x + textoffset - core->cameraX, e->y + textoffset - core->cameraY, 0, buffer);
+	}
+}
