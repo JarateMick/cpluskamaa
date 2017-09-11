@@ -10,11 +10,11 @@ set DEV_ENV_DIR= ???
 
 rem eHa
 echo "ehahaha"
-set CFLAGS= -Zi -nologo -EHs -Gm- -Oi -GR-  -fp:fast -wd4311 -wd4312 
+set CFLAGS= -Zi -nologo -EHs -Gm- -Oi -GR-  -fp:fast -wd4311 -wd4312
 set LFLAGS= -incremental:no opengl32.lib  
-set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib
+set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib
 REM set INCLUDE=
-set ADDITIONAL= /I"../include" /I"../src/Imgui" 
+set ADDITIONAL= /I"../include" /I"../src/Imgui" /I"../sln/Raknet/Include"
 
 rem kernel32.lib user32.lib  Shell32.lib
 if not exist bin mkdir bin

@@ -31,6 +31,17 @@
 *.out
 *.app
 
+
+*.pdb
+*.exp
+*.ilk
+*.ipdb
+*.iobj
+*.db
+*.opendb
+*.swp
+
+
 sln/.vs/
 sln/winmm/
 sln/obj/

@@ -639,9 +639,14 @@ void initShaders()
 }
 
 
+#include "source.h"
 int main(int argc, char* argv[])
 {
+	init(mode_client);
+	update();
+	cleanUp();
 
+	// update()
 	int windowWidth = 1280;
 	int windowHeight = 720;
 
@@ -656,7 +661,7 @@ int main(int argc, char* argv[])
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
 	Uint32 flags = SDL_WINDOW_OPENGL;
-	SDL_Window* window = SDL_CreateWindow("hei taas sdl", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, flags);
+	SDL_Window* window = SDL_CreateWindow("Age of Empires I Definitive Edition", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, flags);
 
 	if (!window)
 	{
@@ -726,7 +731,7 @@ int main(int argc, char* argv[])
 
 	gameMemory.transientStorage = ((uint8_t*)gameMemory.permanentStorage + gameMemory.permanentStorageSize);
 	inputState.memory = gameMemory.permanentStorage;
-	inputState.totalMemorySize = megaBytes(64) + gigaBytes(1);
+	inputState.totalMemorySize = megaBytes(64); // + gigaBytes(1);
 
 
 	// TODO: Terminate thread
@@ -737,10 +742,6 @@ int main(int argc, char* argv[])
 		printf("done!\n");
 		fileLoadingThreadDone = true;
 	});
-
-
-
-
 
 	InputManager inputManager = {};
 	//////////////////////////////////////////////

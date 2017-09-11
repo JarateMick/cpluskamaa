@@ -121,7 +121,7 @@
     <NMakeOutput>$(SolutionDir)../bin/main.exe</NMakeOutput>
     <NMakeReBuildCommandLine>$(SolutionDir)./build.bat</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>I:\Dev\Allegro\allegro vanhat\Include;I:\Dev\Allegro\allegro vanhat\Include\glm;I:\Dev\SDL\allegro vanhat\Include;I:\Dev\SDL\allegro vanhat\Include\glad;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>I:\Dev\Allegro\allegro vanhat\Include;I:\Dev\Allegro\allegro vanhat\Include\glm;I:\Dev\SDL\allegro vanhat\Include;I:\Dev\SDL\allegro vanhat\Include\glad;$(SolutionDir)/Raknet/Include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <IncludePath>$(IncludePath)</IncludePath>
     <NMakeForcedIncludes>I:\Dev\Allegro\allegro\Include\sol\sol2;I:\Dev\Allegro\allegro\Include;$(NMakeForcedIncludes)</NMakeForcedIncludes>
   </PropertyGroup>
