@@ -563,6 +563,10 @@ EXPORT void Draw(EngineCore* core)
 	}
 
 
+	lua_getglobal(L, "main_function");
+	lua_pcall(L, 0, 0, 0);
+
+
 	DrawAllEntitys(core);
 
 	// render all entitys

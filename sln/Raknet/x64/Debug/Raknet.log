@@ -1,2 +1,10 @@
-﻿  Raknet.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.dll
-  Raknet.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.pdb (Partial PDB)
+﻿  CCRakNetSlidingWindow.cpp
+c:\users\eetuker\desktop\algorytmeja\cpluskamaa\sln\raknet\raknet\ccraknetslidingwindow.cpp(221): error C2668: 'abs': ambiguous call to overloaded function
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdlib.h(359): note: could be '__int64 abs(const __int64) throw()'
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdlib.h(354): note: or       'long abs(const long) throw()'
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdlib.h(284): note: or       'int abs(int)'
+  c:\users\eetuker\desktop\algorytmeja\cpluskamaa\sln\raknet\raknet\ccraknetslidingwindow.cpp(221): note: while trying to match the argument list '(double)'
+  Raknet.cpp
+c:\users\eetuker\desktop\algorytmeja\cpluskamaa\sln\raknet\raknet.cpp(54): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  Generating Code...

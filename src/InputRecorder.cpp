@@ -4,36 +4,28 @@ struct NesInput
 	unsigned int buttons;
 };
 
-// #include <sys/stat.h>
-//inline bool FileExist(const std::string& name) {
-//	struct stat buffer;
-//	return (stat(name.c_str(), &buffer) == 0);
-//}
-//
-//inline bool FileExist(char* name) {
-//	struct stat buffer;
-//	return (stat(name, &buffer) == 0);
-//}
-//
-inline bool FileExist(const std::string& name) {
-	if (FILE *file = fopen(name.c_str(), "r")) {
-		fclose(file);
-		return true;
-	}
-	else {
-		return false;
-	}
-}
+#include "fileSystem.h"
 
-inline bool FileExist(const char* name) {
-	if (FILE *file = fopen(name, "r")) {
-		fclose(file);
-		return true;
-	}
-	else {
-		return false;
-	}
-}
+
+//inline bool FileExist(const std::string& name) {
+//	if (FILE *file = fopen(name.c_str(), "r")) {
+//		fclose(file);
+//		return true;
+//	}
+//	else {
+//		return false;
+//	}
+//}
+//
+//inline bool FileExist(const char* name) {
+//	if (FILE *file = fopen(name, "r")) {
+//		fclose(file);
+//		return true;
+//	}
+//	else {
+//		return false;
+//	}
+//}
 
 
 /******************************************************************************/

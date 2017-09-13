@@ -528,12 +528,12 @@ EXPORT IMGUIFUNC(Imgui)
 	}
 	ImGui::End();
 
-	ImGui::Begin("Playback", &open, window_flags);
-	ImGui::Text("Welcome to playback");
-	ImGui::End();
+	//  ImGui::Begin("Playback", &open, window_flags);
+	//  ImGui::Text("Welcome to playback");
+	//  ImGui::End();
+
 
 	cameraControls(state);
-
 
 	static bool consoleOpen = true;
 	ShowConsole(&consoleOpen);
@@ -554,7 +554,6 @@ EXPORT IMGUIFUNC(Imgui)
 //		if (ImGui::Button("start editing"))
 //			state->mapEditorSettings.active = true;
 //	}
-
 //	ImGui::DragInt("Troop insert count", &state->mapEditorSettings.insertCount, 1, -99, 99);
 //	ImGui::Text("Side");
 //	ImGui::SameLine();

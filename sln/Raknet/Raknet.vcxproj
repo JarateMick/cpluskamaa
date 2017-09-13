@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -251,9 +251,10 @@
     <ClCompile Include="Raknet\VitaIncludes.cpp" />
     <ClCompile Include="Raknet\WSAStartupSingleton.cpp" />
     <ClCompile Include="Raknet\_FindFirst.cpp" />
-    <ClCompile Include="source.cpp" />
+    <ClCompile Include="Raknet.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Raknet.h" />
     <ClInclude Include="Raknet\AutopatcherPatchContext.h" />
     <ClInclude Include="Raknet\AutopatcherRepositoryInterface.h" />
     <ClInclude Include="Raknet\Base64Encoder.h" />
@@ -408,7 +409,6 @@
     <ClInclude Include="Raknet\WSAStartupSingleton.h" />
     <ClInclude Include="Raknet\XBox360Includes.h" />
     <ClInclude Include="Raknet\_FindFirst.h" />
-    <ClInclude Include="source.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Raknet\CMakeLists.txt" />

@@ -21,6 +21,7 @@
     <ClCompile Include="..\src\gl\Sprite.cpp" />
     <ClCompile Include="..\src\DebugRenderer.cpp" />
     <ClCompile Include="..\src\gl\SpriteFont.cpp" />
+    <ClCompile Include="..\src\fileSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\game.h" />
@@ -49,5 +50,6 @@
     <ClInclude Include="..\src\gl\SpriteFont.h" />
     <ClInclude Include="..\src\Tilemap.h" />
     <ClInclude Include="Algo\SLinkedList.h" />
+    <ClInclude Include="..\src\fileSystem.h" />
   </ItemGroup>
 </Project>

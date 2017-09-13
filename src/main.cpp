@@ -6,6 +6,8 @@
 #include <lua.hpp>
 #include <Windows.h>
 
+#include <algorithm>
+
 #include <string>
 #include <vector>
 #include <stdio.h>
@@ -625,6 +627,7 @@ std::string GetLastErrorAsString()
 // hudspritebatch.init();
 // camera init
 
+
 UpiEngine::GLSLProgram textureProgram;
 UpiEngine::Camera2D    camera2D;
 void initShaders()
@@ -637,41 +640,43 @@ void initShaders()
 }
 
 
+#include <Raknet.h>
 #include "Algo/SLinkedList.h"
 
-#include "source.h"
+
+
+
+
+
 int main(int argc, char* argv[])
 {
+//	SListNode<int>* list = new SListNode<int>;
+//	list->_data = 10;
+//	list->_next = new SListNode<int>;
+//	list->_next->_data = 20;
+//	list->_next->_next = new SListNode<int>;
+//
+//
+//	SLinkedList<int> lista;
+//	lista.Append(10);
+//	lista.Append(30);
+//	lista.Append(40);
+//
+//	std::cout << "linked list contains: ";
+//
+//	SListIterator<int> itr = lista.GetIterator();
+//
+// 	for (itr.Start(); itr.valid(); itr.Forth())
+// 	{
+//// 		std::cout << itr.Item() << ", ";
+// 	}
 
-	SListNode<int>* list = new SListNode<int>;
-	list->_data = 10;
-	list->_next = new SListNode<int>;
-	list->_next->_data = 20;
-	list->_next->_next = new SListNode<int>;
-
-
-	SLinkedList<int> lista;
-	lista.Append(10);
-	lista.Append(30);
-	lista.Append(40);
-
-	std::cout << "linked list contains: ";
-
-	SListIterator<int> itr = lista.GetIterator();
-
- 	for (itr.Start(); itr.valid(); itr.Forth())
- 	{
- 		std::cout << itr.Item() << ", ";
- 	}
-
- 	itr.Start();
+ 	// itr.Start();
 	// sivu 164
 
-
-
-	init(mode_client);
-	update();
-	cleanUp();
+	// init(mode_client);
+	// update();
+	// cleanUp();
 
 	// update()
 	int windowWidth = 1280;
@@ -838,19 +843,6 @@ int main(int argc, char* argv[])
 	simpleRecorder._nesinput = &nesInput;
 
 
-
-	UpiEngine::GLTexture asdf = UpiEngine::ResourceManager::getTexture("tileset2.png");
-	GLuint ididididid = asdf.id;
-	GLuint testId = UpiEngine::ResourceManager::getTexture("test.png").id;
-
-	// TileSheet 
-	UpiEngine::TileSheet tileset;
-	tileset.init(asdf, { 10, 16 });
-	core.testyTexture = &tileset;
-	// core.testyTexture UpiEngine::ResourceManager::getTexture("tileset.png");
-
-	core.slopeMapTexture = UpiEngine::ResourceManager::getTexture("slopemap.png").id;
-
 	// Lua Scripting Init****************************************
 	static bool init1 = false;
 	static lua_State *L = luaL_newstate();
@@ -859,7 +851,7 @@ int main(int argc, char* argv[])
 	{
 		if (!L)
 		{
-			printf("could not create lua newstate");
+			printf("could not create lua_state");
 			debugBreak();
 			exit(1);
 		}
@@ -871,7 +863,7 @@ int main(int argc, char* argv[])
 
 		if (succ == 0)
 		{
-			printf("Lua file: %s loaded succesfully!", lua_main_filename);
+			printf("Lua file: %s loaded succesfully!\n", lua_main_filename);
 		}
 		else
 		{
@@ -880,20 +872,20 @@ int main(int argc, char* argv[])
 			exit(1);
 		}
 	}
+
 	lua_getglobal(L, "main_function");
 	lua_pcall(L, 0, 0, 0);
+	lua_settop(L, 0);
 
-	// getchar();
-	//
-	// Lua Scripting Init****************************************
+	// lua_getglobal(L, "testiPrinter");
+	// lua_pcall(L, 0, 0, 0);
+	// lua_settop(L, 0);
 
-	// TODO: create console here!
 
 	while (!quit)
 	{
 		auto timePoint1(std::chrono::high_resolution_clock::now());
 
-		// reddit
 		auto delta_time = std::chrono::high_resolution_clock::now() - currentTime;
 		currentTime = std::chrono::high_resolution_clock::now();
 		simulationTime += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_time);
@@ -993,10 +985,15 @@ int main(int argc, char* argv[])
 			}
 		} // POLL EvENTS
 
-				// number |= 1 << x;   // setting
-				// number &= ~(1 << x); // clear
+				// number |= 1 << x;   // setting bit 
+				// number &= ~(1 << x); // clear 
 
 				// nesInput.buttons = 0xFF;
+
+		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
+		{
+			quit = true;
+		}
 
 		const char* playbackFileDir = "../TEST_ENUMERATE/Playback/";
 		if (inputManager.isKeyPressed(SDL_SCANCODE_G) && false)
@@ -1011,7 +1008,7 @@ int main(int argc, char* argv[])
 			std::string name = "_autorec";
 			std::string end = ".rec";
 
-			// TODO: toimii vain 10 kpl XDDDDDDD
+			// TODO: toimii vain 10 kpl 
 			std::vector<std::string> filenames = get_all_files_names_within_folder(playbackFileDir);
 			int recordNum = 0;
 			std::string recordName = "";
@@ -1034,14 +1031,14 @@ int main(int argc, char* argv[])
 		}
 
 		simpleRecorder.Update();
-
 		ImGui_ImplSdlGL3_NewFrame(window);
 		ImguiTest(clear_color, &core);
 
-		if (inputManager.isKeyPressed(SDL_SCANCODE_T))
-		{
-			system("waitfor /si build");
-		}
+
+		// if (inputManager.isKeyPressed(SDL_SCANCODE_T))
+		// {
+			// system("waitfor /si build");
+		// }
 
 		FILETIME newTime = Win32GetLastWriteTime("game.dll");
 		if (CompareFileTime(&newTime, &GameDLLWriteTime))
@@ -1049,6 +1046,7 @@ int main(int argc, char* argv[])
 			printf("loaded!\n");
 			LoadGameDLL();
 		}
+
 		if (core.filewatcher.update())
 		{
 			int succ = luaL_loadfile(L, lua_main_filename);
@@ -1065,8 +1063,6 @@ int main(int argc, char* argv[])
 				// exit(1);
 			}
 		}
-
-
 
 		int steps = 0;
 		currentSlice += lastFT;
@@ -1097,8 +1093,6 @@ int main(int argc, char* argv[])
 					else if (inputState.playing)
 					{
 						playBackInput(&inputManager, &inputState);
-						//	al_draw_rectangle(inputManager.mouseX - 2.f, inputManager.mouseY - 2.f, inputManager.mouseX + 2.f, inputManager.mouseY + 2.f, al_map_rgb(255, 0, 0), 2.0f);
-							// al_set_mouse_xy(display, inputManager.mouseX, inputManager.mouseY);
 					}
 
 					LoopPtr(&core); // GAME LOOP
@@ -1181,8 +1175,6 @@ int main(int argc, char* argv[])
 
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);
-
-
 
 		//if (ft != 0.f)
 		//{
