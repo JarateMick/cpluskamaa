@@ -154,7 +154,7 @@ namespace UpiEngine {
 		_glyphs = new CharGlyph[_regLength + 1];
 		for (i = 0; i < _regLength; i++) {
 			_glyphs[i].character = (char)(cs + i);
-			std::cout << _glyphs[i].character << std::endl;
+			// std::cout << _glyphs[i].character << std::endl;
 			_glyphs[i].size = glm::vec2(glyphRects[i].z, glyphRects[i].w);
 			_glyphs[i].uvRect = glm::vec4(
 				(float)glyphRects[i].x / (float)bestWidth,

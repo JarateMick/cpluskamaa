@@ -31,8 +31,6 @@
 // #include "imgui/imgui_internal.h"
 #include "game.h" 
 #include "imguiTools.h"
-
-
 //typedef struct  
 //{
 //	unsigned char buttons;
@@ -639,9 +637,38 @@ void initShaders()
 }
 
 
+#include "Algo/SLinkedList.h"
+
 #include "source.h"
 int main(int argc, char* argv[])
 {
+
+	SListNode<int>* list = new SListNode<int>;
+	list->_data = 10;
+	list->_next = new SListNode<int>;
+	list->_next->_data = 20;
+	list->_next->_next = new SListNode<int>;
+
+
+	SLinkedList<int> lista;
+	lista.Append(10);
+	lista.Append(30);
+	lista.Append(40);
+
+	std::cout << "linked list contains: ";
+
+	SListIterator<int> itr = lista.GetIterator();
+
+ 	for (itr.Start(); itr.valid(); itr.Forth())
+ 	{
+ 		std::cout << itr.Item() << ", ";
+ 	}
+
+ 	itr.Start();
+	// sivu 164
+
+
+
 	init(mode_client);
 	update();
 	cleanUp();
@@ -853,8 +880,8 @@ int main(int argc, char* argv[])
 			exit(1);
 		}
 	}
-	  lua_getglobal(L, "main_function");
-	  lua_pcall(L, 0, 0, 0);
+	lua_getglobal(L, "main_function");
+	lua_pcall(L, 0, 0, 0);
 
 	// getchar();
 	//
@@ -947,13 +974,13 @@ int main(int argc, char* argv[])
 					{
 						inputState.playing = true;
 						inputManager.reset();
-			}
+					}
 #else
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-			}
-		} break;
+				}
+			} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -963,13 +990,13 @@ int main(int argc, char* argv[])
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
 				}
 			} break;
-	}
-} // POLL EvENTS
+			}
+		} // POLL EvENTS
 
-		// number |= 1 << x;   // setting
-		// number &= ~(1 << x); // clear
+				// number |= 1 << x;   // setting
+				// number &= ~(1 << x); // clear
 
-		// nesInput.buttons = 0xFF;
+				// nesInput.buttons = 0xFF;
 
 		const char* playbackFileDir = "../TEST_ENUMERATE/Playback/";
 		if (inputManager.isKeyPressed(SDL_SCANCODE_G) && false)

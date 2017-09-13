@@ -48,5 +48,6 @@
     <ClInclude Include="..\src\DebugRenderer.h" />
     <ClInclude Include="..\src\gl\SpriteFont.h" />
     <ClInclude Include="..\src\Tilemap.h" />
+    <ClInclude Include="Algo\SLinkedList.h" />
   </ItemGroup>
 </Project>

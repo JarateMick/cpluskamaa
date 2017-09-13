@@ -64,6 +64,7 @@
     <ClInclude Include="..\src\Random.h" />
     <ClInclude Include="..\src\TextureHolder.h" />
     <ClInclude Include="..\src\Tilemap.h" />
+    <ClInclude Include="Algo\SLinkedList.h" />
     <ClInclude Include="SpriteBatch.h" />
     <ClInclude Include="stb_sprintf.h" />
   </ItemGroup>
