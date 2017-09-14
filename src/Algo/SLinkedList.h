@@ -165,5 +165,67 @@ public:
 		return SListIterator<T>(this, head);
 		// return { this, head };
 	}
+
+	void Insert(SListIterator<T>& p_iterator, T data)
+	{
+		if (p_iterator.list != this) // doesn't belong to this list
+		{
+			return;
+		}
+
+		if (p_iterator.node != 0)
+		{
+			// if the iterator is valid 
+			p_iterator.node->InsertAfter(data);
+
+			if (p_iterator.node == tail) // if last update tail
+			{
+				tail = p_iterator.node->_next;
+			}
+			count++;
+		}
+		else
+		{
+			Append(data);
+		}
+	}
+
+	void Remove(SListIterator<T>& iterator)
+	{
+		SListNode<T>* node = head;
+
+		if (iterator.list != this) // doesn't belong to this list
+		{
+			return;
+		}
+
+		if (iterator.node == 0)
+		{
+			return;
+		}
+
+		if (iterator.node == head)
+		{
+			iterator.Forth();
+			RemoveHead();
+		}
+		else
+		{
+			while (node->_next != iterator.node)
+				node = node->_next;
+
+			iterator.Forth();
+
+			if (node->_next == tail)
+			{
+				tail = node;
+			}
+
+			delete node->_next;
+			node->_next = iterator.node;
+		}
+
+		count--;
+	}
 };
 

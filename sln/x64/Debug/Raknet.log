@@ -1,0 +1,2 @@
+﻿H:\visual\MSBuild\Microsoft\VisualStudio\v15.0\CodeAnalysis\Microsoft.CodeAnalysis.targets(220,5): error MSB4175: The task factory "CodeTaskFactory" could not be loaded from the assembly "H:\visual\MSBuild\15.0\Bin\Microsoft.Build.Tasks.Core.dll". Levyllä on liian vähän tilaa.
+H:\visual\MSBuild\Microsoft\VisualStudio\v15.0\CodeAnalysis\Microsoft.CodeAnalysis.targets(220,5): error MSB4175: 
