@@ -28,7 +28,7 @@ rem Box2D.lib  Box2D.lib
 
 REM game dll
 echo "WAITING FOR PDB ..." > lock.tmp
-cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
+rem cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
 del lock.tmp
 
 SETLOCAL EnableExtensions
@@ -48,7 +48,7 @@ rem ..\src\Imgui\imgui*.cpp
 echo Running
 
 REM Imgui tools.dll 
-cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
+rem cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
 
 popd
 echo Done!

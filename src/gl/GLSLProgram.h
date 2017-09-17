@@ -12,7 +12,7 @@ namespace UpiEngine {
 		void compileShaders(const std::string &vertexShaderFilePath, const std::string &fragmentShaderFilePath);
 		void compileShadersFromSource(const char* vertexSource, const char* fragmentSource);
 
-		void linkShaders();
+		bool linkShaders();
 
 		void addAttribute(const std::string &attributeName);
 

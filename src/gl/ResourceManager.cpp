@@ -1,6 +1,7 @@
 #include "ResourceManager.h"
 
-namespace UpiEngine {
+namespace UpiEngine 
+{
 	TextureCache ResourceManager::_textureCache;
 
 	GLTexture ResourceManager::getTexture(std::string texturePath)

@@ -30,6 +30,8 @@
 
 #include <atomic>
 
+
+
 // #include "imgui/imgui_internal.h"
 #include "game.h" 
 #include "imguiTools.h"
@@ -601,6 +603,8 @@ std::string GetLastErrorAsString()
 	return message;
 }
 
+
+
 // #include "gl/picoPNG.cpp"
 
 // #include "glad.c" 
@@ -630,75 +634,493 @@ std::string GetLastErrorAsString()
 
 UpiEngine::GLSLProgram textureProgram;
 UpiEngine::Camera2D    camera2D;
-void initShaders()
+bool initShaders(UpiEngine::GLSLProgram& textureProgram)
 {
 	textureProgram.compileShaders("Shaders/colorShading.vert", "Shaders/colorShading.frag");
 	textureProgram.addAttribute("vertexPosition");
 	textureProgram.addAttribute("vertexColor");
 	textureProgram.addAttribute("vertexUV");
-	textureProgram.linkShaders();
+	return textureProgram.linkShaders();
 }
-
 
 #include <Raknet.h>
 #include "Algo/SLinkedList.h"
 
 
-int main(int argc, char* argv[])
+#define LUAFILESCOUNT 2
+const char* luaFiles[LUAFILESCOUNT] = {
+	 "lua/main3.lua", "lua/main2.lua"
+};
+
+// shader file watcher !
+#define SHADERFILECOUNT 4
+const char* shaderFiles[SHADERFILECOUNT] = {
+	"Shaders/colorShading.frag", "Shaders/colorShading.vert",
+	"Shaders/province.frag", "Shaders/province.vert"
+};
+
+
+#include <list>
+#include <queue>
+
+// template<class T>
+// class SLinkedList;
+
+template<class NodeType, class ArcType>
+class GraphArc;
+
+template<class NodeType, class ArcType>
+class GraphNode
 {
-	std::cout << argc;
-	if (argc == 1)
+public:
+	typedef GraphArc<NodeType, ArcType> Arc;
+	typedef GraphNode<NodeType, ArcType> Node;
+
+	NodeType data;
+	std::list<Arc> archlist;
+	bool marked;
+
+	void AddArc(Node* node, ArcType weight)
 	{
-		printf("foo");
-		// init(mode_server);
+		Arc a;
+		a.node = node;
+		a.weight = weight;
+		archlist.push_back(a);
+	}
+
+	Arc* GetArc(Node* node)
+	{
+		auto iter = archlist.begin();
+
+		for (iter; iter != archlist.end(); iter++)
+		{
+			if ((*iter).node == node)
+				return &(*iter);
+		}
+		return 0;
+
+		//auto iter = std::find(archlist.begin(), archlist.end(), node);
+		//if (iter != archlist.end())
+		//{
+		//	return &(*iter);
+		//}
+		//return nullptr;
+	}
+};
+
+
+template<class NodeType, class ArcType>
+class GraphArc
+{
+public:
+	GraphNode<NodeType, ArcType>* node;
+	ArcType weight;
+};
+
+template<class NodeType, class ArcType>
+class Graph
+{
+public:
+	typedef GraphArc<NodeType, ArcType> Arc;
+	typedef GraphNode<NodeType, ArcType> Node;
+
+	std::vector<Node*> nodes;
+	int count;
+
+	Graph(int size) : nodes(size)
+	{
+		int i;
+		for (i = 0; i < size; i++)
+		{
+			nodes[i] = 0;
+		}
+		count = 0;
+	}
+
+	~Graph()
+	{
+		int index;
+		for (index = 0; index < nodes.size(); index++)
+		{
+			if (nodes[index] != 0)
+			{
+				delete nodes[index];
+			}
+		}
+	}
+
+	bool AddNode(NodeType data, int index)
+	{
+		if (nodes[index] != 0)
+		{
+			return false;
+		}
+
+		nodes[index] = new Node;
+		nodes[index]->data = data;
+		nodes[index]->marked = false;
+		count++;
+
+		return true;
+	}
+
+	void RemoveNode(int index)
+	{
+		if (nodes[index] == 0)
+		{
+			return;
+		}
+
+		int node;
+		Arc* arc;
+
+		for (node = 0; node < nodes.size(); node++)
+		{
+			if (nodes[node] != 0)
+			{
+				arc = nodes[node]->GetArc(nodes[index]);
+				if (arc != 0)
+					RemoveArc(node, index);
+			}
+		}
+
+		delete node[index];
+		nodes[index] = 0;
+		count--;
+	}
+
+	bool AddArc(int from, int to, ArcType weight)
+	{
+		if (nodes[from] == 0 || nodes[to] == 0)
+		{
+			return false;
+		}
+		if (nodes[from]->GetArc(nodes[to]) != 0)
+		{
+			return false;
+		}
+		nodes[from]->AddArc(nodes[to], weight);
+		return true;
+	}
+
+	void RemoveArc(int from, int to)
+	{
+		if (nodes[from] == 0 || nodes[to] == 0)
+		{
+			return;
+		}
+
+		nodes[from]->RemoveArc(nodes[to]);
+	}
+
+	Arc* GetArc(int from, int to)
+	{
+		if (nodes[from] == 0 || nodes[to] == 0)
+		{
+			return 0;
+		}
+
+		return nodes[from]->GetArc(nodes[to]);
+	}
+
+	void ClearMarks()
+	{
+		int index;
+		for (index = 0; index < nodes.size(); index++)
+		{
+			if (nodes[index] != 0)
+			{
+				nodes[index]->marked = false;
+			}
+		}
+	}
+
+	void DepthFirst(Node* node, void(*process)(Node*))
+	{
+		if (node == 0)
+			return;
+
+		process(node);
+		node->marked = true;
+
+		auto iter = node->archlist.begin();
+		for (iter; iter != node->archlist.end(); iter++)
+		{
+			if (iter->node->marked == false)
+			{
+				DepthFirst((*iter).node, process);
+			}
+		}
+	}
+
+	// breadth-first sivu 511
+	void BreadthFirst(Node* node, void(*process)(Node*))
+	{
+		if (node == 0)
+			return;
+
+		std::queue<Node*> queue;
+
+		// list itr
+
+		queue.push(node);
+		node->marked = true;
+
+		while (queue.size() != 0)
+		{
+			process(queue.front());
+			auto itr = queue.front()->archlist.begin();
+			for (itr; itr != queue.front()->archlist.end(); itr++)
+			{
+				if (itr->node->marked == false)
+				{
+					itr->node->marked = true;
+					queue.push(itr->node);
+				}
+			}
+			queue.pop();
+		}
+	}
+};
+
+//template<class NodeType, class ArcType>
+//void GraphNode::AddArc(Node* node, ArcType weight)
+//{
+//	
+//}
+
+void renderGraph(GraphNode<int, int>* node, UpiEngine::SpriteBatch* spriteBatch)
+{
+	spriteBatch->draw(glm::vec4{  }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, 1, 1.0f);
+}
+
+void process(GraphNode<int, int>* node)
+{
+	printf("%i\n", node->data);
+}
+
+struct MapNode
+{
+	int id;
+	float x, y; // for rendering and debugging
+};
+
+// 
+#include <fstream>
+
+//void SaveNodes(Graph<MapNode, float>* graph)
+//{
+//	FILE* file = fopen("GraphSave.dat", "w");
+//
+//	char buffer[64];
+//
+//	for (int i = 0; i < graph->count; i++)
+//	{
+//		auto* currentNode = graph->nodes[i];
+//		fprintf(file, "%i;%f;%f", currentNode->data.id, currentNode->data.x, currentNode->data.y);
+//
+//		for (auto iter = currentNode->archlist.begin(); iter != currentNode->archlist.end(); iter++)
+//		{
+//			fwrite(iter-)
+//		}
+//	}
+//
+//	fwrite(graph->nodes.data, sizeof(char), sizeof(buffer), file);
+//	fprintf(file, "")
+//}
+
+class ImageData
+{
+public:
+	SDL_Surface* surface;
+
+	ImageData(const char* filename)
+	{
+		surface = IMG_Load(filename);
+	}
+
+	~ImageData()
+	{
+		SDL_FreeSurface(surface);
+	}
+
+	void   set_pixel(int x, int y, Uint32 color)
+	{
+		// Uint32 *target_pixel = (Uint32 *)surface->pixels + y * surface->pitch +
+			// x * sizeof *target_pixel;
+		// *target_pixel = pixel;
+
+		Uint8 * pixel = (Uint8*)surface->pixels;
+		pixel += (y * surface->pitch) + (x * sizeof(Uint32));
+		*((Uint32*)pixel) = color;
+	}
+
+	Uint32 GetPixel(int x, int y)
+	{
+		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
+		// return (Uint32)surface->pixels + y * surface->pitch +
+		//	x * sizeof(Uint32);
+	}
+}; 
+
+
+#include <string>
+#include <sstream>
+void LoadNodes()
+{
+	std::vector<std::vector<std::string>> data;
+	std::ifstream stream("test.txt");
+	std::string line;
+
+	while (std::getline(stream, line))
+	{
+		std::istringstream s(line);
+		std::string field;
+		while (std::getline(s, field, ';'))
+		{
+			std::cout << field << ", ";
+		}
+		std::cout << "\n";
+	}
+}
+
+void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
+{
+	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
+	{
+		replacement->set_pixel(startX, startY, replacementColor);
+		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
 	}
 	else
 	{
-		// init(mode_client);
+		return;
+	}
+}
+
+
+//void GetAllAvaiblePixels(ImageData* imageData, int startX, int startY, Uint32 targetColor, int* buffer, int index = 0)
+//{
+//	if (targetColor == imageData->GetPixel(startX, startY))
+//	{
+//		GetAllAvaiblePixels(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
+//		GetAllAvaiblePixels(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+//		GetAllAvaiblePixels(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
+//		GetAllAvaiblePixels(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
+//	}
+//	else
+//	{
+//		return;
+//	}
+//}
+
+
+
+
+GLuint TurnSurfaceIntoGlTexture(SDL_Surface* surface)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	int Mode = GL_RGB;
+
+	if (surface->format->BytesPerPixel == 4) {
+		Mode = GL_RGBA;
 	}
 
-	while (0)
-	{
-		update();
-	}
+	glTexImage2D(GL_TEXTURE_2D, 0, Mode, surface->w, surface->h, 0, Mode, GL_UNSIGNED_BYTE, surface->pixels);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	return textureID;
+}
+
+void FreeTexture(GLuint* texture)
+{
+	glDeleteTextures(1, texture);
+}
+
+int main(int argc, char* argv[])
+{
+	Graph<int, int> map(6);
+	LoadNodes();
+	map.AddNode(0, 0);
+	map.AddNode(1, 1);
+	map.AddNode(2, 2);
+	map.AddNode(3, 3);
+	map.AddNode(4, 4);
+	map.AddNode(5, 5);
+
+	map.AddArc(0, 1, 10);
+	map.AddArc(1, 0, 10);
+
+	map.AddArc(2, 0, 10);
+	map.AddArc(0, 2, 10);
+
+	map.AddArc(3, 2, 1);
+	map.AddArc(2, 3, 1);
+
+	map.AddArc(4, 3, 1);
+	map.AddArc(3, 4, 1);
+
+	map.AddArc(0, 5, 1);
+	map.AddArc(5, 0, 1);
 
 
-	SLinkedList<int> lista;
-	SListIterator<int> itr;
-	lista.Append(10);
-	lista.Append(30);
-	lista.Append(40);
+	printf("breadt first: \n");
+	map.BreadthFirst(map.nodes[0], process);
+	map.ClearMarks();
+	printf("depth first: \n");
+	map.DepthFirst(map.nodes[0], process);
 
-	itr = lista.GetIterator();
-	for (itr.Start(); itr.valid(); itr.Forth())
-	{
-		std::cout << itr.Item() << ", ";
-	}
-	itr.Start();
 
-	lista.Insert(itr, 20);
 
-	itr = lista.GetIterator();
-	for (itr.Start(); itr.valid(); itr.Forth())
-	{
-		std::cout << itr.Item() << ", ";
-	}
-	itr.Start();
-
-	itr.Forth();
-	itr.Forth();
-
-	lista.Remove(itr);
+	ImageData data("provinces.png");
+	ImageData showToPlayer("provinces.png");
 	
-	itr = lista.GetIterator();
-	for (itr.Start(); itr.valid(); itr.Forth())
-	{
-		std::cout << itr.Item() << ", ";
-	}
-	itr.Start();
 
 
-	std::cout << "linked list contains: ";
+
+	//SLinkedList<int> lista;
+	//SListIterator<int> itr;
+	//lista.Append(10);
+	//lista.Append(30);
+	//lista.Append(40);
+
+	//itr = lista.GetIterator();
+	//for (itr.Start(); itr.valid(); itr.Forth())
+	//{
+	//	std::cout << itr.Item() << ", ";
+	//}
+	//itr.Start();
+
+	//lista.Insert(itr, 20);
+
+	//itr = lista.GetIterator();
+	//for (itr.Start(); itr.valid(); itr.Forth())
+	//{
+	//	std::cout << itr.Item() << ", ";
+	//}
+	//itr.Start();
+
+	//itr.Forth();
+	//itr.Forth();
+
+	//lista.Remove(itr);
+
+	//itr = lista.GetIterator();
+	//for (itr.Start(); itr.valid(); itr.Forth())
+	//{
+	//	std::cout << itr.Item() << ", ";
+	//}
+	//itr.Start();
+
+
+	//std::cout << "linked list contains: ";
 	// SListIterator<int> itr = lista.GetIterator();
 
 
@@ -755,7 +1177,7 @@ int main(int argc, char* argv[])
 
 	glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
-	initShaders();
+	initShaders(textureProgram);
 
 	UpiEngine::SpriteBatch spriteBatch;
 	spriteBatch.init();
@@ -857,6 +1279,8 @@ int main(int argc, char* argv[])
 	Debug::_Debugger = &debugger;
 	// huom deubbgslgjal
 
+	core.filewatcher.init(luaFiles, LUAFILESCOUNT, Resource_script);
+	// "lua/main3.lua", "lua/main2.lua"
 
 	// al_start_timer(timer);
 	bool quit = false;
@@ -913,6 +1337,12 @@ int main(int argc, char* argv[])
 	// lua_pcall(L, 0, 0, 0);
 	// lua_settop(L, 0);
 
+
+	auto asdf = UpiEngine::ResourceManager::getTexture("tekstuuri");
+
+	core.filewatcher.init(shaderFiles, SHADERFILECOUNT, Resource_shader);
+
+	GLuint randomTexture = UpiEngine::ResourceManager::getTexture("test.png").id;
 
 	while (!quit)
 	{
@@ -998,13 +1428,13 @@ int main(int argc, char* argv[])
 					{
 						inputState.playing = true;
 						inputManager.reset();
-			}
+					}
 #else
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-			}
-		} break;
+					}
+				} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1014,17 +1444,31 @@ int main(int argc, char* argv[])
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
 				}
 			} break;
-	}
-} // POLL EvENTS
+			}
+			} // POLL EvENTS
 
-		// number |= 1 << x;   // setting bit 
-		// number &= ~(1 << x); // clear 
+					// number |= 1 << x;   // setting bit 
+					// number &= ~(1 << x); // clear 
 
-		// nesInput.buttons = 0xFF;
+					// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
 			quit = true;
+		}
+
+		if (core.filewatcher.update(Resource_shader))
+		{
+			UpiEngine::GLSLProgram newshader;
+			if (initShaders(newshader))
+			{
+				textureProgram.unuse();
+				textureProgram.dispose();
+				textureProgram = newshader;
+				printf("shader loaded!");
+			}
+			else
+				printf("shader loading failed!");
 		}
 
 		const char* playbackFileDir = "../TEST_ENUMERATE/Playback/";
@@ -1079,7 +1523,7 @@ int main(int argc, char* argv[])
 			LoadGameDLL();
 		}
 
-		if (core.filewatcher.update())
+		if (core.filewatcher.update(Resource_script))
 		{
 			int succ = luaL_loadfile(L, lua_main_filename);
 			lua_setglobal(L, "main_function");
@@ -1179,7 +1623,50 @@ int main(int argc, char* argv[])
 
 		spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
 
+		spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
+
+		static bool initted = false;
+		static GLuint tid;
+		if (!initted)
+		{
+			initted = true;
+			// showToPlayer
+			tid = TurnSurfaceIntoGlTexture(showToPlayer.surface);
+			// FreeTexture(&tid);
+		}
+
+		static float colors[4];
+		static Uint32 replacement = 0;
+		if (ImGui::ColorEdit4("vari", colors, true))
+		{
+			replacement = ImGui::GetColorU32(ImVec4(colors[3],colors[2], colors[1], colors[0]));
+		}
+
+
+		spriteBatch.draw(glm::vec4{ 200.f, 0.f, 800.f, 600.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, tid, 1.0f);
+		if (core.input->isKeyDown(SDL_SCANCODE_5))
+		{
+			Uint32 color = data.GetPixel(core.input->mouse.x - 200.f, 600.f - core.input->mouse.y);
+			std::cout << color << "\n";
+		}
+		ImGui::Text((std::string("mousePos: ") + std::to_string(core.input->mouse.y)).c_str());
+
+		if (core.input->isKeyPressed(SDL_SCANCODE_6))
+		{
+			Uint32 targetcolor = data.GetPixel(core.input->mouse.x - 200.f, 600.f - core.input->mouse.y);
+			FloodFillImage(&data, &showToPlayer, core.input->mouse.x - 200.f, 600.f - core.input->mouse.y, targetcolor, Uint32(replacement));
+
+			FreeTexture(&tid);
+			TurnSurfaceIntoGlTexture(showToPlayer.surface);
+		}
+
 		DrawPtr(&core);
+
+
+
+		//		map.BreadthFirst(map.nodes[0], )
+		//		map.ClearMarks();
+
 
 		spriteBatch.end();
 		spriteBatch.renderBatch();
@@ -1248,7 +1735,7 @@ int main(int argc, char* argv[])
 		ftSeconds = (ft / 1000.f);
 		// printf("%f\n", ft);
 
-	}
+		}
 
 	ImGui_ImplSdlGL3_Shutdown();
 	// SDL_GL_DeleteCOntext(glcontext);s	
@@ -1256,5 +1743,5 @@ int main(int argc, char* argv[])
 	SDL_Quit();
 
 	return 0;
-}
+	}
 

@@ -51,7 +51,7 @@ namespace UpiEngine{
 		compileShader(fragmentSource, "Fragment Shader", _fragmentShaderID);
 	}
 
-	void GLSLProgram::linkShaders()
+	bool GLSLProgram::linkShaders()
 	{
 
 		//Attach our shaders to our program
@@ -83,6 +83,7 @@ namespace UpiEngine{
 
 			// fatalError("shaders failed to link!");
 			printf("shaders failed to link!");
+			return false;
 		}
 
 		//Always detach shaders after a successful link.
@@ -90,6 +91,7 @@ namespace UpiEngine{
 		glDetachShader(_programID, _fragmentShaderID);
 		glDeleteShader(_vertexShaderID);
 		glDeleteShader(_fragmentShaderID);
+		return true;
 	}
 
 	void GLSLProgram::addAttribute(const std::string &attributeName)
@@ -102,7 +104,7 @@ namespace UpiEngine{
 		GLint location = glGetUniformLocation(_programID, uniformName.c_str());
 		if (location == GL_INVALID_INDEX) {
 			// fatalError("Uniform" + uniformName + " not found in shader!");
-			printf("Uniform %s not found in shader", uniformName.c_str());
+			printf("Uniform %s not found in shader\n", uniformName.c_str());
 		}
 		return location;
 	}

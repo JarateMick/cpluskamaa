@@ -2,7 +2,8 @@
 #include <map>
 #include "GLTexture.h"
 
-namespace UpiEngine {
+namespace UpiEngine 
+{
 	class TextureCache
 	{
 	public:
@@ -14,5 +15,4 @@ namespace UpiEngine {
 	private:
 		std::map<std::string, GLTexture> _textureMap;
 	};
-
 }

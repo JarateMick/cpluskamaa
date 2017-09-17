@@ -128,7 +128,6 @@ EXPORT void Loop(EngineCore* core)
 		gameState->arena.InitalizeArena(core->memory->permanentStorageSize - sizeof(game_state),
 			(uint8_t *)core->memory->permanentStorage + sizeof(game_state));
 
-		core->filewatcher.init();
 
 		L = core->script.L;
 

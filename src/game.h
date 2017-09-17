@@ -81,6 +81,85 @@
 
 // glm: 
 //   + mat4 voi olla vaikea tehdä itse
+Internal FILETIME Win32GetLastWriteTime(const char* path)
+{
+	FILETIME time = {};
+	WIN32_FILE_ATTRIBUTE_DATA data;
+
+	if (GetFileAttributesEx(path, GetFileExInfoStandard, &data))
+		time = data.ftLastWriteTime;
+
+	return time;
+}
+
+enum ResourceType
+{
+	Resource_shader = 0,
+	Resource_script,
+	Resource_texture,
+	Resource_max,
+};
+
+struct resourceData 
+{
+	std::vector<FILETIME> filetimes;
+	std::vector<std::string> filepathsToWatch;
+	int watchFilesCount;
+};
+
+struct FileWatcher
+{
+	// std::vector<FILETIME> filetimes;
+	// std::vector<std::string> filepathsToWatch;
+	// int watchFilesCount;
+
+	resourceData resources[Resource_max];
+
+	// load from config file !!!
+	void init(const char** filenames, int size, ResourceType type)
+	{
+		resourceData& res = resources[type];
+
+		res.watchFilesCount = size;
+
+		for (int i = 0; i < res.watchFilesCount; i++)
+		{
+			res.filepathsToWatch.push_back(std::string(filenames[i]));
+		}
+
+		for (int i = 0; i < res.watchFilesCount; i++)
+		{
+			res.filetimes.push_back(Win32GetLastWriteTime(res.filepathsToWatch[i].c_str()));
+		}
+	}
+
+
+
+	// ladataanko vai ei
+	bool update(ResourceType type)
+	{
+		resourceData& res = resources[type];
+
+		for (int i = 0; i < res.watchFilesCount; i++)
+		{
+			FILETIME newFileTime = Win32GetLastWriteTime(res.filepathsToWatch[i].c_str());
+			if (CompareFileTime(&newFileTime, &res.filetimes[i]))
+			{
+				// reload this file!
+				res.filetimes[i] = newFileTime;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void showImgui(ResourceType type)
+	{
+		
+	}
+
+
+};
 
 struct game_memory
 {
@@ -93,50 +172,6 @@ struct game_memory
 	void* transientStorage;
 };
 
-Internal FILETIME Win32GetLastWriteTime(const char* path)
-{
-	FILETIME time = {};
-	WIN32_FILE_ATTRIBUTE_DATA data;
-
-	if (GetFileAttributesEx(path, GetFileExInfoStandard, &data))
-		time = data.ftLastWriteTime;
-
-	return time;
-}
-
-struct FileWatcher
-{
-	// lataa Configista
-	static constexpr int pathSize = 2;
-	const char* filepathsToWatch[pathSize] = {
-		"lua/main3.lua", "lua/main2.lua"
-	};
-	FILETIME filetimes[pathSize];
-
-	void init()
-	{
-		for (int i = 0; i < pathSize; i++)
-		{
-			filetimes[i] = Win32GetLastWriteTime(filepathsToWatch[i]);
-		}
-	}
-
-	// ladataanko vai ei
-	bool update()
-	{
-		for (int i = 0; i < pathSize; i++)
-		{
-			FILETIME newFileTime = Win32GetLastWriteTime(filepathsToWatch[i]);
-			if (CompareFileTime(&newFileTime, &filetimes[i]))
-			{
-				// reload this file!
-				filetimes[i] = newFileTime;
-				return true;
-			}
-		}
-		return false;
-	}
-};
 
 
 struct scripting

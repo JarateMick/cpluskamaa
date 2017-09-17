@@ -322,7 +322,34 @@ static Console& GetConsoleInstance()
 
 static void ShowConsole(bool* p_open)
 {
-	 GetConsoleInstance().Draw("Console", p_open);
+	GetConsoleInstance().Draw("Console", p_open);
+}
+
+void showFileType(FileWatcher* watcher, ResourceType type)
+{
+	resourceData* data = &watcher->resources[type];
+	for (int i = 0; i < data->watchFilesCount; i++)
+	{
+		ImGui::Text("%s", data->filepathsToWatch[i].c_str());
+	}
+}
+
+void ShowFileWatcher(FileWatcher* filewatcher)
+{
+	ImGui::Begin("Filewatcher:");
+
+	ImGui::Text("Scripts: ");
+	showFileType(filewatcher, Resource_script);
+
+	// ImGui::Text("Textures: ");
+	// showFileType(filewatcher, Resource_script);
+	ImGui::Separator();
+
+	ImGui::Text("Shaders: ");
+	showFileType(filewatcher, Resource_shader);
+
+
+	ImGui::End();
 }
 
 EXPORT IMGUIFUNC(Imgui)
@@ -537,6 +564,8 @@ EXPORT IMGUIFUNC(Imgui)
 
 	static bool consoleOpen = true;
 	ShowConsole(&consoleOpen);
+
+	ShowFileWatcher(&core->filewatcher);
 }
 
 // ---------------------------------------------------------------------
