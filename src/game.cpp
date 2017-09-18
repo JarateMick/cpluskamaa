@@ -11,13 +11,38 @@
 
 #include <algorithm>
 #include <lua.hpp>
-#include <SDL2\SDL_image.h>
 
 #undef max
 #undef min
 
 using namespace std;
 StackAllocator g_singleFrameAllocator;
+
+
+ImageData::ImageData(const char* filename)
+{
+	surface = IMG_Load(filename);
+	if (!surface)
+		printf("IMG_Load: %s\n", IMG_GetError());
+}
+
+void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
+{
+	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
+	{
+		replacement->set_pixel(startX, startY, replacementColor);
+		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
+	}
+	else
+	{
+		return;
+	}
+}
+
+
 
 // TODO: SAVING LOADING!!!
 //void SaveAllEntitys(game_state* gameState, const char* fileName)
@@ -139,7 +164,7 @@ EXPORT void Loop(EngineCore* core)
 		// Initialize some npc's;
 		// floats = PushArray(&gameState->arena, 10000000, float);
 
-		
+
 
 		core->memory->isInitialized = true;
 
@@ -168,6 +193,13 @@ EXPORT void Loop(EngineCore* core)
 		e->x = 150.f;
 		e->y = 150.f;
 
+
+		SDL_Surface* surface = core->resources.LoadSurface("europe.png");
+		gameState->worldmap.provinces.surface = surface;
+
+		surface = core->resources.LoadSurface("europedata.png");
+		gameState->worldmap.visual.surface    = surface;
+		gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(surface);
 
 		if (!Debug::restartLog())
 		{
@@ -223,7 +255,41 @@ EXPORT void Loop(EngineCore* core)
 		}
 		lua_pop(L, 1);
 	}
+
+
+
+	static bool initted = false;
+	static GLuint tid;
+	if (!initted)
+	{
+		initted = true;
+		// showToPlayer
+		tid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
+		// FreeTexture(&tid);
+	}
+
+
+
+	if (input->isKeyDown(SDL_SCANCODE_5))
+	{
+		Uint32 color = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 600.f - input->mouse.y);
+		std::cout << color << "\n";
+	}
+
+	if (input->isKeyDown(SDL_SCANCODE_6))
+	{
+		Uint32 targetcolor = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 640.f - input->mouse.y);
+		FloodFillImage(&gameState->worldmap.provinces, &gameState->worldmap.visual, input->mouse.x - 200.f, 640.f - input->mouse.y, targetcolor, Uint32(gameState->worldmap.editorColor));
+
+		core->resources.FreeTexture(&tid);
+		gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface); 
+	}
 }
+
+
+
+
+
 
 // hex sizes --- world in meters
 static const float hexWidth = 30.f;
@@ -561,10 +627,10 @@ EXPORT void Draw(EngineCore* core)
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
 	}
 
+	// _getglobal(L, "main_function");
+	// lua_pcall(L, 0, 0, 0);
 
-	lua_getglobal(L, "main_function");
-	lua_pcall(L, 0, 0, 0);
-
+	core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 528.f, 640.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
 
 	DrawAllEntitys(core);
 

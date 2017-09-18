@@ -54,6 +54,7 @@
 #include <vector>
 #include "TextureHolder.h"
 #include <functional>
+#include <SDL2\SDL_image.h>
 
 
 // #include "imgui/imgui.h"
@@ -106,6 +107,39 @@ struct resourceData
 	std::vector<std::string> filepathsToWatch;
 	int watchFilesCount;
 };
+
+class ImageData
+{
+public:
+	SDL_Surface* surface = 0;
+
+	ImageData(const char* filename);
+
+	~ImageData()
+	{
+		SDL_FreeSurface(surface);
+	}
+
+	void   set_pixel(int x, int y, Uint32 color)
+	{
+		// Uint32 *target_pixel = (Uint32 *)surface->pixels + y * surface->pitch +
+			// x * sizeof *target_pixel;
+		// *target_pixel = pixel;
+
+		Uint8 * pixel = (Uint8*)surface->pixels;
+		pixel += (y * surface->pitch) + (x * sizeof(Uint32));
+		*((Uint32*)pixel) = color;
+	}
+
+	Uint32 GetPixel(int x, int y)
+	{
+		// return (Uint32)surface->pixels + y * surface->pitch +
+		//	x * sizeof(Uint32);
+
+		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
+	}
+}; 
+
 
 struct FileWatcher
 {
@@ -221,6 +255,14 @@ struct scripting
 #include "gl/SpriteFont.cpp"
 #include "gl/DebugRenderer.cpp"
 
+// todo: korjaa oikea resurrsi managers
+struct ResourceManager
+{
+	GLuint(*SurfaceToGlTexture)(SDL_Surface*);
+	void(*FreeTexture)(GLuint*);
+	SDL_Surface*(*LoadSurface)(const char*);
+};
+
 // tänne tavallaan public engine hommat
 struct EngineCore
 {
@@ -241,6 +283,9 @@ struct EngineCore
 
 	scripting     script;          // lua scipts
 	FileWatcher   filewatcher;     // very bare-bones file write time poller
+
+	ResourceManager resources;
+
 
 	float deltaTime;
 
@@ -333,6 +378,15 @@ void* PushSize_(memory_arena *Arena, memory_index Size)
 
 #include "Entity.h"
 // #include "Tilemap.h"
+
+struct WorldMap
+{
+	GLuint temptextureid;
+	ImageData provinces;
+	ImageData visual;
+	Uint32 editorColor;
+};
+
 struct game_state
 {
 	memory_arena arena;
@@ -341,6 +395,8 @@ struct game_state
 
 	// TileMap tilemap;
 	// TilemapEditor editor;
+	WorldMap worldmap;
+	
 
 	float cameraSpeed;
 };

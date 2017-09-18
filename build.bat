@@ -2,9 +2,8 @@
 ctime -begin engine.ctm
 
 if not defined DEV_ENV_DIR (
- 	rem call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x64
-    rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-	call "H:\Visual Studio\VC\vcvarsall.bat" x64 
+ 	call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+    rem call "H:\Visual Studio\VC\vcvarsall.bat" x64 
 	rem call "I:\VisualStudio\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 set DEV_ENV_DIR= ???
@@ -28,7 +27,7 @@ rem Box2D.lib  Box2D.lib
 
 REM game dll
 echo "WAITING FOR PDB ..." > lock.tmp
-rem cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
+cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
 del lock.tmp
 
 SETLOCAL EnableExtensions
@@ -48,7 +47,7 @@ rem ..\src\Imgui\imgui*.cpp
 echo Running
 
 REM Imgui tools.dll 
-rem cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
+cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
 
 popd
 echo Done!

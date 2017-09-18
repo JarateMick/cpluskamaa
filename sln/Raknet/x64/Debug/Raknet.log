@@ -1,6 +1,2 @@
-﻿  Raknet.cpp
-i:\dev\sdl\allegro vanhat\sln\raknet\raknet.cpp(57): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
-  LINK : I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.dll not found or not built by the last incremental link; performing full link
-     Creating library I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.lib and object I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.exp
-  Raknet.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.dll
+﻿  Raknet.vcxproj -> C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\sln\x64\Debug\Raknet.dll
+  Raknet.vcxproj -> C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\sln\x64\Debug\Raknet.pdb (Partial PDB)

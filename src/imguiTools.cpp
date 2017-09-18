@@ -352,9 +352,11 @@ void ShowFileWatcher(FileWatcher* filewatcher)
 	ImGui::End();
 }
 
+
 EXPORT IMGUIFUNC(Imgui)
 {
 	ImGui::SetCurrentContext(context);
+	game_state *gameState = (game_state*)core->memory->permanentStorage;
 	// ImGui_ImplSdlGL3_NewFrame(window);
 
 	// Debug::console = &GetConsoleInstance().AddLog;
@@ -566,6 +568,17 @@ EXPORT IMGUIFUNC(Imgui)
 	ShowConsole(&consoleOpen);
 
 	ShowFileWatcher(&core->filewatcher);
+
+
+
+	static float colors[4];
+	static Uint32 replacement = 0;
+	if (ImGui::ColorEdit4("vari", colors, true))
+	{
+		replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+		gameState->worldmap.editorColor = replacement;
+		std::cout << replacement << "\n";
+	}
 }
 
 // ---------------------------------------------------------------------

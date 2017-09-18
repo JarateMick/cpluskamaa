@@ -1,3 +1,15 @@
-﻿  'I:\Dev\SDL\allegro' is not recognized as an internal or external command,
+﻿  KutsuittekO
+  'ctime' is not recognized as an internal or external command,
   operable program or batch file.
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.MakeFile.Targets(38,5): error MSB3073: The command "I:\Dev\SDL\allegro vanhat\sln\./build.bat" exited with code 9009.
+  "ehahaha"
+  C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\bin
+  game.cpp
+     Creating library game.lib and object game.exp
+  Not running
+  main.cpp
+  Running
+  imguiTools.cpp
+     Creating library imguiTools.lib and object imguiTools.exp
+  Done!
+  'ctime' is not recognized as an internal or external command,
+  operable program or batch file.

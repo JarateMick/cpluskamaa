@@ -929,41 +929,6 @@ struct MapNode
 //	fprintf(file, "")
 //}
 
-class ImageData
-{
-public:
-	SDL_Surface* surface;
-
-	ImageData(const char* filename)
-	{
-		surface = IMG_Load(filename);
-	}
-
-	~ImageData()
-	{
-		SDL_FreeSurface(surface);
-	}
-
-	void   set_pixel(int x, int y, Uint32 color)
-	{
-		// Uint32 *target_pixel = (Uint32 *)surface->pixels + y * surface->pitch +
-			// x * sizeof *target_pixel;
-		// *target_pixel = pixel;
-
-		Uint8 * pixel = (Uint8*)surface->pixels;
-		pixel += (y * surface->pitch) + (x * sizeof(Uint32));
-		*((Uint32*)pixel) = color;
-	}
-
-	Uint32 GetPixel(int x, int y)
-	{
-		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
-		// return (Uint32)surface->pixels + y * surface->pitch +
-		//	x * sizeof(Uint32);
-	}
-}; 
-
-
 #include <string>
 #include <sstream>
 void LoadNodes()
@@ -984,22 +949,22 @@ void LoadNodes()
 	}
 }
 
-void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
-{
-	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
-	{
-		replacement->set_pixel(startX, startY, replacementColor);
-		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
-	}
-	else
-	{
-		return;
-	}
-}
-
+//void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
+//{
+//	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
+//	{
+//		replacement->set_pixel(startX, startY, replacementColor);
+//		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
+//		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+//		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
+//		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
+//	}
+//	else
+//	{
+//		return;
+//	}
+//}
+//
 
 //void GetAllAvaiblePixels(ImageData* imageData, int startX, int startY, Uint32 targetColor, int* buffer, int index = 0)
 //{
@@ -1017,7 +982,39 @@ void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, i
 //}
 
 
+//GLuint TurnSurfaceIntoGlTexture(SDL_Surface* surface)
+//{
+//	GLuint textureID;
+//	glGenTextures(1, &textureID);
+//	glBindTexture(GL_TEXTURE_2D, textureID);
+//
+//	int Mode = GL_RGB;
+//
+//	if (surface->format->BytesPerPixel == 4) {
+//		Mode = GL_RGBA;
+//	}
+//
+//	glTexImage2D(GL_TEXTURE_2D, 0, Mode, surface->w, surface->h, 0, Mode, GL_UNSIGNED_BYTE, surface->pixels);
+//
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//
+//	return textureID;
+//}
+//
+//void FreeTexture(GLuint* texture)
+//{
+//	glDeleteTextures(1, texture);
+//}
 
+
+SDL_Surface* LoadSurface(const char* image)
+{
+	SDL_Surface* surface = IMG_Load(image);
+	if (!surface)
+		printf("IMG_Load: %s\n", IMG_GetError());
+	return surface;
+}
 
 GLuint TurnSurfaceIntoGlTexture(SDL_Surface* surface)
 {
@@ -1078,9 +1075,8 @@ int main(int argc, char* argv[])
 	map.DepthFirst(map.nodes[0], process);
 
 
-
-	ImageData data("provinces.png");
-	ImageData showToPlayer("provinces.png");
+	// ImageData data("europe.png");
+	// ImageData showToPlayer("europedata.png");
 	
 
 
@@ -1272,6 +1268,18 @@ int main(int argc, char* argv[])
 	core.screenWidth = windowWidth;
 	core.screenHeight = windowHeight;
 	core.camera2D = &camera2D;
+
+
+	core.resources.FreeTexture = FreeTexture;
+	core.resources.SurfaceToGlTexture = TurnSurfaceIntoGlTexture;
+	core.resources.LoadSurface = LoadSurface;
+
+
+
+
+
+
+
 
 	UpiEngine::DebugRenderer debugger;
 	debugger.init();
@@ -1625,40 +1633,6 @@ int main(int argc, char* argv[])
 
 		spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
 
-		static bool initted = false;
-		static GLuint tid;
-		if (!initted)
-		{
-			initted = true;
-			// showToPlayer
-			tid = TurnSurfaceIntoGlTexture(showToPlayer.surface);
-			// FreeTexture(&tid);
-		}
-
-		static float colors[4];
-		static Uint32 replacement = 0;
-		if (ImGui::ColorEdit4("vari", colors, true))
-		{
-			replacement = ImGui::GetColorU32(ImVec4(colors[3],colors[2], colors[1], colors[0]));
-		}
-
-
-		spriteBatch.draw(glm::vec4{ 200.f, 0.f, 800.f, 600.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, tid, 1.0f);
-		if (core.input->isKeyDown(SDL_SCANCODE_5))
-		{
-			Uint32 color = data.GetPixel(core.input->mouse.x - 200.f, 600.f - core.input->mouse.y);
-			std::cout << color << "\n";
-		}
-		ImGui::Text((std::string("mousePos: ") + std::to_string(core.input->mouse.y)).c_str());
-
-		if (core.input->isKeyPressed(SDL_SCANCODE_6))
-		{
-			Uint32 targetcolor = data.GetPixel(core.input->mouse.x - 200.f, 600.f - core.input->mouse.y);
-			FloodFillImage(&data, &showToPlayer, core.input->mouse.x - 200.f, 600.f - core.input->mouse.y, targetcolor, Uint32(replacement));
-
-			FreeTexture(&tid);
-			TurnSurfaceIntoGlTexture(showToPlayer.surface);
-		}
 
 		DrawPtr(&core);
 
