@@ -531,8 +531,7 @@ void ImguiTest(ImVec4 clear_color, EngineCore* core)
 		ImGui::ShowTestWindow(&show_test_window);
 	}
 
-	auto context = ImGui::GetCurrentContext();
-	ImguiPtr(core, context, (void*)(&gAssetFileTimes), &gAssetFileInfo);
+
 }
 
 
@@ -647,9 +646,9 @@ bool initShaders(UpiEngine::GLSLProgram& textureProgram)
 #include "Algo/SLinkedList.h"
 
 
-#define LUAFILESCOUNT 2
+#define LUAFILESCOUNT 3
 const char* luaFiles[LUAFILESCOUNT] = {
-	 "lua/main3.lua", "lua/main2.lua"
+	 "lua/main3.lua", "lua/main2.lua", "lua/file.lua"
 };
 
 // shader file watcher !
@@ -1030,8 +1029,8 @@ GLuint TurnSurfaceIntoGlTexture(SDL_Surface* surface)
 
 	glTexImage2D(GL_TEXTURE_2D, 0, Mode, surface->w, surface->h, 0, Mode, GL_UNSIGNED_BYTE, surface->pixels);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	return textureID;
 }
@@ -1077,9 +1076,6 @@ int main(int argc, char* argv[])
 
 	// ImageData data("europe.png");
 	// ImageData showToPlayer("europedata.png");
-	
-
-
 
 	//SLinkedList<int> lista;
 	//SListIterator<int> itr;
@@ -1324,7 +1320,6 @@ int main(int argc, char* argv[])
 		int succ = luaL_loadfile(L, lua_main_filename);
 		lua_setglobal(L, "main_function");
 
-
 		if (succ == 0)
 		{
 			printf("Lua file: %s loaded succesfully!\n", lua_main_filename);
@@ -1338,8 +1333,22 @@ int main(int argc, char* argv[])
 	}
 
 	lua_getglobal(L, "main_function");
-	lua_pcall(L, 0, 0, 0);
-	lua_settop(L, 0);
+	char buffer[512];
+	int succ = lua_pcall(L, 0, 0, 0);
+
+	if (succ != 0)
+	{
+		sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+		printf("%s", buffer);
+		core.AddToConsole(buffer);
+	//	debugBreak();
+	}
+	else
+	{
+		lua_settop(L, 0);
+	}
+
+
 
 	// lua_getglobal(L, "testiPrinter");
 	// lua_pcall(L, 0, 0, 0);
@@ -1368,6 +1377,7 @@ int main(int argc, char* argv[])
 			fileLoadingThreadDone = false;
 		}
 
+		ImGui_ImplSdlGL3_NewFrame(window);
 		SDL_Event ev;
 		while (SDL_PollEvent(&ev))
 		{
@@ -1441,8 +1451,8 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-					}
-				} break;
+				}
+			} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1453,12 +1463,12 @@ int main(int argc, char* argv[])
 				}
 			} break;
 			}
-			} // POLL EvENTS
+		} // POLL EvENTS
 
-					// number |= 1 << x;   // setting bit 
-					// number &= ~(1 << x); // clear 
+				// number |= 1 << x;   // setting bit 
+				// number &= ~(1 << x); // clear 
 
-					// nesInput.buttons = 0xFF;
+				// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1514,9 +1524,17 @@ int main(int argc, char* argv[])
 			simpleRecorder.Reset(); // starts new record
 		}
 
+		Sleep(1); // program runs too fast
+
 		simpleRecorder.Update();
-		ImGui_ImplSdlGL3_NewFrame(window);
 		ImguiTest(clear_color, &core);
+
+		auto context = ImGui::GetCurrentContext();
+		ImguiPtr(&core, context, (void*)(&gAssetFileTimes), &gAssetFileInfo);
+
+		static char buffer[64];
+		ImGui::InputText("input2 ", buffer, 64);
+
 
 
 		// if (inputManager.isKeyPressed(SDL_SCANCODE_T))
@@ -1531,22 +1549,41 @@ int main(int argc, char* argv[])
 			LoadGameDLL();
 		}
 
-		if (core.filewatcher.update(Resource_script))
+		// FILEUPDATE*************************************************************
+		if (const char* updatedFile = core.filewatcher.update(Resource_script))
 		{
-			int succ = luaL_loadfile(L, lua_main_filename);
-			lua_setglobal(L, "main_function");
+			static char buffer[2048]; // mainin alkuun iso random buffer?
+			int succ = luaL_loadfile(L, updatedFile);
 
 			if (succ == 0)
 			{
-				printf("Lua file: %s loaded succesfully!\n", lua_main_filename);
+				lua_setglobal(L, "loaded");
+				lua_getglobal(L, "loaded");
+				succ = lua_pcall(L, 0, 0, 0);
+
+				if (succ == 0)
+				{
+					sprintf(buffer, "Lua file: %s loaded succesfully!\n", updatedFile);
+					printf("%s", buffer);
+					core.AddToConsole(buffer);
+				}
+				else
+				{
+					sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+					printf("%s", buffer);
+					core.AddToConsole(buffer);
+					debugBreak();
+				}
 			}
 			else
 			{
-				fprintf(stderr, "%s\n", lua_tostring(L, -1));
+				sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+				printf("%s", buffer);
+				core.AddToConsole(buffer);
 				debugBreak();
-				// exit(1);
 			}
 		}
+				// fprintf(stderr, "%s\n", lua_tostring(L, -1));
 
 		int steps = 0;
 		currentSlice += lastFT;
@@ -1624,6 +1661,7 @@ int main(int argc, char* argv[])
 		glActiveTexture(GL_TEXTURE0);
 		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 		glUniform1i(textureLocation, 0);
+	https://www.latex-project.org/
 
 		GLint plocation = textureProgram.getUniformLocation("P");
 		glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
@@ -1644,8 +1682,6 @@ int main(int argc, char* argv[])
 
 		spriteBatch.end();
 		spriteBatch.renderBatch();
-
-
 
 		//*************************************debug*******************************
 
@@ -1709,7 +1745,7 @@ int main(int argc, char* argv[])
 		ftSeconds = (ft / 1000.f);
 		// printf("%f\n", ft);
 
-		}
+	}
 
 	ImGui_ImplSdlGL3_Shutdown();
 	// SDL_GL_DeleteCOntext(glcontext);s	
@@ -1717,5 +1753,5 @@ int main(int argc, char* argv[])
 	SDL_Quit();
 
 	return 0;
-	}
+}
 

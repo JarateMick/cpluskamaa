@@ -13,11 +13,10 @@
 #include <lua.hpp>
 
 #undef max
-#undef min
+#undef min 
 
 using namespace std;
 StackAllocator g_singleFrameAllocator;
-
 
 ImageData::ImageData(const char* filename)
 {
@@ -41,8 +40,6 @@ void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, in
 		return;
 	}
 }
-
-
 
 // TODO: SAVING LOADING!!!
 //void SaveAllEntitys(game_state* gameState, const char* fileName)
@@ -141,7 +138,6 @@ void SaveAllGameState(game_state* gameState)
 	}
 }
 
-
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -194,11 +190,11 @@ EXPORT void Loop(EngineCore* core)
 		e->y = 150.f;
 
 
-		SDL_Surface* surface = core->resources.LoadSurface("europe.png");
+		SDL_Surface* surface = core->resources.LoadSurface("europedata.png"); // clickaamiseen
 		gameState->worldmap.provinces.surface = surface;
 
 		surface = core->resources.LoadSurface("europedata.png");
-		gameState->worldmap.visual.surface    = surface;
+		gameState->worldmap.visual.surface = surface;
 		gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(surface);
 
 		if (!Debug::restartLog())
@@ -272,20 +268,57 @@ EXPORT void Loop(EngineCore* core)
 
 	if (input->isKeyDown(SDL_SCANCODE_5))
 	{
-		Uint32 color = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 600.f - input->mouse.y);
+		Uint32 color = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 480.f - input->mouse.y);
 		std::cout << color << "\n";
 	}
 
 	if (input->isKeyDown(SDL_SCANCODE_6))
 	{
-		Uint32 targetcolor = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 640.f - input->mouse.y);
-		FloodFillImage(&gameState->worldmap.provinces, &gameState->worldmap.visual, input->mouse.x - 200.f, 640.f - input->mouse.y, targetcolor, Uint32(gameState->worldmap.editorColor));
+		Uint32 targetcolor = gameState->worldmap.provinces.GetPixel(input->mouse.x - 200.f, 480.f - input->mouse.y);
 
-		core->resources.FreeTexture(&tid);
-		gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface); 
+		SDL_PixelFormat *fmt = gameState->worldmap.provinces.surface->format;
+
+		Uint32 temp;
+		Uint32 pixel = targetcolor;
+		temp = pixel & fmt->Amask;  /* Isolate alpha component */
+		temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
+		temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
+		Uint8 alpha = (Uint8)temp;
+		
+		std::cout << targetcolor << "\n";
+		if (targetcolor != 0xFF000000 && alpha != 0)
+		{
+			FloodFillImage(&gameState->worldmap.provinces, &gameState->worldmap.visual, input->mouse.x - 200.f, 480.f - input->mouse.y, targetcolor, Uint32(gameState->worldmap.editorColor));
+
+			core->resources.FreeTexture(&tid);
+			gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
+		}
 	}
 }
 
+/* Get Red component */
+//temp = pixel & fmt->Rmask;  /* Isolate red component */
+//temp = temp >> fmt->Rshift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Rloss;  /* Expand to a full 8-bit number */
+//red = (Uint8)temp;
+//
+///* Get Green component */
+//temp = pixel & fmt->Gmask;  /* Isolate green component */
+//temp = temp >> fmt->Gshift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Gloss;  /* Expand to a full 8-bit number */
+//green = (Uint8)temp;
+//
+///* Get Blue component */
+//temp = pixel & fmt->Bmask;  /* Isolate blue component */
+//temp = temp >> fmt->Bshift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Bloss;  /* Expand to a full 8-bit number */
+//blue = (Uint8)temp;
+//
+///* Get Alpha component */
+//temp = pixel & fmt->Amask;  /* Isolate alpha component */
+//temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
+//alpha = (Uint8)temp;
 
 
 
@@ -490,7 +523,7 @@ EXPORT __declspec(dllexport) void Swapper(float &x, float &y, int id)
 	y = 10;
 }
 
-EXPORT __declspec(dllexport) void Drawer(float x, float y)
+EXPORT __declspec(dllexport) void Drawer(float x, float y) //LUA_E_F
 {
 	// static ALLEGRO_BITMAP* texture = al_load_bitmap("test.png");
 	// al_draw_bitmap(texture, x, y, 0);
@@ -508,98 +541,110 @@ void LuaErrorWrapper(game_state* state, EngineCore* core)
 {
 	InputManager* input = core->input;
 
+//	int succ = luaL_loadfile(L, filename);
+lua_getglobal(L, "main_function");
+int ret = lua_pcall(L, 0, 0, 0);
+if (ret != 0)
+{
+	fprintf(stderr, "%s\n", lua_tostring(L, -1));
 
-
-	//	int succ = luaL_loadfile(L, filename);
-	lua_getglobal(L, "main_function");
-	int ret = lua_pcall(L, 0, 0, 0);
-	if (ret != 0)
-	{
-		fprintf(stderr, "%s\n", lua_tostring(L, -1));
-
-		debugBreak();
-	}
-	lua_settop(L, 0);
-
-	//if (!init1)
-	//{
-	//	core->script.luaP = &lua;
-	//	lua.open_libraries(sol::lib::base, sol::lib::os, sol::lib::string, sol::lib::math, sol::lib::ffi,
-	//		sol::lib::package, sol::lib::jit, sol::lib::table);
-	//	lua["Draw"] = DrawRect2;
-	//	lua["HoldBitmap"] = al_hold_bitmap_drawing;
-	//	init1 = true;
-
-	//	// lua["outoStruct"] = &Hello;
-	//	// lua["e2"] = e2;
-	//	// lua["Update"] = &Entity2::Update;
-	//	// lua["DrawLots"] = &DrawLotsOfEntitys;
-	//	// lua["DrawUpdate"] = &DrawUpdateEntity;
-	//	// void SetAllEntitys2(int count, const char* table)
-	//	// lua["SetAllEntity2"] = &SetAllEntitys2;
-	//	//usertype<Entity2> Entity2Type(
-	//	//	"Update", &Entity2::Update,
-	//	//	"Printf", &Entity2::Printf
-	//	//);
-	//	//lua.set_usertype<Entity2>("Entity2", Entity2Type);
-	//	// lua.set("DrawUpdate2", sol::c_call<sol::wrap<decltype(&DrawUpdateEntity), &DrawUpdateEntity>>);
-	//	//lua.new_usertype<Entity2>("Entity2",
-	//	//	"Update", &Entity2::Update,
-	//	//	"Printf", &Entity2::Printf,
-	//	//	"x", &Entity2::x,
-	//	//	"y", &Entity2::y,
-	//	//	"SetPos", &Entity2::SetPos,
-	//	//	"Draw", &Entity2::Draw
-	//	//	);
-	//	// lua.script("ents = {}");
-	//	lua["SetEntityPos"] = &SetEntityPosition;
-	//	lua["SetEntityVel"] = &SetEntityVel;
-	//	lua["CreateEntityHandle"] = &CreateEntityHandle;
-	//	// lua["input"] = sol::table;
-	//	lua.create_named_table("Input");
-	//	lua["Input"]["mouse"] = lua.create_table_with();
-	//	lua.create_named_table("time");
-
-	//	lua["PhysAndDraw"] = &Physics;
-
-	//	luaP = &lua;
-	//}
-
-	//(*luaP)["Input"]["mouse"]["x"] = input->mouseX;
-	//(*luaP)["Input"]["mouse"]["y"] = input->mouseY;
-
-	//(*luaP)["Input"]["w"] = input->isKeyDown(SDL_SCANCODE_W);
-	//(*luaP)["Input"]["s"] = input->isKeyDown(SDL_SCANCODE_S);
-	//(*luaP)["Input"]["d"] = input->isKeyDown(SDL_SCANCODE_D);
-	//(*luaP)["Input"]["a"] = input->isKeyDown(SDL_SCANCODE_A);
-	//(*luaP)["time"]["dt"] = core->deltaTime;
-
-	//al_hold_bitmap_drawing(true);
-
-	//try
-	//{
-	//	lua.safe_script_file("I:/Dev/Allegro/allegro/bin/lua/main2.lua");
-	//}
-	//catch (sol::error& err)
-	//{
-	//	printf("sol::error: %s", err.what());
-	//	// render
-	//	static ALLEGRO_FONT* font = al_load_ttf_font("rs.ttf", 30, 0);
-	//	al_draw_text(font, al_map_rgb(255, 120, 120), 40, 40, 0, err.what());
-
-	//	// al_flip_display();
-
-	//	// core->forceFlip();
-
-	//	DebugBreak();
-	//}
-	//catch (...)
-	//{
-	//	DebugBreak();
-	//}
-
-	//al_hold_bitmap_drawing(false);
+	debugBreak();
 }
+lua_settop(L, 0);
+
+//if (!init1)
+//{
+//	core->script.luaP = &lua;
+//	lua.open_libraries(sol::lib::base, sol::lib::os, sol::lib::string, sol::lib::math, sol::lib::ffi,
+//		sol::lib::package, sol::lib::jit, sol::lib::table);
+//	lua["Draw"] = DrawRect2;
+//	lua["HoldBitmap"] = al_hold_bitmap_drawing;
+//	init1 = true;
+
+//	// lua["outoStruct"] = &Hello;
+//	// lua["e2"] = e2;
+//	// lua["Update"] = &Entity2::Update;
+//	// lua["DrawLots"] = &DrawLotsOfEntitys;
+//	// lua["DrawUpdate"] = &DrawUpdateEntity;
+//	// void SetAllEntitys2(int count, const char* table)
+//	// lua["SetAllEntity2"] = &SetAllEntitys2;
+//	//usertype<Entity2> Entity2Type(
+//	//	"Update", &Entity2::Update,
+//	//	"Printf", &Entity2::Printf
+//	//);
+//	//lua.set_usertype<Entity2>("Entity2", Entity2Type);
+//	// lua.set("DrawUpdate2", sol::c_call<sol::wrap<decltype(&DrawUpdateEntity), &DrawUpdateEntity>>);
+//	//lua.new_usertype<Entity2>("Entity2",
+//	//	"Update", &Entity2::Update,
+//	//	"Printf", &Entity2::Printf,
+//	//	"x", &Entity2::x,
+//	//	"y", &Entity2::y,
+//	//	"SetPos", &Entity2::SetPos,
+//	//	"Draw", &Entity2::Draw
+//	//	);
+//	// lua.script("ents = {}");
+//	lua["SetEntityPos"] = &SetEntityPosition;
+//	lua["SetEntityVel"] = &SetEntityVel;
+//	lua["CreateEntityHandle"] = &CreateEntityHandle;
+//	// lua["input"] = sol::table;
+//	lua.create_named_table("Input");
+//	lua["Input"]["mouse"] = lua.create_table_with();
+//	lua.create_named_table("time");
+
+//	lua["PhysAndDraw"] = &Physics;
+
+//	luaP = &lua;
+//}
+
+//(*luaP)["Input"]["mouse"]["x"] = input->mouseX;
+//(*luaP)["Input"]["mouse"]["y"] = input->mouseY;
+
+//(*luaP)["Input"]["w"] = input->isKeyDown(SDL_SCANCODE_W);
+//(*luaP)["Input"]["s"] = input->isKeyDown(SDL_SCANCODE_S);
+//(*luaP)["Input"]["d"] = input->isKeyDown(SDL_SCANCODE_D);
+//(*luaP)["Input"]["a"] = input->isKeyDown(SDL_SCANCODE_A);
+//(*luaP)["time"]["dt"] = core->deltaTime;
+
+//al_hold_bitmap_drawing(true);
+
+//try
+//{
+//	lua.safe_script_file("I:/Dev/Allegro/allegro/bin/lua/main2.lua");
+//}
+//catch (sol::error& err)
+//{
+//	printf("sol::error: %s", err.what());
+//	// render
+//	static ALLEGRO_FONT* font = al_load_ttf_font("rs.ttf", 30, 0);
+//	al_draw_text(font, al_map_rgb(255, 120, 120), 40, 40, 0, err.what());
+
+//	// al_flip_display();
+
+//	// core->forceFlip();
+
+//	DebugBreak();
+//}
+//catch (...)
+//{
+//	DebugBreak();
+//}
+
+//al_hold_bitmap_drawing(false);
+}
+
+
+struct exportMe { //LUA_E_S
+	int a;
+	float b;
+	const char* name;
+};             //LUA_E_SE
+
+EXPORT __declspec(dllexport) void testFuncy(int a, int b) //LUA_E_F
+{
+	printf("hello world (%i,%i)\n", a, b);
+}
+
+
 
 EXPORT void Draw(EngineCore* core)
 {
@@ -627,10 +672,10 @@ EXPORT void Draw(EngineCore* core)
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
 	}
 
-	// _getglobal(L, "main_function");
+	// getglobal(L, "main_function");
 	// lua_pcall(L, 0, 0, 0);
 
-	core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 528.f, 640.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
+	core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f * 4, 480.f * 4 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
 
 	DrawAllEntitys(core);
 

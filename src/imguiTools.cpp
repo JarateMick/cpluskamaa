@@ -199,7 +199,8 @@ struct Console
 			if (command_line[0] == ':')
 			{
 				int l = str_cut(command_line, 0, 1);
-				g_tools_core->script.executeCommand(command_line);
+				const char* str = g_tools_core->script.executeCommand(command_line);
+				AddLog("%s", str);
 			}
 		}
 		else
@@ -352,6 +353,10 @@ void ShowFileWatcher(FileWatcher* filewatcher)
 	ImGui::End();
 }
 
+void AddToConsole(const char* text)
+{
+	GetConsoleInstance().AddLog("%s", text);
+}
 
 EXPORT IMGUIFUNC(Imgui)
 {
@@ -360,6 +365,11 @@ EXPORT IMGUIFUNC(Imgui)
 	// ImGui_ImplSdlGL3_NewFrame(window);
 
 	// Debug::console = &GetConsoleInstance().AddLog;
+	static bool init = false;
+	if (!init)
+	{
+		core->AddToConsole = AddToConsole;
+	}
 
 	g_tools_core = core;
 

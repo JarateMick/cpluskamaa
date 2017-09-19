@@ -170,7 +170,7 @@ struct FileWatcher
 
 
 	// ladataanko vai ei
-	bool update(ResourceType type)
+	const char* update(ResourceType type)
 	{
 		resourceData& res = resources[type];
 
@@ -181,10 +181,10 @@ struct FileWatcher
 			{
 				// reload this file!
 				res.filetimes[i] = newFileTime;
-				return true;
+				return res.filepathsToWatch[i].c_str();
 			}
 		}
-		return false;
+		return 0;
 	}
 
 	void showImgui(ResourceType type)
@@ -214,21 +214,30 @@ struct scripting
 	// sol::state* luaP;
 	lua_State* L;
 
-	void executeCommand(const char* script)
+	const char* executeCommand(const char* script)
 	{
+		static char buffer[1024];
 		int succ = luaL_loadstring(L, script);
 		if (succ != 0)
 		{
-			fprintf(stderr, "%s\n", lua_tostring(L, -1));
+			// fprintf(stderr, "%s\n", lua_tostring(L, -1));
+			sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+			printf("%s", buffer);
+			return buffer;
 		}
 
 		int ret = lua_pcall(L, 0, 0, 0);
 		if (ret != 0)
 		{
-			fprintf(stderr, "%s\n", lua_tostring(L, -1));
+			// fprintf(stderr, "%s\n", lua_tostring(L, -1));
+			sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+			printf("%s", buffer);
+			return buffer;
 			// debugBreak();
 		}
 		lua_settop(L, 0);
+
+		return 0;
 	}
 };
 
@@ -286,10 +295,9 @@ struct EngineCore
 
 	ResourceManager resources;
 
+	void(*AddToConsole)(const char* text);
 
 	float deltaTime;
-
-
 	float timeMultiplier;
 
 	int       screenWidth;

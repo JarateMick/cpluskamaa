@@ -139,36 +139,36 @@ static void ImGui_ImplSdlGL3_SetClipboardText(void*, const char* text)
     SDL_SetClipboardText(text);
 }
 
-bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* event)
+bool ImGui_ImplSdlGL3_ProcessEvent(SDL_Event* ev)
 {
     ImGuiIO& io = ImGui::GetIO();
-    switch (event->type)
+    switch (ev->type)
     {
     case SDL_MOUSEWHEEL:
         {
-            if (event->wheel.y > 0)
+            if (ev->wheel.y > 0)
                 g_MouseWheel = 1;
-            if (event->wheel.y < 0)
+            if (ev->wheel.y < 0)
                 g_MouseWheel = -1;
             return true;
         }
     case SDL_MOUSEBUTTONDOWN:
         {
-            if (event->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
-            if (event->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
-            if (event->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
+            if (ev->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
+            if (ev->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
+            if (ev->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
             return true;
         }
     case SDL_TEXTINPUT:
         {
-            io.AddInputCharactersUTF8(event->text.text);
+            io.AddInputCharactersUTF8(ev->text.text);
             return true;
         }
     case SDL_KEYDOWN:
     case SDL_KEYUP:
         {
-            int key = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
-            io.KeysDown[key] = (event->type == SDL_KEYDOWN);
+            int key = ev->key.keysym.sym & ~SDLK_SCANCODE_MASK;
+            io.KeysDown[key] = (ev->type == SDL_KEYDOWN);
 
             io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
             io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
