@@ -530,8 +530,6 @@ void ImguiTest(ImVec4 clear_color, EngineCore* core)
 		ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
 		ImGui::ShowTestWindow(&show_test_window);
 	}
-
-
 }
 
 
@@ -898,11 +896,6 @@ void process(GraphNode<int, int>* node)
 	printf("%i\n", node->data);
 }
 
-struct MapNode
-{
-	int id;
-	float x, y; // for rendering and debugging
-};
 
 // 
 #include <fstream>
@@ -930,7 +923,19 @@ struct MapNode
 
 #include <string>
 #include <sstream>
-void LoadNodes()
+
+struct MapNode
+{
+	int   id;
+	float x, y; // for rendering and debugging
+};
+
+#define MAX_PROVINCES 128
+Uint32 colorToId[MAX_PROVINCES];
+
+// id;r;g;b;a; x;y; neighbours;
+
+void LoadNodes(std::vector<MapNode>* nodes)
 {
 	std::vector<std::vector<std::string>> data;
 	std::ifstream stream("test.txt");
@@ -940,11 +945,29 @@ void LoadNodes()
 	{
 		std::istringstream s(line);
 		std::string field;
+
+		std::getline(s, field, ';');
+		std::cout << "id: " << field << ", ";
+		int id = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "x: " << field << ", ";
+		int x = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "y: " << field << ", ";
+		int y = atoi(field.c_str());
+
+		nodes->push_back({ id, (float)x, (float)y });
+		// colorToId[id] = r g b a
+
+		std::cout << "Neighbours: ";
 		while (std::getline(s, field, ';'))
 		{
 			std::cout << field << ", ";
 		}
 		std::cout << "\n";
+		// node x y id
 	}
 }
 
@@ -1042,8 +1065,8 @@ void FreeTexture(GLuint* texture)
 
 int main(int argc, char* argv[])
 {
+
 	Graph<int, int> map(6);
-	LoadNodes();
 	map.AddNode(0, 0);
 	map.AddNode(1, 1);
 	map.AddNode(2, 2);
@@ -1073,6 +1096,11 @@ int main(int argc, char* argv[])
 	printf("depth first: \n");
 	map.DepthFirst(map.nodes[0], process);
 
+
+	printf("##################################################\n");
+	std::vector<MapNode> nodes;
+	LoadNodes(&nodes);
+	printf("##################################################\n");
 
 	// ImageData data("europe.png");
 	// ImageData showToPlayer("europedata.png");
@@ -1532,8 +1560,8 @@ int main(int argc, char* argv[])
 		auto context = ImGui::GetCurrentContext();
 		ImguiPtr(&core, context, (void*)(&gAssetFileTimes), &gAssetFileInfo);
 
-		static char buffer[64];
-		ImGui::InputText("input2 ", buffer, 64);
+		// static char buffer[64];
+		// ImGui::InputText("input2 ", buffer, 64);
 
 
 
@@ -1661,6 +1689,7 @@ int main(int argc, char* argv[])
 		glActiveTexture(GL_TEXTURE0);
 		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 		glUniform1i(textureLocation, 0);
+
 	https://www.latex-project.org/
 
 		GLint plocation = textureProgram.getUniformLocation("P");

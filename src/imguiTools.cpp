@@ -364,6 +364,9 @@ EXPORT IMGUIFUNC(Imgui)
 	game_state *gameState = (game_state*)core->memory->permanentStorage;
 	// ImGui_ImplSdlGL3_NewFrame(window);
 
+	static char buffer[248];
+	DefineInput(core);
+
 	// Debug::console = &GetConsoleInstance().AddLog;
 	static bool init = false;
 	if (!init)
@@ -580,7 +583,6 @@ EXPORT IMGUIFUNC(Imgui)
 	ShowFileWatcher(&core->filewatcher);
 
 
-
 	static float colors[4];
 	static Uint32 replacement = 0;
 	if (ImGui::ColorEdit4("vari", colors, true))
@@ -589,10 +591,19 @@ EXPORT IMGUIFUNC(Imgui)
 		gameState->worldmap.editorColor = replacement;
 		std::cout << replacement << "\n";
 	}
-}
+
+	ImGui::Text("MousePos: %f, %f", input->mouse.x, input->mouse.y);
+
+
+	ImGui::InputText("Province ID: ", buffer, sizeof(buffer));
+	ImGui::SameLine();
+	if (ImGui::Button("save province ids"))
+	{
+		printf("SAVING NOT IMPLEMENTED\n");
+	}
+} 
 
 // ---------------------------------------------------------------------
-
 //if (ImGui::CollapsingHeader("Map Editor Settings"))
 //{
 //	ImGui::Text("hello");

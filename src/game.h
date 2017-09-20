@@ -393,7 +393,22 @@ struct WorldMap
 	ImageData provinces;
 	ImageData visual;
 	Uint32 editorColor;
+
+	glm::vec4 dimensions;
+
+	void Draw(UpiEngine::SpriteBatch* sb)
+	{
+		sb->draw(dimensions, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, temptextureid, 1.0f);
+
+		// minimap :)
+		// sb->draw(glm::vec4{ 0.f, 0.f, 590.f, 480.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, temptextureid, 1.f);
+	}
 };
+
+
+
+
+
 
 struct game_state
 {
