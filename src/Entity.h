@@ -5,10 +5,14 @@ enum Entity_Enum
 	Entity_Invalid,
 	Entity_ninja,
 	Entity_npc,
+
 	Entity_unit,
+
 	Entity_script,
 
 	Entity_player,
+
+	Entity_building,
 
 	Entity_MAX
 };
@@ -20,8 +24,8 @@ const char *EntityNames[Entity_MAX] =
 	"npc",
 	"unit",
 	"script",
-
-	"player"
+	"player",
+	"building"
 };
 
 // #include "glm/vec2.hpp"
@@ -45,6 +49,14 @@ struct Rect
 	{
 		Debug::drawBox(x, y, w, h);
 	}
+};
+
+enum building_type
+{
+	building_none,
+	building_millitary_factory,
+	building_mill,
+	building_max,
 };
 
 struct Entity
@@ -74,6 +86,7 @@ struct Entity
 			int damage;
 			int moveSpeed;
 			int strength;
+			Uint32 side;
 		} unit;
 		struct
 		{
@@ -83,7 +96,19 @@ struct Entity
 		struct
 		{
 			int currentRoom;
+
+			Uint32 side;
+			// currently Selected entities! pointer
+			int cash;
+
+			building_type selectedBuildingType;
 		} player;
+		struct
+		{
+			building_type type;
+			Uint32        side;
+			float         timer;
+		} building;
 	};
 };
 

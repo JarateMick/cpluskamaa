@@ -5,7 +5,7 @@
 #include <vector>
 // #define EXE_COMPILE 1
 #include <unordered_set>
-#include "Random.cpp"
+// #include "Random.cpp"
 #include <algorithm>
 // #define _USE_MATH_DEFINES
 
@@ -25,21 +25,6 @@ ImageData::ImageData(const char* filename)
 		printf("IMG_Load: %s\n", IMG_GetError());
 }
 
-void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
-{
-	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
-	{
-		replacement->set_pixel(startX, startY, replacementColor);
-		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
-		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
-	}
-	else
-	{
-		return;
-	}
-}
 
 // TODO: SAVING LOADING!!!
 //void SaveAllEntitys(game_state* gameState, const char* fileName)
@@ -93,11 +78,6 @@ void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, in
 //}
 
 
-Entity* GetFirstAvaibleEntity(game_state* state)
-{
-	ASSERT(state->currentEntityCount < ArrayCount(state->entities));
-	return &state->entities[state->currentEntityCount++];
-}
 
 // pointer to pointer that nullifys other pointers 
 // sounds too complicated
@@ -139,18 +119,6 @@ void SaveAllGameState(game_state* gameState)
 }
 
 
-Uint8 getAlpha(Uint32 color, SDL_PixelFormat* fmt)
-{
-	Uint32 temp;
-	Uint32 pixel = color;
-	temp = pixel & fmt->Amask;  /* Isolate alpha component */
-	temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
-	temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
-
-	return (Uint8)temp;
-}
-
-
 const int mapSizeMultiplier = 4;
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
@@ -179,14 +147,25 @@ EXPORT void Loop(EngineCore* core)
 		gameState->entities[0].type = Entity_ninja;
 		gameState->entities[1].type = Entity_npc;
 
+
 		int j = 0;
 		for (int i = 0; i < (int)ArrayCount(gameState->entities); i++)
 		{
 			gameState->entities[i].guid = i;
 			j++;
 		}
-		gameState->currentEntityCount = 2;
 
+		gameState->entities[2].type = Entity_unit;
+		gameState->entities[2].x = 300.f;
+		gameState->entities[2].y = 300.f;
+		gameState->entities[2].unit.side = 0xF0F0F0FF;
+
+
+		gameState->entities[3].type = Entity_player;
+		gameState->entities[3].player.cash = 100;
+		gameState->entities[3].player.side = 0xFFFF0000; // red!
+		gameState->player = &gameState->entities[3];
+		gameState->currentEntityCount = 4;
 
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
@@ -272,10 +251,9 @@ EXPORT void Loop(EngineCore* core)
 	{
 		initted = true;
 		// showToPlayer
-		tid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
+		// tid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
 		// FreeTexture(&tid);
 	}
-
 
 
 	// MOUSE debug code
@@ -287,10 +265,9 @@ EXPORT void Loop(EngineCore* core)
 	if (input->isKeyDown(SDL_SCANCODE_5))
 	{
 		WorldMap* map = &gameState->worldmap;
-		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, 480.f - my); // real size 
-		std::cout << color << "\n";
-		std::cout << 480.f - my << "\n";
-		std::cout << my << "\n";
+		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
+		map->editor.editorColor = color;
+		printf("%x\n", color);
 	}
 
 	if (input->isKeyDown(SDL_SCANCODE_6))
@@ -302,19 +279,24 @@ EXPORT void Loop(EngineCore* core)
 		SDL_PixelFormat *fmt = gameState->worldmap.provinces.surface->format;
 		Uint8 alpha = getAlpha(targetcolor, fmt);
 
-		std::cout << targetcolor << "\n";
+
 		if (targetcolor != 0xFF000000 && alpha != 0)
 		{
-			FloodFillImage(&map->provinces, &map->visual, mx, my, targetcolor, Uint32(gameState->worldmap.editorColor));
+			FloodFillImage(&map->provinces, &map->visual, mx, my, targetcolor, Uint32(map->editor.editorColor));
 
-			core->resources.FreeTexture(&tid);
-			gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
+			// core->resources.FreeTexture(&tid);
+		//	gameState->worldmap.temptextureid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
+
+			core->resources.FreeTexture(&map->temptextureid);
+			core->resources.SurfaceToGlTexture(map->visual.surface);
 		}
 	}
 
 	if (input->isKeyDown(SDL_SCANCODE_7))
 	{
-
+		WorldMap* map = &gameState->worldmap;
+		map->editor.inputX = input->mouse.x;
+		map->editor.inputY = input->mouse.y;
 	}
 }
 
@@ -441,11 +423,11 @@ void SetEntityVel(float velX, float velY, int id)
 //	}
 //}
 
-EXPORT __declspec(dllexport) typedef struct
-{
-	float x;
-	float y;
-} v2;
+// EXPORT __declspec(dllexport) typedef struct
+// {
+	// float x;
+	// float y;
+// } v2;
 
 EXPORT __declspec(dllexport) void SetTile(int x, int y, int id)
 {

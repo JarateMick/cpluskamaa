@@ -930,23 +930,56 @@ struct MapNode
 	float x, y; // for rendering and debugging
 };
 
+
 #define MAX_PROVINCES 128
-Uint32 colorToId[MAX_PROVINCES];
+Uint32 idToColor[MAX_PROVINCES];
+v2 positions[MAX_PROVINCES];
+std::map<Uint32, int> colorToId;
+int nodeCount = 0;
+
 
 // id;r;g;b;a; x;y; neighbours;
+void SaveNodes(std::vector<MapNode>* nodes)
+{
+	FILE* file = fopen("test2.txt", "w");
+	char buffer[128];
+
+	// ;id;x;y;r;g;b;a;n;n;n;n;n;n;n;n;n;n;
+	for (int i = 0; i < nodeCount; i++)
+	{
+		auto color = ImGui::ColorConvertU32ToFloat4(idToColor[i]);
+		v2 pos = positions[i];
+		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;\n", 
+									  i, pos.x, pos.y, (int)(color.w * 255), (int)(color.z * 255), (int)(color.y * 255), (int)(color.x * 255));
+		fwrite(buffer, sizeof(char), count, file);
+	}
+	fclose(file);
+}
+
+Uint32 createRGBA(int r, int g, int b, int a)
+{
+	return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8)
+		+ (a & 0xff);
+}
 
 void LoadNodes(std::vector<MapNode>* nodes)
 {
 	std::vector<std::vector<std::string>> data;
-	std::ifstream stream("test.txt");
+	std::ifstream stream("test2.txt");
 	std::string line;
 
 	while (std::getline(stream, line))
 	{
 		std::istringstream s(line);
-		std::string field;
+		
+		if (line.at(0) == ';')
+			continue;
+		nodeCount++;
 
+		std::string field;
 		std::getline(s, field, ';');
+		
+
 		std::cout << "id: " << field << ", ";
 		int id = atoi(field.c_str());
 
@@ -960,6 +993,36 @@ void LoadNodes(std::vector<MapNode>* nodes)
 
 		nodes->push_back({ id, (float)x, (float)y });
 		// colorToId[id] = r g b a
+
+		std::getline(s, field, ';');
+		std::cout << "r: " << ", ";
+		int r = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "g: " << ", ";
+		int g = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "b: " << ", ";
+		int b = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "a: " << ", ";
+		int a = atoi(field.c_str());
+
+
+		  // replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+		positions[id] = { x, y };
+		Uint32 color  = createRGBA(a, b, g, r);
+
+	//	Uint32 color = ImGui::GetColorU32({})
+	//	auto color2 = ImGui::GetColorU32({ (float)r / 255.f, g / 255.f, b/255.f, a/255.f });
+
+		// Uint32 color = ImGui::GetColorU32({(float)r, (float)g, (float)b, (float)a});
+		// auto color = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
+
+		colorToId[color] = id;
+		idToColor[id] = color;
 
 		std::cout << "Neighbours: ";
 		while (std::getline(s, field, ';'))
@@ -1029,6 +1092,33 @@ void LoadNodes(std::vector<MapNode>* nodes)
 //	glDeleteTextures(1, texture);
 //}
 
+/* Get Red component */
+
+
+// temp = pixel & fmt->Rmask;  /* Isolate red component */
+// temp = temp >> fmt->Rshift; /* Shift it down to 8-bit */
+// temp = temp << fmt->Rloss;  /* Expand to a full 8-bit number */
+// red = (Uint8)temp;
+
+///* Get Green component */
+//temp = pixel & fmt->Gmask;  /* Isolate green component */
+//temp = temp >> fmt->Gshift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Gloss;  /* Expand to a full 8-bit number */
+//green = (Uint8)temp;
+//
+///* Get Blue component */
+//temp = pixel & fmt->Bmask;  /* Isolate blue component */
+//temp = temp >> fmt->Bshift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Bloss;  /* Expand to a full 8-bit number */
+//blue = (Uint8)temp;
+//
+///* Get Alpha component */
+//temp = pixel & fmt->Amask;  /* Isolate alpha component */
+//temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
+//temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
+//alpha = (Uint8)temp;
+
+
 
 SDL_Surface* LoadSurface(const char* image)
 {
@@ -1066,6 +1156,9 @@ void FreeTexture(GLuint* texture)
 int main(int argc, char* argv[])
 {
 
+	Uint32 co = createRGBA(200, 255, 200, 0);
+	Uint32 cool = ImGui::GetColorU32({ 255 / 255.f, 0 / 255.f, 12 / 255.f, 200 / 255.f });
+
 	Graph<int, int> map(6);
 	map.AddNode(0, 0);
 	map.AddNode(1, 1);
@@ -1100,6 +1193,10 @@ int main(int argc, char* argv[])
 	printf("##################################################\n");
 	std::vector<MapNode> nodes;
 	LoadNodes(&nodes);
+	printf("##################################################\n");
+	// SaveNodes(&nodes);
+	printf("##################################################\n");
+	// LoadNodes(&nodes);
 	printf("##################################################\n");
 
 	// ImageData data("europe.png");
@@ -1294,16 +1391,21 @@ int main(int argc, char* argv[])
 	core.camera2D = &camera2D;
 
 
+
+
+	// moveta provinssi stuff game.c ___________________________________________________________
+	game_state *gameState = (game_state*)core.memory->permanentStorage;
+	gameState->provinceData.maxProvinces = MAX_PROVINCES;
+	gameState->provinceData.currentCount = &nodeCount;
+
+	gameState->provinceData.positions = positions;
+	gameState->provinceData.colorToId = &colorToId;
+	gameState->provinceData.idToColor = idToColor;
+	// moveta provinssi stuff game.c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	core.resources.FreeTexture = FreeTexture;
 	core.resources.SurfaceToGlTexture = TurnSurfaceIntoGlTexture;
 	core.resources.LoadSurface = LoadSurface;
-
-
-
-
-
-
-
 
 	UpiEngine::DebugRenderer debugger;
 	debugger.init();
@@ -1552,7 +1654,7 @@ int main(int argc, char* argv[])
 			simpleRecorder.Reset(); // starts new record
 		}
 
-		Sleep(1); // program runs too fast
+		// Sleep(1); // program runs too fast
 
 		simpleRecorder.Update();
 		ImguiTest(clear_color, &core);
@@ -1626,7 +1728,7 @@ int main(int argc, char* argv[])
 		int updates = 0;
 		for (; currentSlice >= FT_SLICE; currentSlice -= FT_SLICE)	// hud input should be polled!
 		{
-			if (updates > 4) break;
+			if (updates > 10) break;
 
 			simulationTime -= timestep;
 			updates++;
@@ -1775,7 +1877,7 @@ int main(int argc, char* argv[])
 		// printf("%f\n", ft);
 
 	}
-
+	SaveNodes(&nodes);
 	ImGui_ImplSdlGL3_Shutdown();
 	// SDL_GL_DeleteCOntext(glcontext);s	
 	SDL_DestroyWindow(window);

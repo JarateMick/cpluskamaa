@@ -335,6 +335,17 @@ void showFileType(FileWatcher* watcher, ResourceType type)
 	}
 }
 
+unsigned int reverse_nibbles(unsigned int x)
+{
+	unsigned int out = 0, i;
+	for (i = 0; i < 4; ++i)
+	{
+		const unsigned int byte = (x >> 8 * i) & 0xff;
+		out |= byte << (24 - 8 * i);
+	}
+	return out;
+}
+
 void ShowFileWatcher(FileWatcher* filewatcher)
 {
 	ImGui::Begin("Filewatcher:");
@@ -583,25 +594,75 @@ EXPORT IMGUIFUNC(Imgui)
 	ShowFileWatcher(&core->filewatcher);
 
 
+	WorldMap* map = &gameState->worldmap;
+
+
+
 	static float colors[4];
 	static Uint32 replacement = 0;
+	replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+	if (replacement != map->editor.editorColor) // jos vaihdettin editorista
+	{
+		auto color = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
+		colors[0] = color.x;
+		colors[1] = color.y;
+		colors[2] = color.z;
+		colors[3] = color.w;
+	}
+
 	if (ImGui::ColorEdit4("vari", colors, true))
 	{
 		replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
-		gameState->worldmap.editorColor = replacement;
-		std::cout << replacement << "\n";
+		map->editor.editorColor = replacement;
 	}
 
 	ImGui::Text("MousePos: %f, %f", input->mouse.x, input->mouse.y);
 
+	ImGui::Text("CurrentInputPos: %i, %i", (int)map->editor.inputX, (int)map->editor.inputY);
 
 	ImGui::InputText("Province ID: ", buffer, sizeof(buffer));
 	ImGui::SameLine();
 	if (ImGui::Button("save province ids"))
 	{
-		printf("SAVING NOT IMPLEMENTED\n");
+		ProvinceData* data = &gameState->provinceData;
+		// save here / add some provinces
+		map->editor.inputProvinceId = atoi(buffer);
+
+		if (*data->currentCount < data->maxProvinces - 1)
+		{
+			// Uint32 color = reverse_nibbles(map->editor.inputProvinceId);
+			
+			auto rgba = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
+			// -> abgr formaattiin
+
+			data->colorToId->insert(std::make_pair(map->editor.editorColor, map->editor.inputProvinceId));
+			data->idToColor[map->editor.inputProvinceId] = map->editor.editorColor;
+			data->positions[map->editor.inputProvinceId] = { (int)map->editor.inputX, (int)map->editor.inputY };
+
+			if (*data->currentCount == map->editor.inputProvinceId)
+				(*data->currentCount)++;
+
+			printf("SAVETETTU!");
+		}
 	}
-} 
+
+	static bool pickingColor = false;
+	ImGui::Checkbox("Toggle color pickings mode (press 6 to pick color)", &pickingColor);
+	if (pickingColor)
+		ImGui::Text("Picking");
+	else
+		ImGui::Text("Coloring");
+
+
+	ImGui::Begin("fake player gui");
+	if (ImGui::Button("build factory"))
+	{
+		gameState->player->player.selectedBuildingType = building_millitary_factory;
+	}
+	ImGui::Button("build mill");
+
+	ImGui::End();
+}
 
 // ---------------------------------------------------------------------
 //if (ImGui::CollapsingHeader("Map Editor Settings"))

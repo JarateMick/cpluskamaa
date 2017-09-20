@@ -9,6 +9,7 @@
 #define ArrayCount(array) ( sizeof(array) / sizeof((array)[0]))
 
 #include "Debug.h"
+#include "Random.cpp"
 
 #define ASSERTIONS_ENABLED 1
 #if ASSERTIONS_ENABLED
@@ -41,6 +42,8 @@
 
 
 // #define 
+
+struct v2 { int x, y; };
 
 
 #include <lua.hpp>
@@ -80,6 +83,7 @@
 //  + nopeampi compileta
 //  + vecit helppoja tehdä
 
+
 // glm: 
 //   + mat4 voi olla vaikea tehdä itse
 Internal FILETIME Win32GetLastWriteTime(const char* path)
@@ -107,6 +111,17 @@ struct resourceData
 	std::vector<std::string> filepathsToWatch;
 	int watchFilesCount;
 };
+
+Uint8 getAlpha(Uint32 color, SDL_PixelFormat* fmt)
+{
+	Uint32 temp;
+	Uint32 pixel = color;
+	temp = pixel & fmt->Amask;  /* Isolate alpha component */
+	temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
+	temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
+
+	return (Uint8)temp;
+}
 
 class ImageData
 {
@@ -272,6 +287,8 @@ struct ResourceManager
 	SDL_Surface*(*LoadSurface)(const char*);
 };
 
+
+
 // tänne tavallaan public engine hommat
 struct EngineCore
 {
@@ -282,7 +299,6 @@ struct EngineCore
 	game_memory*   memory;
 	UpiEngine::TileSheet*  	   testyTexture;
 	UpiEngine::Camera2D*   	   camera2D;
-
 	GLuint 			slopeMapTexture; // todo: remove
 
 	SDL_GLContext *glcontext;
@@ -387,12 +403,38 @@ void* PushSize_(memory_arena *Arena, memory_index Size)
 #include "Entity.h"
 // #include "Tilemap.h"
 
+void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
+{
+	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
+	{
+		replacement->set_pixel(startX, startY, replacementColor);
+		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
+		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
+	}
+	else
+	{
+		return;
+	}
+}
+
+struct WorldMapEditor
+{
+	Uint32 editorColor;
+	int inputProvinceId;
+	float inputX;
+	float inputY;
+};
+
 struct WorldMap
 {
 	GLuint temptextureid;
 	ImageData provinces;
 	ImageData visual;
-	Uint32 editorColor;
+
+	// Uint32 editorColor;
+	WorldMapEditor editor;
 
 	glm::vec4 dimensions;
 
@@ -403,18 +445,64 @@ struct WorldMap
 		// minimap :)
 		// sb->draw(glm::vec4{ 0.f, 0.f, 590.f, 480.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, temptextureid, 1.f);
 	}
+
+	Uint32 GetPixelSideFromWorld(int x, int y)
+	{
+		return provinces.GetPixel(x / 4, 480.f - y / 4); // real size 
+	}
+
+	Uint32 GetCurrentHolder(int x, int y)
+	{
+		return visual.GetPixel(x / 4, 480.f - y / 4);
+	}
+
+	Uint32 GetPixelSide(int x, int y)
+	{
+		// contains ?
+		return provinces.GetPixel(x, y); // real size 
+	}
+
+	void changeSideWorld(int x, int y, Uint32 to, EngineCore* core)
+	{
+		x = (x - dimensions.x) / 4;
+		y = (dimensions.w - y) / 4;
+		Uint32 targetColor = GetPixelSide(x, y);
+
+		SDL_PixelFormat *fmt = provinces.surface->format;
+		Uint8 alpha = getAlpha(targetColor, fmt);
+		if (targetColor != 0xFF000000 && alpha != 0)
+		{
+			FloodFillImage(&provinces, &visual, x, y, targetColor, to);
+
+			// taman jos tekee framen lopussa niin ei tarvitse tehda kuin yksi tekstruuri generaatio
+			core->resources.FreeTexture(&temptextureid);
+			temptextureid = core->resources.SurfaceToGlTexture(visual.surface);
+		}
+	}
+
+	void CheckSide(Uint32 targetColor)
+	{
+
+	}
 };
 
 
-
-
-
+struct ProvinceData
+{
+	int                    maxProvinces;
+	Uint32*                idToColor;
+	v2*                    positions;
+	std::map<Uint32, int>* colorToId;
+	int*                   currentCount;
+};
 
 struct game_state
 {
-	memory_arena arena;
-	Entity entities[500];
-	int currentEntityCount;
+	memory_arena   arena;
+	Entity         entities[10000];
+	Entity*        player;
+	int            currentEntityCount;
+	ProvinceData   provinceData;
 
 	// TileMap tilemap;
 	// TilemapEditor editor;
@@ -423,6 +511,39 @@ struct game_state
 
 	float cameraSpeed;
 };
+
+// jEntity* GetFirstAvaibleEntity(game_state* state);
+Entity* GetFirstAvaibleEntity(game_state* state)
+{
+	ASSERT(state->currentEntityCount < ArrayCount(state->entities));
+	return &state->entities[state->currentEntityCount++];
+}
+
+Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)
+{
+	Entity* result = GetFirstAvaibleEntity(state);
+	result->x = x;
+	result->y = y;
+	result->type = type;
+	return result;
+}
+
+bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side)
+{
+	WorldMap* map = &state->worldmap;
+	
+	// pelaajaan tuo check
+	// map->GetPixelSideFromWorld((float)x, (float)y);
+
+	// vaativa check voiko rakennuksen rakentaa tahan // rakennus bitmap? // probably tarkistetaan vain ymparisto
+													  // quad tree alkoi kuulostaa kivalta
+	Entity* e = newEntity(x, y, Entity_building, state);
+	e->building.type  = type;
+	e->building.side  = side;
+	e->building.timer = 0.f;  
+
+	return true;
+}
 
 void f(Entity *e, EngineCore* core)
 {
@@ -483,13 +604,50 @@ void f(Entity *e, EngineCore* core)
 			}
 		}
 	}
-	else if (auto entity = GET_ENTITY(e, player))
+	else if (auto player = GET_ENTITY(e, player))
 	{
 		GetGameState(core);
 		DefineInput(core);
 
-		glm::vec2 playerMoveVev{ 0.f, 0.f };
+		// lista controlloiduista entitytyista id / pointerit
+		// tehdaan valintoja sen perusteella rectilla -> vetaa nelion
+		// sitten voi kotrolloida uniitteja 
 
+		// jos clickkaa / painaa pikanappainta voi rakentaa rakennuksia
+
+		if (input->isMouseClicked(1)) // tutki input juttua enemman
+		{
+			printf("click\n");
+
+			// valitse -> menusta rakennettavaksi rakennus!
+			if (player->selectedBuildingType != building_none)
+			{
+				// build that building
+				buildBuilding(input->mouse.x, input->mouse.y, player->selectedBuildingType, gameState, player->side);
+
+				player->selectedBuildingType = building_none;
+			}
+
+			// command dem selected troops / select some troops
+			// 1 -> select
+			// 2 -> clear selection
+		}
+	}
+	else if (auto entity = GET_ENTITY(e, unit))
+	{
+		GetGameState(core);
+		DefineInput(core);
+
+		// if (entity->side == gameState.playerSide)
+		// {
+		// }
+		Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
+		if (side != entity->side)
+		{
+			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, entity->side, core);
+		}
+
+		glm::vec2 playerMoveVev{ 0.f, 0.f };
 		if (input->isKeyDown(SDL_SCANCODE_DOWN))
 		{
 			playerMoveVev.y -= 1.f;
@@ -506,32 +664,34 @@ void f(Entity *e, EngineCore* core)
 		{
 			playerMoveVev.x += 1.f;
 		}
+		e->x += playerMoveVev.x;
+		e->y += playerMoveVev.y;
+	}
+	else if (auto building = GET_ENTITY(e, building))
+	{
+		GetGameState(core);
+		DefineInput(core);
+
+		building->timer += core->deltaTime;
+
+		if (building->timer > 10)
+		{
+			printf("building troop!\n");
+			building->timer = 0.f;
+			newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+		}
 	}
 }
 
 void r(Entity *e, EngineCore* core)
 {
-	if (auto entity = GET_ENTITY(e, ninja))
+	if (auto entity = GET_ENTITY(e, building))
 	{
-		//static TextureHolder text;
-		//text.renderer = core->renderer;
-		// static ALLEGRO_BITMAP* bitmap = al_load_bitmap("test.png");
-		// al_draw_bitmap(bitmap, e->x, e->y, 0);
-		// printf("(%i, %i)", e->x, e->y);
-
-		//static LTexture alt2 = text.getTexture(Texture_Infantry);
-		//alt2.render(core->renderer, e->x, e->y);
+		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
 	}
 	else if (auto entity = GET_ENTITY(e, unit))
 	{
-		//  entity->texture.render(core->renderer, e->x, e->y);
-#define textoffset 15
-	   // DrawText(core, e->x + textoffset, e->y + textoffset, entity->strength);
-		// static ALLEGRO_FONT* font = al_load_font("rs.ttf", 20, 0);
-		static char buffer[2];
-		ASSERT(entity->strength < 100);
-		sprintf(buffer, "%i", entity->strength);
-		// al_draw_text(font, al_map_rgb(0, 0, 0), e->x + textoffset - core->cameraX, e->y + textoffset - core->cameraY, 0, buffer);
+		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
 	}
 	else if (auto entity = GET_ENTITY(e, script))
 	{
