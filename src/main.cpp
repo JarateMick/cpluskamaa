@@ -34,6 +34,7 @@
 
 // #include "imgui/imgui_internal.h"
 #include "game.h" 
+#include "fileSystem.cpp" // aika hack
 #include "imguiTools.h"
 //typedef struct  
 //{
@@ -1793,6 +1794,10 @@ int main(int argc, char* argv[])
 		glUniform1i(textureLocation, 0);
 
 	https://www.latex-project.org/
+		// httpss://www.latex-project.org2/
+		// https://www.latex-project.org/
+
+	
 
 		GLint plocation = textureProgram.getUniformLocation("P");
 		glm::mat4 cameraMatrix = camera2D.getCameraMatrix();

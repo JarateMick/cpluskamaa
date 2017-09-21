@@ -1,26 +1,13 @@
+#pragma once
 #include <cstdio>
 #include <string>
-// #include <dirent.h>
 
-inline bool FileExist(const std::string& name) {
-	if (FILE *file = fopen(name.c_str(), "r")) {
-		fclose(file);
-		return true;
-	}
-	else {
-		return false;
-	}
-}
+inline bool FileExist(const std::string& name);
+inline bool FileExist(const char* name);
+static FILETIME Win32GetLastWriteTime(const char* path);
 
-inline bool FileExist(const char* name) {
-	if (FILE *file = fopen(name, "r")) {
-		fclose(file);
-		return true;
-	}
-	else {
-		return false;
-	}
-}
+// #include <dirent.h> <-- tuolta saattaa löytyä kivaa
+
 ///*
 //DIR *dir;
 //struct dirent *ent;

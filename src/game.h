@@ -34,47 +34,25 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
-#define GetGameState(core) game_state*   gameState = (game_state*)(core)->memory->permanentStorage;
-#define DefineInput(core)  InputManager* input     = (core)->input;
-
-#include <math.h>
-#define CLAMP(x, upper, lower) (std::min(upper, std::max(x, lower)))
-
-
-// #define 
 
 struct v2 { int x, y; };
 
 
 #include <lua.hpp>
-
 #include <Windows.h>
- // #define SOL_EXCEPTIONS_SAFE_PROPAGATION
-//#include <sol\sol.hpp>
-
+#include <SDL2\SDL_image.h>
 
 #include <cstdint>
 #include <vector>
-#include "TextureHolder.h"
 #include <functional>
-#include <SDL2\SDL_image.h>
+#include <math.h>
+#define CLAMP(x, upper, lower) (std::min(upper, std::max(x, lower)))
 
+#include "TextureHolder.h"
+#include "fileSystem.h"
 
-// #include "imgui/imgui.h"
-
-// #include "TextureHolder.h"
-// #include "SDL_FontCache/SDL_FontCache.c"
-
+// #include "Hex.h"
 #define Internal static
-
-#include "Hex.h"
-
-// lajitte engine kamat omaan ja game kamat omaan
-
-// engineCOre jne..
-// entity
-
-// gamestate jne...
 
 
 // TODO: Vec2  -> typedeffaa vec jne....
@@ -82,20 +60,9 @@ struct v2 { int x, y; };
 // oma: 
 //  + nopeampi compileta
 //  + vecit helppoja tehdä
-
-
 // glm: 
-//   + mat4 voi olla vaikea tehdä itse
-Internal FILETIME Win32GetLastWriteTime(const char* path)
-{
-	FILETIME time = {};
-	WIN32_FILE_ATTRIBUTE_DATA data;
+//   + mat4 voi olla ärsyttävä tehdä itse
 
-	if (GetFileAttributesEx(path, GetFileExInfoStandard, &data))
-		time = data.ftLastWriteTime;
-
-	return time;
-}
 
 enum ResourceType
 {
@@ -104,7 +71,6 @@ enum ResourceType
 	Resource_texture,
 	Resource_max,
 };
-
 struct resourceData 
 {
 	std::vector<FILETIME> filetimes;
@@ -112,6 +78,7 @@ struct resourceData
 	int watchFilesCount;
 };
 
+// color / image data
 Uint8 getAlpha(Uint32 color, SDL_PixelFormat* fmt)
 {
 	Uint32 temp;
@@ -155,13 +122,8 @@ public:
 	}
 }; 
 
-
 struct FileWatcher
 {
-	// std::vector<FILETIME> filetimes;
-	// std::vector<std::string> filepathsToWatch;
-	// int watchFilesCount;
-
 	resourceData resources[Resource_max];
 
 	// load from config file !!!
@@ -182,8 +144,6 @@ struct FileWatcher
 		}
 	}
 
-
-
 	// ladataanko vai ei
 	const char* update(ResourceType type)
 	{
@@ -202,12 +162,7 @@ struct FileWatcher
 		return 0;
 	}
 
-	void showImgui(ResourceType type)
-	{
-		
-	}
-
-
+	void showImgui(ResourceType type) { }
 };
 
 struct game_memory
@@ -221,12 +176,8 @@ struct game_memory
 	void* transientStorage;
 };
 
-
-
 struct scripting
 {
-	// void(*executeCommand)(const char* script);
-	// sol::state* luaP;
 	lua_State* L;
 
 	const char* executeCommand(const char* script)
@@ -257,76 +208,6 @@ struct scripting
 };
 
 
-
-
-
-
-#include "glad.c"
-#include "gl/IOManager.cpp"
-#include "gl/GLSLProgram.cpp"
-#include "gl/picoPNG.cpp" 
-#include "gl/ImageLoader.cpp"
-#include "gl/GLTexture.h"
-#include "gl/TextureCache.cpp"
-#include "gl/ResourceManager.cpp"
-#include "gl\SpriteBatch.cpp"
-
-
-#include "gl/Camera2D.cpp"
-#include "gl/TileSheet.h"
-
-// #include "gl\GLSLProgram.cpp"
-#include "gl/SpriteFont.cpp"
-#include "gl/DebugRenderer.cpp"
-
-// todo: korjaa oikea resurrsi managers
-struct ResourceManager
-{
-	GLuint(*SurfaceToGlTexture)(SDL_Surface*);
-	void(*FreeTexture)(GLuint*);
-	SDL_Surface*(*LoadSurface)(const char*);
-};
-
-
-
-// tänne tavallaan public engine hommat
-struct EngineCore
-{
-	UpiEngine::DebugRenderer* debugger; // pitäsiköhän nämä jakaa omaan init/context, joka asettaisi nämä oikein
-										// vai tekisiköhän accesille omat macror
-										// TODO: testaa ylempiä käytännössä
-	InputManager*  input;
-	game_memory*   memory;
-	UpiEngine::TileSheet*  	   testyTexture;
-	UpiEngine::Camera2D*   	   camera2D;
-	GLuint 			slopeMapTexture; // todo: remove
-
-	SDL_GLContext *glcontext;
-	SDL_Window    *window;
-
-	UpiEngine::SpriteBatch *spriteBatch;
-
-	scripting     script;          // lua scipts
-	FileWatcher   filewatcher;     // very bare-bones file write time poller
-
-	ResourceManager resources;
-
-	void(*AddToConsole)(const char* text);
-
-	float deltaTime;
-	float timeMultiplier;
-
-	int       screenWidth;
-	int       screenHeight;
-
-	// boring
-	bool      pause;
-	bool      advanceNextFrame;
-	bool      advancedLastFrame;
-	bool      beginSkipToFrame;
-	float     timeFactor;
-	int       skipToFrame;
-};
 
 
 class StackAllocator
@@ -401,6 +282,8 @@ void* PushSize_(memory_arena *Arena, memory_index Size)
 // };
 
 #include "Entity.h"
+#include "core.h"
+
 // #include "Tilemap.h"
 
 void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
@@ -482,10 +365,8 @@ struct WorldMap
 
 	void CheckSide(Uint32 targetColor)
 	{
-
 	}
 };
-
 
 struct ProvinceData
 {
@@ -507,202 +388,9 @@ struct game_state
 	// TileMap tilemap;
 	// TilemapEditor editor;
 	WorldMap worldmap;
-	
 
 	float cameraSpeed;
 };
-
-// jEntity* GetFirstAvaibleEntity(game_state* state);
-Entity* GetFirstAvaibleEntity(game_state* state)
-{
-	ASSERT(state->currentEntityCount < ArrayCount(state->entities));
-	return &state->entities[state->currentEntityCount++];
-}
-
-Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)
-{
-	Entity* result = GetFirstAvaibleEntity(state);
-	result->x = x;
-	result->y = y;
-	result->type = type;
-	return result;
-}
-
-bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side)
-{
-	WorldMap* map = &state->worldmap;
-	
-	// pelaajaan tuo check
-	// map->GetPixelSideFromWorld((float)x, (float)y);
-
-	// vaativa check voiko rakennuksen rakentaa tahan // rakennus bitmap? // probably tarkistetaan vain ymparisto
-													  // quad tree alkoi kuulostaa kivalta
-	Entity* e = newEntity(x, y, Entity_building, state);
-	e->building.type  = type;
-	e->building.side  = side;
-	e->building.timer = 0.f;  
-
-	return true;
-}
-
-void f(Entity *e, EngineCore* core)
-{
-	if (auto ninja = GET_ENTITY(e, ninja))
-	{
-		int x{ 0 };
-		int y{ 0 };
-		if (core->input->isKeyDown(SDL_SCANCODE_UP))
-			--y;
-		if (core->input->isKeyDown(SDL_SCANCODE_DOWN))
-			++y;
-		if (core->input->isKeyDown(SDL_SCANCODE_LEFT))
-			--x;
-		if (core->input->isKeyDown(SDL_SCANCODE_RIGHT))
-			++x;
-
-		if (x != 0 || y != 0)
-		{
-			// glm::vec2 normal = glm::normalize(glm::vec2{x, y});
-			// e->pos.x += (normal.x * core->deltaTime * 0.5f);
-			// e->pos.y += (normal.y * core->deltaTime * 0.5f);
-			e->x += (float)x * core->deltaTime * 25.f;
-			e->y += (float)y * core->deltaTime * 25.f;
-			//printf("%f", y * core->deltaTime * 0.5f);
-		}
-		//e->y += sinf(e->x) * 5;
-	}
-	else if (auto npc = GET_ENTITY(e, npc))
-	{
-		if (core->input->isKeyPressed(SDL_SCANCODE_SPACE))
-		{
-			// printf("ninjas are gays!\n");
-		}
-	}
-	else if (auto entity = GET_ENTITY(e, script))
-	{
-		GetGameState(core);
-		DefineInput(core);
-
-		// nuista clikattavista voisi laittaa jonnekin mukavammin saataville core->clicables
-		// tai sitten tekisi entity updatesta systeemi maisen
-
-		if (core->input->isMouseClicked(1))
-		{
-			for (int i = 0; i < gameState->currentEntityCount; i++) {
-
-				Entity& e = gameState->entities[i];
-				if (e.type == Entity_script)
-				{
-					auto script = GET_ENTITY(&e, script);
-
-					if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
-					{
-						// hitbox clicked! show message
-						printf("hitbox clicked!\n");
-					}
-				}
-			}
-		}
-	}
-	else if (auto player = GET_ENTITY(e, player))
-	{
-		GetGameState(core);
-		DefineInput(core);
-
-		// lista controlloiduista entitytyista id / pointerit
-		// tehdaan valintoja sen perusteella rectilla -> vetaa nelion
-		// sitten voi kotrolloida uniitteja 
-
-		// jos clickkaa / painaa pikanappainta voi rakentaa rakennuksia
-
-		if (input->isMouseClicked(1)) // tutki input juttua enemman
-		{
-			printf("click\n");
-
-			// valitse -> menusta rakennettavaksi rakennus!
-			if (player->selectedBuildingType != building_none)
-			{
-				// build that building
-				buildBuilding(input->mouse.x, input->mouse.y, player->selectedBuildingType, gameState, player->side);
-
-				player->selectedBuildingType = building_none;
-			}
-
-			// command dem selected troops / select some troops
-			// 1 -> select
-			// 2 -> clear selection
-		}
-	}
-	else if (auto entity = GET_ENTITY(e, unit))
-	{
-		GetGameState(core);
-		DefineInput(core);
-
-		// if (entity->side == gameState.playerSide)
-		// {
-		// }
-		Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
-		if (side != entity->side)
-		{
-			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, entity->side, core);
-		}
-
-		glm::vec2 playerMoveVev{ 0.f, 0.f };
-		if (input->isKeyDown(SDL_SCANCODE_DOWN))
-		{
-			playerMoveVev.y -= 1.f;
-		}
-		if (input->isKeyDown(SDL_SCANCODE_UP))
-		{
-			playerMoveVev.y += 1.f;
-		}
-		if (input->isKeyDown(SDL_SCANCODE_LEFT))
-		{
-			playerMoveVev.x -= 1.f;
-		}
-		if (input->isKeyDown(SDL_SCANCODE_RIGHT))
-		{
-			playerMoveVev.x += 1.f;
-		}
-		e->x += playerMoveVev.x;
-		e->y += playerMoveVev.y;
-	}
-	else if (auto building = GET_ENTITY(e, building))
-	{
-		GetGameState(core);
-		DefineInput(core);
-
-		building->timer += core->deltaTime;
-
-		if (building->timer > 10)
-		{
-			printf("building troop!\n");
-			building->timer = 0.f;
-			newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
-		}
-	}
-}
-
-void r(Entity *e, EngineCore* core)
-{
-	if (auto entity = GET_ENTITY(e, building))
-	{
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
-	}
-	else if (auto entity = GET_ENTITY(e, unit))
-	{
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
-	}
-	else if (auto entity = GET_ENTITY(e, script))
-	{
-		// debug rect
-		entity->hitbox.DrawRect();
-	}
-	else if (auto entity = GET_ENTITY(e, player))
-	{
-		GetGameState(core);
-	}
-}
 
 struct AssetFileInfo
 {

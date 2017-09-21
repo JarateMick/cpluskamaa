@@ -1,5 +1,6 @@
 #include "game.h"
 
+
 #include <chrono>
 #include <string>
 #include <vector>
@@ -11,6 +12,8 @@
 
 #include <algorithm>
 #include <lua.hpp>
+#include "Entity.cpp"
+#include "fileSystem.cpp"
 
 #undef max
 #undef min 
@@ -96,15 +99,29 @@ void RemoveEntity(int index, game_state* state)
 
 
 // Game:
-//   * Better selection for region select
-//   * Risk style battle screen
-//   *
+//   * 
+//   * Countries -> data structure for owned provinces etc...
+//   * Troops/Units -> freely moving units on the screen different (sides color)
+//   * defensive structures 
+//   * province logic
+//   * factory/mill outputtin units/cash
+//   * 
+
+//  * AI:
+//  * super simple just sittings there maybe building buildings?
+//  * ----zombie mode----
+//  * zombie ai just walking towards closest one
+//  * simple neutral countries trying to stay alive
+
+//  * boats
+//  * technology mode
+//  * diplomacy
+
 
 // Engine:
 //   * Hotloading variable tweak -> (from google sheets maybe?)
 //   * Configs files
 //   * Better solutions for -> . -> . 
-//   * Take look on allegro shader stuff
 //   *
 
 
@@ -173,12 +190,6 @@ EXPORT void Loop(EngineCore* core)
 		auto script = GET_ENTITY(e, script);
 		sprintf(script->message, "%s", "Morjesta"); // Luassa olisi kiva maaritella jutut
 		script->hitbox = { 0, 0, 40, 80 };
-
-
-		e = GetFirstAvaibleEntity(gameState);
-		e->type = Entity_player;
-		e->x = 150.f;
-		e->y = 150.f;
 
 		// world map 
 		SDL_Surface* surface = core->resources.LoadSurface("europedata.png"); // clickaamiseen
