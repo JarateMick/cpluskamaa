@@ -22,6 +22,7 @@
     <ClCompile Include="..\src\DebugRenderer.cpp" />
     <ClCompile Include="..\src\gl\SpriteFont.cpp" />
     <ClCompile Include="..\src\fileSystem.cpp" />
+    <ClCompile Include="..\src\simple_preprocessor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\game.h" />

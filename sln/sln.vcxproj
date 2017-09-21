@@ -38,6 +38,7 @@
     <ClCompile Include="..\src\LuaScript.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Random.cpp" />
+    <ClCompile Include="..\src\simple_preprocessor.cpp" />
     <ClCompile Include="..\src\TextureHolder.cpp" />
     <ClCompile Include="..\src\utility.h" />
   </ItemGroup>
