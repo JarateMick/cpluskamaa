@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS 1
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -5,7 +6,7 @@
 char *ReadEntireFIleIntoMemoryAndNullTerminate(char *filename)
 {
 	char *result = 0;
-	FILE *file = fopen("handmade_sim_region.h", "r");
+	FILE *file = fopen(filename, "r");
 	if (file)
 	{
 		fseek(file, 0, SEEK_END);
@@ -66,7 +67,7 @@ inline bool IsWhitespace(char c)
 inline bool IsAlpha(char c)
 {
 	return ((c >= 'a') && (c <= 'z') ||
-		(c >= 'A') && (c >= 'Z'));
+			(c >= 'A') && (c <= 'Z'));
 }
 
 inline bool IsNumer(char c)
@@ -85,7 +86,7 @@ static void EatAllWhitespace(Tokenizer* tokenizer)
 		}
 		else if (tokenizer->at[0] == '/' && tokenizer->at[1] == '/')
 		{
-			tokenizer += 2;
+			tokenizer->at += 2;
 			while (tokenizer->at[0] && !IsEndOfLine(tokenizer->at[0]))
 			{
 				++tokenizer->at;
@@ -93,7 +94,7 @@ static void EatAllWhitespace(Tokenizer* tokenizer)
 		}
 		else if (tokenizer->at[0] == '/' && tokenizer->at[1] == '*')
 		{
-			tokenizer += 2;
+			tokenizer->at += 2;
 			while (tokenizer->at[0] && !(tokenizer->at[0] == '*' && tokenizer->at[1] == '/'))
 			{
 				++tokenizer->at;
@@ -117,8 +118,7 @@ static Token GetToken(Tokenizer* tokenizer)
 
 	Token token{};
 	token.textLength = 1;
-	token.textLength = tokenizer->at[0];
-
+	token.text = tokenizer->at;
 	char c = tokenizer->at[0];
 	++tokenizer->at;
 
@@ -135,17 +135,17 @@ static Token GetToken(Tokenizer* tokenizer)
 	case '{': token.type = Token_OpenBraces; break;
 	case '}': token.type = Token_CloseBraces; break;
 
-	case '/':
+	/*case '/':
 	{
 
 	} break;
-
+*/
 	case '"':
 	{
 		token.type = Token_String;
 		token.text = tokenizer->at;
 
-		while (tokenizer->at[0] && tokenizer->at[0])
+		while (tokenizer->at[0] && tokenizer->at[0] != '"')
 		{
 			if ((tokenizer->at[0] == '\\') && tokenizer->at[1])
 			{
@@ -164,7 +164,6 @@ static Token GetToken(Tokenizer* tokenizer)
 
 	default:
 	{
-
 		if (IsAlpha(c))
 		{
 			token.type = Token_Identifier;
@@ -185,7 +184,7 @@ static Token GetToken(Tokenizer* tokenizer)
 		{
 			token.type = Token_Unknown;
 		}
-	}
+	}break;
 	}
 
 	return token;
@@ -196,7 +195,7 @@ inline bool TokenEquals(Token token, char* match)
 	char *at = match;
 	for (int i = 0; i < token.textLength; ++i, at++)
 	{
-		if (*at == 0 || token.text[i] != *at)
+		if ((*at == 0) || (token.text[i] != *at))
 		{
 			return false;
 		}
@@ -244,7 +243,9 @@ static void ParseMember(Tokenizer *tokenizer, Token memberTypeToken)
 			break;
 
 		case Token_Identifier:
-			printf("debug value %.*s\n",  (int)token.textLength, token.text);
+			printf("{type_%.*s, %.*s },\n",
+				(int)memberTypeToken.textLength, memberTypeToken.text, 
+				(int)token.textLength, token.text);
 			break;
 
 		case Token_Semicolon:
@@ -260,6 +261,8 @@ static void ParseStruct(Tokenizer* tokenizer)
 	Token nameToken = GetToken(tokenizer);
 	if (RequireToken(tokenizer, Token_OpenBraces))
 	{
+		printf("char *memberOf_%.*s[] = \n", (int)nameToken.textLength, nameToken.text);
+		printf("{\n");
 		for (;;)
 		{
 			Token memberToke = GetToken(tokenizer);
@@ -272,6 +275,7 @@ static void ParseStruct(Tokenizer* tokenizer)
 				ParseMember(tokenizer, memberToke);
 			}
 		}
+		printf("}\n");
 	}
 }
 
@@ -284,7 +288,7 @@ static void parseIntrospectable(Tokenizer *tokenizer)
 		Token typeToken = GetToken(tokenizer);
 		if (TokenEquals(typeToken, "struct"))
 		{
-
+			ParseStruct(tokenizer);
 		}
 		else
 		{
@@ -310,6 +314,11 @@ int main(int ArgCount, char ** Args)
 		Token token = GetToken(&tokenizer);
 		switch (token.type)
 		{
+		case Token_EndOfStream:
+		{
+			parsing = false;
+		} break;
+
 
 
 		case Token_Unknown: break;
@@ -322,15 +331,12 @@ int main(int ArgCount, char ** Args)
 			}
 		} break;
 
-		case Token_EndOfStream:
-		{
-			parsing = false;
-		} break;
-
 		default:
 		{
 			printf("%d: %.*s: \n", token.type, (int)token.textLength, token.text);
 		} break;
 		}
 	}
+
+	getchar();
 }

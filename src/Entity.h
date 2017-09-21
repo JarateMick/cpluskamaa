@@ -41,8 +41,22 @@ struct Rect
 
 	bool Contains(float x, float y)
 	{
-		return (this->x < x && this->x + w > x &&
-			this->y  < y && this->y + h > y);
+		return (this->x < x &&  this->x + (w) > x &&
+				this->y  < y && this->y + (h) > y);
+	}
+
+	void UseLeftBottomAsStart()
+	{
+		if (w < 0)
+		{
+			w  = std::abs(w);
+			x -= w;
+		}
+		if (h < 0)
+		{
+			h  = std::abs(h);
+			y -= h;
+		}
 	}
 
 	void DrawRect()
@@ -101,8 +115,10 @@ struct Entity
 			Uint32 side;
 			// currently Selected entities! pointer
 			int cash;
-
 			building_type selectedBuildingType;
+
+			Rect selectionRect;
+			bool selectingTroops;
 		} player;
 		struct
 		{
@@ -115,6 +131,7 @@ struct Entity
 
 struct EngineCore;
 struct game_state;
+
 void f(Entity *e, EngineCore* core);
 void r(Entity *e, EngineCore* core);
 

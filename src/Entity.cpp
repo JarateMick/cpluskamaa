@@ -52,7 +52,7 @@ void f(Entity *e, EngineCore* core)
 				{
 					auto script = GET_ENTITY(&e, script);
 
-					if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
+					//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
 					{
 						// hitbox clicked! show message
 					}
@@ -70,10 +70,17 @@ void f(Entity *e, EngineCore* core)
 		// sitten voi kotrolloida uniitteja 
 
 		// jos clickkaa / painaa pikanappainta voi rakentaa rakennuksia
-
-		if (input->isMouseClicked(1)) // tutki input juttua enemman
+		bool dragSelection = input->isMouseDown(1) && player->selectingTroops;
+		if (dragSelection)
 		{
-
+			glm::vec2 mousePos = input->mouse;
+			glm::vec2 startPoint = { player->selectionRect.x, player->selectionRect.y };
+			glm::vec2 vector = mousePos - startPoint;
+			player->selectionRect.w = vector.x;
+			player->selectionRect.h = vector.y;
+		}
+		else if (input->isMouseClicked(1)) // tutki input juttua enemman
+		{
 			// valitse -> menusta rakennettavaksi rakennus!
 			if (player->selectedBuildingType != building_none)
 			{
@@ -82,10 +89,46 @@ void f(Entity *e, EngineCore* core)
 
 				player->selectedBuildingType = building_none;
 			}
-
+			else
+			{
+				// ############### start dragging square #####################
+				player->selectingTroops = true;
+				player->selectionRect.x = input->mouse.x;
+				player->selectionRect.y = input->mouse.y;
+			}
+		}
+		else if (input->isMouseClicked(2))
+		{
+			player->selectedBuildingType = building_none;
 			// command dem selected troops / select some troops
 			// 1 -> select
 			// 2 -> clear selection
+		}
+
+		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
+		if (stoppedSelectingRect)
+		{
+			printf("SELECTION END\n");
+			player->selectingTroops = false;
+
+			// TODO: choose troops
+			player->selectionRect.UseLeftBottomAsStart();
+
+
+			for (int i = 0; i < gameState->currentEntityCount; i++)
+			{
+				Entity* e = &gameState->entities[i];
+				if (e->type == Entity_unit)
+				{
+					if (player->selectionRect.Contains(e->x, e->y))
+					{
+						// Entity* selected[100];
+						// todo: laita valitut kirjoille niin niita voidaan alkaa liikuttelee!
+						printf("selected!");
+					}
+				}
+			}
+			//	gameState->entitiesA
 		}
 	}
 	else if (auto entity = GET_ENTITY(e, unit))
@@ -140,16 +183,16 @@ void f(Entity *e, EngineCore* core)
 			} break;
 			case building_millitary_factory:
 			{
-				printf("gimme troop!\n");
-				building->timer = 0.f;
-				newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+				// printf("gimme troop!\n");
+				Entity *ee = newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
 			} break;
 			default:
 				ASSERT(false); // , "building type not found!");
 				break;
 			}
-		}
 
+			building->timer = 0.f;
+		}
 	}
 }
 
@@ -166,20 +209,23 @@ void r(Entity *e, EngineCore* core)
 	else if (auto entity = GET_ENTITY(e, script))
 	{
 		// debug rect
-		entity->hitbox.DrawRect();
 	}
-	else if (auto entity = GET_ENTITY(e, player))
+	else if (auto player = GET_ENTITY(e, player))
 	{
 		GetGameState(core);
 		DefineInput(core);
 		// core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
-		// Debug::drawTextf(0, "money: %i", entity->cash);
+		// Debug::drawTextf(0, "money: %i", player->cash);
+
+		// printf("cash %i", player->cash);
 
 		char buffer[64];
-		sprintf(buffer, "money: %i", entity->cash);
-		// printf("cash %i", entity->cash);
+		sprintf(buffer, "money: %i", player->cash);
+
 		Debug::drawText(buffer, 2);
 
+		if (player->selectingTroops)
+			player->selectionRect.DrawRect();
 		// Debug::drawBox(core->input->mouse.x, core->input->mouse.y, 30.f, 30.f);
 	}
 }
