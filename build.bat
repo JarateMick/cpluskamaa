@@ -9,7 +9,6 @@ if not defined DEV_ENV_DIR (
 set DEV_ENV_DIR= ???
 
 rem eHa
-echo "ehahaha"
 set CFLAGS= -Zi -nologo -EHs -Gm- -Oi -GR-  -fp:fast -wd4311 -wd4312
 set LFLAGS= -incremental:no opengl32.lib  
 set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib
@@ -22,6 +21,10 @@ pushd bin
 
 echo %cd%
 del *.pdb > NUL 2> NUL
+
+
+rem simple preprocessor
+cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
 
 rem Box2D.lib  Box2D.lib
 
