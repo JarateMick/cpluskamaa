@@ -42,6 +42,7 @@
     <ClCompile Include="..\src\utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\Debug.h" />
     <ClInclude Include="..\src\DebugRenderer.h" />
     <ClInclude Include="..\src\Entity.h" />
@@ -124,7 +125,7 @@
     <NMakeOutput>$(SolutionDir)../bin/main.exe</NMakeOutput>
     <NMakeReBuildCommandLine>$(SolutionDir)./build.bat</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\algorytmeja\cpluskamaa\Include;I:\Dev\SDL\allegro vanhat\Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\algorytmeja\cpluskamaa\Include;I:\Dev\SDL\allegro vanhat\Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;C:\Users\EetuKer\Desktop\Lua\cpluskamaa\Include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <IncludePath>$(IncludePath)</IncludePath>
     <NMakeForcedIncludes>I:\Dev\Allegro\allegro\Include\sol\sol2;I:\Dev\Allegro\allegro\Include;$(NMakeForcedIncludes)</NMakeForcedIncludes>
   </PropertyGroup>

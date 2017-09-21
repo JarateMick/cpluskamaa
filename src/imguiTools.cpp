@@ -1,6 +1,7 @@
 ﻿#include "imguiTools.h"
-// #include "utility.h"
 #include "imgui/imgui.h"
+#include "fileSystem.cpp"
+// #include "utility.h"
 // #include "imgui/imgui.h"
 
 // structi johon tökättäisiin function pointerit
@@ -631,7 +632,7 @@ EXPORT IMGUIFUNC(Imgui)
 		if (*data->currentCount < data->maxProvinces - 1)
 		{
 			// Uint32 color = reverse_nibbles(map->editor.inputProvinceId);
-			
+
 			auto rgba = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
 			// -> abgr formaattiin
 
@@ -659,7 +660,10 @@ EXPORT IMGUIFUNC(Imgui)
 	{
 		gameState->player->player.selectedBuildingType = building_millitary_factory;
 	}
-	ImGui::Button("build mill");
+	if (ImGui::Button("build mill"))
+	{
+		gameState->player->player.selectedBuildingType = building_mill;
+	}
 
 	ImGui::End();
 }

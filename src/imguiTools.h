@@ -1,13 +1,4 @@
 #pragma once 
-// #define EXPORT extern "C" __declspec( dllexport )
-// #define ArrayCount(array) ( sizeof(array) / sizeof((array)[0]))
-
-// #include <cstring>
-// #include <cstdlib>
-// #include <cstdint>
-// #include <vector>
-// #include "TextureHolder.h"
-// #include "gl3w/GL/gl3w.c" // used
 
 // #define DLLCOMPILE 1
 #ifdef DLLCOMPILE
@@ -18,7 +9,6 @@
 #endif
 
 #include "game.h"
-// #include "utility.h"
 
 #define internal static
 

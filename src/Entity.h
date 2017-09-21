@@ -68,9 +68,10 @@ struct Entity
 	// glm::vec2 pos;
 	float x, y;
 	float velX, velY;
+
 	// vel
 	// acc
-	// radius
+
 	union
 	{
 		struct
@@ -112,5 +113,15 @@ struct Entity
 	};
 };
 
+struct EngineCore;
+struct game_state;
+void f(Entity *e, EngineCore* core);
+void r(Entity *e, EngineCore* core);
+
+Entity* GetFirstAvaibleEntity(game_state* state);
+Entity* newEntity(float x, float y, Entity_Enum type, game_state* state);
+bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side);
+
 #define GET_ENTITY(e, entity_type) ((e)->type == Entity_##entity_type ? &(e)->entity_type : 0)
 #define ENT(e, entity_type)        &((e)->entity_type)
+
