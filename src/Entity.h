@@ -102,6 +102,8 @@ struct Entity
 			int moveSpeed;
 			int strength;
 			Uint32 side;
+
+			int targetX, targetY;
 		} unit;
 		struct
 		{

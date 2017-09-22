@@ -1,3 +1,4 @@
 ﻿  simple_preprocessor.cpp
+h:\visual\vc\tools\msvc\14.10.25017\include\limits(211): warning C4577: 'noexcept' used with no exception handling mode specified; termination on exception is not guaranteed. Specify /EHsc
   pre.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\pre.exe
   pre.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\pre.pdb (Partial PDB)

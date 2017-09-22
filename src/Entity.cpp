@@ -43,22 +43,21 @@ void f(Entity *e, EngineCore* core)
 		// nuista clikattavista voisi laittaa jonnekin mukavammin saataville core->clicables
 		// tai sitten tekisi entity updatesta systeemi maisen
 
-		if (core->input->isMouseClicked(1))
-		{
-			for (int i = 0; i < gameState->currentEntityCount; i++) {
+		//if (core->input->isMouseClicked(1))
+		//{
+		//	for (int i = 0; i < gameState->currentEntityCount; i++) {
 
-				Entity& e = gameState->entities[i];
-				if (e.type == Entity_script)
-				{
-					auto script = GET_ENTITY(&e, script);
-
-					//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
-					{
-						// hitbox clicked! show message
-					}
-				}
-			}
-		}
+		//		Entity& e = gameState->entities[i];
+		//		if (e.type == Entity_script)
+		//		{
+		//			auto script = GET_ENTITY(&e, script);
+		//			//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
+		//			{
+		//				// hitbox clicked! show message
+		//			}
+		//		}
+		//	}
+		//}
 	}
 	else if (auto player = GET_ENTITY(e, player))
 	{
@@ -100,9 +99,18 @@ void f(Entity *e, EngineCore* core)
 		else if (input->isMouseClicked(2))
 		{
 			player->selectedBuildingType = building_none;
+
 			// command dem selected troops / select some troops
 			// 1 -> select
 			// 2 -> clear selection
+
+			for (int i = 0; i < gameState->selectedCount; i++)
+			{
+				gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
+				gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
+			}
+
+			printf("target set");
 		}
 
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
@@ -114,7 +122,12 @@ void f(Entity *e, EngineCore* core)
 			// TODO: choose troops
 			player->selectionRect.UseLeftBottomAsStart();
 
+			for (int i = 0; i < 1000; i++)
+			{
+				gameState->selectedEntitys[i] = nullptr;
+			}
 
+			int selectedCount = 0;
 			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
 				Entity* e = &gameState->entities[i];
@@ -122,48 +135,78 @@ void f(Entity *e, EngineCore* core)
 				{
 					if (player->selectionRect.Contains(e->x, e->y))
 					{
-						// Entity* selected[100];
-						// todo: laita valitut kirjoille niin niita voidaan alkaa liikuttelee!
-						printf("selected!");
+						if (selectedCount < gameState->maxSelected)
+							gameState->selectedEntitys[selectedCount++] = e;
 					}
 				}
 			}
-			//	gameState->entitiesA
+
+			gameState->selectedCount = selectedCount;
+			printf("selected %i entitys ", selectedCount);
 		}
+
+
 	}
-	else if (auto entity = GET_ENTITY(e, unit))
+	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		GetGameState(core);
 		DefineInput(core);
 
-		// if (entity->side == gameState.playerSide)
+		// if (unit->side == gameState.playerSide)
 		// {
 		// }
 		Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
-		if (side != entity->side)
+		if (side != unit->side)
 		{
-			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, entity->side, core);
+			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, unit->side, core);
 		}
 
-		glm::vec2 playerMoveVev{ 0.f, 0.f };
-		if (input->isKeyDown(SDL_SCANCODE_DOWN))
+		if (unit->targetX != -1 && unit->targetY != -1)
 		{
-			playerMoveVev.y -= 1.f;
+			glm::vec2 moveVec{ unit->targetX - e->x, unit->targetY - e->y };
+
+			// float length = glm::length(moveVec);
+			// korjaa
+			float length = /* sqrt */((moveVec.x * moveVec.x + moveVec.y * moveVec.y));
+			if (length < 2.f )
+			{
+				unit->targetX = -1;
+				unit->targetY = -1;
+			}
+			else
+			{
+				moveVec = glm::normalize(moveVec) * 0.1f * 1.f;
+				e->x += moveVec.x;
+				e->y += moveVec.y;
+				
+				Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
+				static SDL_PixelFormat *fmt = gameState->worldmap.provinces.surface->format;
+				Uint8 alpha = getAlpha(side, fmt);
+				if (side == 0xFF000000 || alpha == 0) // can't move here
+				{
+					e->x -= moveVec.x;
+					e->y -= moveVec.y;
+				}
+			}
 		}
-		if (input->isKeyDown(SDL_SCANCODE_UP))
-		{
-			playerMoveVev.y += 1.f;
-		}
-		if (input->isKeyDown(SDL_SCANCODE_LEFT))
-		{
-			playerMoveVev.x -= 1.f;
-		}
-		if (input->isKeyDown(SDL_SCANCODE_RIGHT))
-		{
-			playerMoveVev.x += 1.f;
-		}
-		e->x += playerMoveVev.x;
-		e->y += playerMoveVev.y;
+
+		/*	glm::vec2 playerMoveVev{ 0.f, 0.f };
+			if (input->isKeyDown(SDL_SCANCODE_DOWN))
+			{
+				playerMoveVev.y -= 1.f;
+			}
+			if (input->isKeyDown(SDL_SCANCODE_UP))
+			{
+				playerMoveVev.y += 1.f;
+			}
+			if (input->isKeyDown(SDL_SCANCODE_LEFT))
+			{
+				playerMoveVev.x -= 1.f;
+			}
+			if (input->isKeyDown(SDL_SCANCODE_RIGHT))
+			{
+				playerMoveVev.x += 1.f;
+			}*/
 	}
 	else if (auto building = GET_ENTITY(e, building))
 	{
@@ -196,6 +239,14 @@ void f(Entity *e, EngineCore* core)
 	}
 }
 
+//resevallokoi
+
+// var color : uint = 16742927;
+// var a : uint = color >> 24 & 255; // 255
+// var r : uint = color >> 16 & 255; // 255
+// var g : uint = color >> 8 & 255; // 122
+// var b : uint = color >> 0 & 255; // 15, wrote this a bit different than above just for example
+
 void r(Entity *e, EngineCore* core)
 {
 	if (auto entity = GET_ENTITY(e, building))
@@ -204,7 +255,14 @@ void r(Entity *e, EngineCore* core)
 	}
 	else if (auto entity = GET_ENTITY(e, unit))
 	{
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
+		Uint32  ucolor = e->unit.side;
+		int a = ucolor >> 24 & 255;
+		int r = ucolor >> 16 & 255;
+		int g = ucolor >> 8  & 255;
+		int b = ucolor >> 0  & 255;
+
+		UpiEngine::ColorRGBA8 color(r, g, b, a);
+		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
 	}
 	else if (auto entity = GET_ENTITY(e, script))
 	{

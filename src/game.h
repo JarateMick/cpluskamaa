@@ -115,9 +115,6 @@ public:
 
 	Uint32 GetPixel(int x, int y)
 	{
-		// return (Uint32)surface->pixels + y * surface->pitch +
-		//	x * sizeof(Uint32);
-
 		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
 	}
 }; 
@@ -265,6 +262,7 @@ struct memory_arena
 
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type))
+#define PushArray2(Arena, Count, Size) PushSize_(Arena, (Count)*Size)
 
 void* PushSize_(memory_arena *Arena, memory_index Size)
 {
@@ -382,8 +380,13 @@ struct game_state
 	memory_arena   arena;
 	Entity         entities[10000];
 	Entity*        player;
+	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
+	int            selectedCount;
+	int            maxSelected;
+
 	int            currentEntityCount;
 	ProvinceData   provinceData;
+
 
 	// TileMap tilemap;
 	// TilemapEditor editor;

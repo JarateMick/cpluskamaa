@@ -1,17 +1,14 @@
 #include "game.h"
 
-
 #include <chrono>
 #include <string>
 #include <vector>
-// #define EXE_COMPILE 1
-#include <unordered_set>
-// #include "Random.cpp"
-#include <algorithm>
-// #define _USE_MATH_DEFINES
 
+#include <unordered_set>
 #include <algorithm>
+
 #include <lua.hpp>
+
 #include "Entity.cpp"
 #include "fileSystem.cpp"
 
@@ -135,8 +132,8 @@ void SaveAllGameState(game_state* gameState)
 	}
 }
 
-
 const int mapSizeMultiplier = 4;
+
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -147,11 +144,15 @@ EXPORT void Loop(EngineCore* core)
 	{
 		gameState->arena.InitalizeArena(core->memory->permanentStorageSize - sizeof(game_state),
 			(uint8_t *)core->memory->permanentStorage + sizeof(game_state));
-
+		memory_arena* arena = &gameState->arena;
 
 		L = core->script.L;
-
 		Debug::_Debugger = core->debugger; // hööh :-(
+
+
+		gameState->selectedEntitys = ((Entity**)PushArray2(arena, 1000, 4));
+		gameState->maxSelected = 1000;
+
 
 		// TODO: defaults some neat fileloading facilities would be cool
 		gameState->cameraSpeed = 50.0f;
@@ -170,12 +171,14 @@ EXPORT void Loop(EngineCore* core)
 		{
 			gameState->entities[i].guid = i;
 			j++;
+			gameState->entities[i].unit.targetX = -1;
+			gameState->entities[i].unit.targetY = -1;
 		}
 
 		gameState->entities[2].type = Entity_unit;
 		gameState->entities[2].x = 300.f;
 		gameState->entities[2].y = 300.f;
-		gameState->entities[2].unit.side = 0xF0F0F0FF;
+		gameState->entities[2].unit.side = 0xFFFF0000;
 
 
 		gameState->entities[3].type = Entity_player;

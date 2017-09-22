@@ -1200,6 +1200,9 @@ int main(int argc, char* argv[])
 	// LoadNodes(&nodes);
 	printf("##################################################\n");
 
+
+
+
 	// ImageData data("europe.png");
 	// ImageData showToPlayer("europedata.png");
 
@@ -1655,7 +1658,8 @@ int main(int argc, char* argv[])
 			simpleRecorder.Reset(); // starts new record
 		}
 
-		// Sleep(1); // program runs too fast
+
+		Sleep(1); // program runs too fast
 
 		simpleRecorder.Update();
 		ImguiTest(clear_color, &core);
@@ -1774,12 +1778,20 @@ int main(int argc, char* argv[])
 
 		if (inputManager.isKeyDown(SDL_SCANCODE_E))
 		{
-			camera2D.setScale(camera2D.getScale() - 0.01f);
+			camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
+
+			if (camera2D.getScale() < 0.01f)
+			{
+				camera2D.setScale(0.01f);
+			}
 		}
 		if (inputManager.isKeyDown(SDL_SCANCODE_Q))
 		{
-			camera2D.setScale(camera2D.getScale() + 0.01f);
+			camera2D.setScale(camera2D.getScale() + 0.0005f);
 		}
+		// printf("%f\n", camera2D.getScale());
+		ImGui::Text("camera: %f", camera2D.getScale());
+
 		camera2D.update();
 		hudCamera.update();
 
@@ -1793,7 +1805,7 @@ int main(int argc, char* argv[])
 		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 		glUniform1i(textureLocation, 0);
 
-	https://www.latex-project.org/
+		https://www.latex-project.org/
 		// httpss://www.latex-project.org2/
 		// https://www.latex-project.org/
 

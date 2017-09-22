@@ -301,6 +301,8 @@ static void parseIntrospectable(Tokenizer *tokenizer)
 	}
 }
 
+
+
 int main(int ArgCount, char ** Args)
 {
 	char* Filecontents = ReadEntireFIleIntoMemoryAndNullTerminate("I:/Dev/SDL/allegro vanhat/TEST_ENUMERATE/handmade_sim_region.h");
