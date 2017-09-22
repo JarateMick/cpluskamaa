@@ -1,4 +1,440 @@
 ﻿  Raknet.cpp
 i:\dev\sdl\allegro vanhat\sln\raknet\raknet.cpp(57): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  _FindFirst.cpp
+  WSAStartupSingleton.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\wsastartupsingleton.cpp(56): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+  VitaIncludes.cpp
+  VariadicSQLParser.cpp
+  VariableListDeltaTracker.cpp
+  VariableDeltaSerializer.cpp
+  UDPProxyServer.cpp
+  UDPProxyCoordinator.cpp
+  UDPProxyClient.cpp
+  UDPForwarder.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\udpforwarder.cpp(235): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\udpforwarder.cpp(464): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1850): note: see declaration of 'inet_addr'
+  TwoWayAuthentication.cpp
+  ThreadsafePacketLogger.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\threadsafepacketlogger.cpp(44): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  TelnetTransport.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(76): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(86): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(94): warning C4996: 'strncat': This function or variable may be unsafe. Consider using strncat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(255): note: see declaration of 'strncat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(147): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(149): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(315): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\telnettransport.cpp(328): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  TeamManager.cpp
+  TeamBalancer.cpp
+  TCPInterface.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\tcpinterface.cpp(117): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1850): note: see declaration of 'inet_addr'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\tcpinterface.cpp(397): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\tcpinterface.cpp(799): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(2238): note: see declaration of 'gethostbyname'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\tcpinterface.cpp(824): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1850): note: see declaration of 'inet_addr'
+  TableSerializer.cpp
+  SuperFastHash.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\superfasthash.cpp(101): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+  StringTable.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\stringtable.cpp(76): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\stringtable.cpp(137): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+  Generating Code...
+  Compiling...
+  StringCompressor.cpp
+  StatisticsHistory.cpp
+  SocketLayer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(170): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(210): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: see declaration of 'inet_ntoa'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(215): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: see declaration of 'inet_ntoa'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(371): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(402): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(2238): note: see declaration of 'gethostbyname'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(413): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\socketlayer.cpp(490): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'LPVOID'
+  SimpleMutex.cpp
+  SignaledEvent.cpp
+  SendToThread.cpp
+  SecureHandshake.cpp
+  RPC4Plugin.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rpc4plugin.cpp(280): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  Router2.cpp
+  ReplicaManager3.cpp
+  ReliabilityLayer.cpp
+  RelayPlugin.cpp
+  ReadyEvent.cpp
+  RandSync.cpp
+  Rand.cpp
+  RakWString.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(92): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\corecrt_wstring.h(121): note: see declaration of 'wcscpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(112): warning C4996: 'mbstowcs': This function or variable may be unsafe. Consider using mbstowcs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdlib.h(920): note: see declaration of 'mbstowcs'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(121): warning C4996: 'mbstowcs': This function or variable may be unsafe. Consider using mbstowcs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdlib.h(920): note: see declaration of 'mbstowcs'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(164): warning C4996: 'wcscat': This function or variable may be unsafe. Consider using wcscat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\corecrt_wstring.h(101): note: see declaration of 'wcscat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(194): warning C4996: 'wcscat': This function or variable may be unsafe. Consider using wcscat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\corecrt_wstring.h(101): note: see declaration of 'wcscat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakwstring.cpp(385): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\corecrt_wstring.h(121): note: see declaration of 'wcscpy'
+  RakThread.cpp
+  RakString.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(166): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(190): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(208): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(349): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(350): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(475): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(499): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(516): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(665): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(696): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(960): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(1291): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(1305): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(1382): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakstring.cpp(1407): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+  RakSleep.cpp
+  RakPeer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(429): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(577): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(622): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(728): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(733): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\rakpeer.cpp(1896): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  Generating Code...
+  Compiling...
+  RakNetTypes.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettypes.cpp(105): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettypes.cpp(266): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettypes.cpp(295): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: see declaration of 'inet_ntoa'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettypes.cpp(296): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettypes.cpp(299): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  RakNetTransport2.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknettransport2.cpp(63): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+  RakNetStatistics.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(42): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(65): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(74): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(75): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(84): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(85): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(133): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(142): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(143): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(152): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetstatistics.cpp(153): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  RakNetSocket2_Windows_Linux_360.cpp
+  RakNetSocket2_Windows_Linux.cpp
+  RakNetSocket2_WindowsStore8.cpp
+  RakNetSocket2_Vita.cpp
+  RakNetSocket2_PS4.cpp
+  RakNetSocket2_PS3_PS4.cpp
+  RakNetSocket2_NativeClient.cpp
+  RakNetSocket2_Berkley_NativeClient.cpp
+  RakNetSocket2_Berkley.cpp
+  RakNetSocket2_360_720.cpp
+  RakNetSocket2.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_windows_linux.cpp(81): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(2238): note: see declaration of 'gethostbyname'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_berkley.cpp(99): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1850): note: see declaration of 'inet_addr'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_berkley.cpp(193): warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1850): note: see declaration of 'inet_addr'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_berkley_nativeclient.cpp(77): warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(2238): note: see declaration of 'gethostbyname'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_berkley_nativeclient.cpp(93): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\raknetsocket2_berkley_nativeclient.cpp(93): warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+  c:\program files (x86)\windows kits\8.1\include\um\winsock2.h(1868): note: see declaration of 'inet_ntoa'
+  RakNetSocket.cpp
+  RakNetCommandParser.cpp
+  RakMemoryOverride.cpp
+  Rackspace.cpp
+  PS4Includes.cpp
+  PluginInterface2.cpp
+  Generating Code...
+  Compiling...
+  PacketOutputWindowLogger.cpp
+  PacketLogger.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(68): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(95): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(115): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(169): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(190): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(251): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(426): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(431): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(446): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\time.h(505): note: see declaration of 'localtime'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(449): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetlogger.cpp(450): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  PacketizedTCP.cpp
+  PacketFileLogger.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetfilelogger.cpp(35): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetfilelogger.cpp(37): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\packetfilelogger.cpp(38): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+  PacketConsoleLogger.cpp
+  NetworkIDObject.cpp
+  NetworkIDManager.cpp
+  NatTypeDetectionServer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\nattypedetectionserver.cpp(80): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  NatTypeDetectionCommon.cpp
+  NatTypeDetectionClient.cpp
+  NatPunchthroughServer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\natpunchthroughserver.cpp(203): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\natpunchthroughserver.cpp(246): warning C4018: '<': signed/unsigned mismatch
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\natpunchthroughserver.cpp(599): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+  NatPunchthroughClient.cpp
+  MessageFilter.cpp
+  LogCommandParser.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\logcommandparser.cpp(146): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\logcommandparser.cpp(160): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  LocklessTypes.cpp
+  LinuxStrings.cpp
+  Itoa.cpp
+  IncrementalReadInterface.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\incrementalreadinterface.cpp(18): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+  HTTPConnection2.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\httpconnection2.cpp(159): warning C4267: 'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\httpconnection2.cpp(338): warning C4244: '=': conversion from '__int64' to 'int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\httpconnection2.cpp(377): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\httpconnection2.cpp(572): warning C4244: '=': conversion from '__int64' to 'int', possible loss of data
+  HTTPConnection.cpp
+  Generating Code...
+  Compiling...
+  GridSectorizer.cpp
+  gettimeofday.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\gettimeofday.cpp(59): warning C4996: '__timezone': This function or variable may be unsafe. Consider using _get_timezone instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\time.h(73): note: see declaration of '__timezone'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\gettimeofday.cpp(60): warning C4996: '__daylight': This function or variable may be unsafe. Consider using _get_daylight instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\time.h(61): note: see declaration of '__daylight'
+  GetTime.cpp
+  Gets.cpp
+  Getche.cpp
+  FullyConnectedMesh2.cpp
+  FormatString.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\formatstring.cpp(26): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\formatstring.cpp(37): warning C4996: '_vsnprintf': This function or variable may be unsafe. Consider using _vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1396): note: see declaration of '_vsnprintf'
+  FileOperations.cpp
+  FileListTransfer.cpp
+  FileList.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(123): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(241): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(248): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(257): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(267): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(269): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(298): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(299): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(307): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(346): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(366): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(367): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(368): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(555): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(557): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(558): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(614): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(616): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(617): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(706): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\filelist.cpp(708): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  EpochTimeToString.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\epochtimetostring.cpp(30): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\time.h(505): note: see declaration of 'localtime'
+  EmailSender.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(99): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(117): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(126): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(128): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(135): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(137): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(153): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(158): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(163): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(179): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(184): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(187): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(191): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(276): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(279): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(293): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\emailsender.cpp(298): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+  DynDNS.cpp
+  DS_Table.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(109): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(157): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(252): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(956): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(963): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(980): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(995): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(1008): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(1022): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\ds_table.cpp(1047): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+  DS_HuffmanEncodingTree.cpp
+  DS_ByteQueue.cpp
+  DS_BytePool.cpp
+  DR_SHA1.cpp
+  DirectoryDeltaTransfer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(47): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(48): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(63): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(64): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(124): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(346): note: see declaration of 'strncpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(126): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(158): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(162): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\directorydeltatransfer.cpp(164): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(90): note: see declaration of 'strcat'
+  DataCompressor.cpp
+  Generating Code...
+  Compiling...
+  ConsoleServer.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\consoleserver.cpp(315): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+  ConnectionGraph2.cpp
+  CommandParserInterface.cpp
+  CloudServer.cpp
+  CloudCommon.cpp
+  CloudClient.cpp
+  CheckSum.cpp
+  CCRakNetUDT.cpp
+  CCRakNetSlidingWindow.cpp
+  BitStream.cpp
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\bitstream.cpp(845): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\string.h(119): note: see declaration of 'strcpy'
+i:\dev\sdl\allegro vanhat\sln\raknet\raknet\bitstream.cpp(888): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  e:\sdk\include\10.0.10150.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+  Base64Encoder.cpp
+  Generating Code...
+  LINK : I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.dll not found or not built by the last incremental link; performing full link
+     Creating library I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.lib and object I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.exp
   Raknet.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Debug\Raknet.dll
