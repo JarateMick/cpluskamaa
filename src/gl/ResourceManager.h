@@ -9,8 +9,11 @@ namespace UpiEngine {
 	public:
 		static GLTexture getTexture(std::string texturePath);
 
+		static void init();
+		static TextureCache* GetContext();
+		static void SetContext(TextureCache* cache);
 	private:
 		static TextureCache _textureCache;
+		static TextureCache* contextPtr;
 	};
-
 }

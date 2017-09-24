@@ -1,6 +1,7 @@
 ﻿#include "imguiTools.h"
 #include "imgui/imgui.h"
 #include "fileSystem.cpp"
+#include "entity.cpp"
 // #include "utility.h"
 // #include "imgui/imgui.h"
 
@@ -655,6 +656,63 @@ EXPORT IMGUIFUNC(Imgui)
 		ImGui::Text("Coloring");
 
 
+	if (gameState->player)
+	{
+		auto vec4 = ImGui::ColorConvertU32ToFloat4(gameState->player->player.side);
+		ImGui::Text("hello");
+	}
+
+
+	ImGui::Text("Spawn units");
+	static int SpawnCount = 1;
+	ImGui::InputInt("count: ", &SpawnCount);
+	// ImGui::ColorEdit4("Side: ", )
+	if (ImGui::Button("spawn stuff"))
+	{
+		for (int i = 0; i < SpawnCount; i++)
+		{
+			Entity* e = newEntity(input->mouse.x, input->mouse.y, Entity_unit, gameState);
+			Uint32 unitColor = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+			e->unit.side = unitColor;
+			e->unit.attackRange = 200.f;
+			// e->unit.
+		}
+	}
+
+	static bool selectTarget = false;
+	ImGui::Checkbox("select target (g)", &selectTarget);
+	if (selectTarget)
+	{
+		if (input->isKeyPressed(SDL_SCANCODE_G))
+		{
+			Entity* targetEntity = 0;
+			Rect rect{ input->mouse.x, input->mouse.y, 60.f, 60.f };
+
+			for (int i = 0; i < gameState->currentEntityCount; i++)
+			{
+				Entity* e = &gameState->entities[i];
+				if (e->type == Entity_unit)
+				{
+					if (rect.Contains(e->x, e->y))
+					{
+						targetEntity = e;
+						break;
+					}
+				}
+			}
+
+			if (targetEntity)
+			{
+				for (int i = 0; i < gameState->selectedCount; i++)
+				{
+					// nullaa jos kuollut target
+					gameState->selectedEntitys[i]->unit.attackTarget = targetEntity;
+				}
+				printf("target set\n");
+			}
+		}
+	}
+
 	ImGui::Begin("fake player gui");
 	if (ImGui::Button("build factory"))
 	{
@@ -664,7 +722,6 @@ EXPORT IMGUIFUNC(Imgui)
 	{
 		gameState->player->player.selectedBuildingType = building_mill;
 	}
-
 	ImGui::End();
 }
 

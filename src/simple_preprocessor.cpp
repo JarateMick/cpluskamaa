@@ -67,7 +67,7 @@ inline bool IsWhitespace(char c)
 inline bool IsAlpha(char c)
 {
 	return ((c >= 'a') && (c <= 'z') ||
-			(c >= 'A') && (c <= 'Z'));
+		(c >= 'A') && (c <= 'Z'));
 }
 
 inline bool IsNumer(char c)
@@ -135,11 +135,11 @@ static Token GetToken(Tokenizer* tokenizer)
 	case '{': token.type = Token_OpenBraces; break;
 	case '}': token.type = Token_CloseBraces; break;
 
-	/*case '/':
-	{
+		/*case '/':
+		{
 
-	} break;
-*/
+		} break;
+	*/
 	case '"':
 	{
 		token.type = Token_String;
@@ -223,7 +223,7 @@ static void parseIntrospectionParams(Tokenizer * tokenizer)
 	}
 }
 
-static void ParseMember(Tokenizer *tokenizer, Token memberTypeToken)
+static void ParseMember(Tokenizer *tokenizer, Token structTypeToken, Token memberTypeToken)
 {
 	bool parsing = true;
 	bool isPointer = false;
@@ -243,8 +243,10 @@ static void ParseMember(Tokenizer *tokenizer, Token memberTypeToken)
 			break;
 
 		case Token_Identifier:
-			printf("{type_%.*s, %.*s },\n",
-				(int)memberTypeToken.textLength, memberTypeToken.text, 
+			printf("	{ MetaType_%.*s, \"%.*s\", (u32)&((%.*s *)0)->%.*s }, \n",
+				(int)memberTypeToken.textLength, memberTypeToken.text,
+				(int)token.textLength, token.text,
+				(int)structTypeToken.textLength, structTypeToken.text,
 				(int)token.textLength, token.text);
 			break;
 
@@ -261,7 +263,7 @@ static void ParseStruct(Tokenizer* tokenizer)
 	Token nameToken = GetToken(tokenizer);
 	if (RequireToken(tokenizer, Token_OpenBraces))
 	{
-		printf("char *memberOf_%.*s[] = \n", (int)nameToken.textLength, nameToken.text);
+		printf("member_definition memberOf_%.*s[] = \n", (int)nameToken.textLength, nameToken.text);
 		printf("{\n");
 		for (;;)
 		{
@@ -272,10 +274,10 @@ static void ParseStruct(Tokenizer* tokenizer)
 			}
 			else
 			{
-				ParseMember(tokenizer, memberToke);
+				ParseMember(tokenizer, nameToken, memberToke);
 			}
 		}
-		printf("}\n");
+		printf("};\n");
 	}
 }
 
@@ -305,38 +307,48 @@ static void parseIntrospectable(Tokenizer *tokenizer)
 
 int main(int ArgCount, char ** Args)
 {
-	char* Filecontents = ReadEntireFIleIntoMemoryAndNullTerminate("I:/Dev/SDL/allegro vanhat/TEST_ENUMERATE/handmade_sim_region.h");
-
-	Tokenizer tokenizer = {};
-	tokenizer.at = Filecontents;
-
-	bool parsing = true;
-	while (parsing)
+	char * filenames[2] =
 	{
-		Token token = GetToken(&tokenizer);
-		switch (token.type)
+		"I:/Dev/SDL/allegro vanhat/src/game.h",
+		"I:/Dev/SDL/allegro vanhat/src/core.h",
+	};
+
+	for (int i = 0; i < 2; i++)
+	{
+
+		char* Filecontents = ReadEntireFIleIntoMemoryAndNullTerminate(filenames[i]);
+
+		Tokenizer tokenizer = {};
+		tokenizer.at = Filecontents;
+
+		bool parsing = true;
+		while (parsing)
 		{
-		case Token_EndOfStream:
-		{
-			parsing = false;
-		} break;
-
-
-
-		case Token_Unknown: break;
-
-		case Token_Identifier:
-		{
-			if (TokenEquals(token, "introspect"))
+			Token token = GetToken(&tokenizer);
+			switch (token.type)
 			{
-				parseIntrospectable(&tokenizer);
-			}
-		} break;
+			case Token_EndOfStream:
+			{
+				parsing = false;
+			} break;
 
-		default:
-		{
-			printf("%d: %.*s: \n", token.type, (int)token.textLength, token.text);
-		} break;
+
+
+			case Token_Unknown: break;
+
+			case Token_Identifier:
+			{
+				if (TokenEquals(token, "introspect"))
+				{
+					parseIntrospectable(&tokenizer);
+				}
+			} break;
+
+			default:
+			{
+				// printf("%d: %.*s: \n", token.type, (int)token.textLength, token.text);
+			} break;
+			}
 		}
 	}
 

@@ -31,6 +31,11 @@ struct ResourceManager
 };
 
 
+// shitty resource manager 
+struct Context
+{
+	UpiEngine::TextureCache* textureCacheCtx;
+};
 
 // tänne tavallaan public engine hommat
 struct EngineCore
@@ -46,8 +51,9 @@ struct EngineCore
 
 	SDL_GLContext *glcontext;
 	SDL_Window    *window;
-
 	UpiEngine::SpriteBatch *spriteBatch;
+	
+	Context       ctx;
 
 	scripting     script;          // lua scipts
 	FileWatcher   filewatcher;     // very bare-bones file write time poller

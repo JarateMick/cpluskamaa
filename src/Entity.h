@@ -1,5 +1,22 @@
 #pragma once
 
+#define EXTEXP extern "C" __declspec(dllexport)
+
+#ifndef EXPORT
+#define EXPORT extern "C" 
+#endif
+
+// CollisionBody:
+//	create();
+//	destroy();
+
+//
+//  x, y, w, h, ... r
+//  type: circle, square
+//  
+//  queries: 
+// 
+
 enum Entity_Enum
 {
 	Entity_Invalid,
@@ -14,7 +31,9 @@ enum Entity_Enum
 
 	Entity_building,
 
-	Entity_MAX
+	Entity_bullet,
+
+	Entity_MAX,
 };
 
 const char *EntityNames[Entity_MAX] =
@@ -25,7 +44,8 @@ const char *EntityNames[Entity_MAX] =
 	"unit",
 	"script",
 	"player",
-	"building"
+	"building",
+	"bullet",
 };
 
 // #include "glm/vec2.hpp"
@@ -73,6 +93,8 @@ enum building_type
 	building_max,
 };
 
+// hello
+
 struct Entity
 {
 	Entity_Enum type;
@@ -82,6 +104,7 @@ struct Entity
 	// glm::vec2 pos;
 	float x, y;
 	float velX, velY;
+	bool alive;
 
 	// vel
 	// acc
@@ -96,7 +119,7 @@ struct Entity
 		{
 			int damage;
 		} npc;
-		struct
+		struct Unit
 		{
 			int damage;
 			int moveSpeed;
@@ -104,6 +127,16 @@ struct Entity
 			Uint32 side;
 
 			int targetX, targetY;
+
+			Entity* attackTarget;
+
+			float mainAttackCD;
+			// void* target2;
+
+			float attackRange;
+				// attack speed jne...
+				// (instant attacks melee) <-> (type?)
+				// if in range attack jne...
 		} unit;
 		struct
 		{
@@ -127,7 +160,17 @@ struct Entity
 			building_type type;
 			Uint32        side;
 			float         timer;
+			GLbyte        textureId;
+			glm::vec4     textureUv;
 		} building;
+		struct // TODO: (optimointi) bulletit voisi laittaa omaksi arrayksi koska paljon pienimpi
+		{
+			// int exparationFrame;  // laske speed/frame ja vertaile tata laskemisen sijasta ?
+			float speed;
+
+			float rangeSquared;
+			float startX, startY;
+		} bullet;
 	};
 };
 
@@ -138,7 +181,7 @@ void f(Entity *e, EngineCore* core);
 void r(Entity *e, EngineCore* core);
 
 Entity* GetFirstAvaibleEntity(game_state* state);
-Entity* newEntity(float x, float y, Entity_Enum type, game_state* state);
+EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state); //LUA_E_F
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side);
 
 #define GET_ENTITY(e, entity_type) ((e)->type == Entity_##entity_type ? &(e)->entity_type : 0)

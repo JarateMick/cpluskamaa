@@ -1,6 +1,7 @@
 ﻿#pragma once
 #define EXPORT extern "C" 
 // __declspec( dllexport )
+#define introspect(name)
 
 #define kiloBytes(value) ((value)*1024LL)
 #define megaBytes(value) (kiloBytes(value)*1024LL)
@@ -39,7 +40,7 @@ struct v2 { int x, y; };
 
 
 #include <lua.hpp>
-#include <Windows.h>
+// #include <Windows.h> jes
 #include <SDL2\SDL_image.h>
 
 #include <cstdint>
@@ -71,7 +72,7 @@ enum ResourceType
 	Resource_texture,
 	Resource_max,
 };
-struct resourceData 
+struct resourceData
 {
 	std::vector<FILETIME> filetimes;
 	std::vector<std::string> filepathsToWatch;
@@ -117,7 +118,7 @@ public:
 	{
 		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
 	}
-}; 
+};
 
 struct FileWatcher
 {
@@ -192,7 +193,7 @@ struct scripting
 		int ret = lua_pcall(L, 0, 0, 0);
 		if (ret != 0)
 		{
-			// fprintf(stderr, "%s\n", lua_tostring(L, -1));
+			// fprintf(stderr, "%s\n",/ lua_tostring(L, -1));
 			sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
 			printf("%s", buffer);
 			return buffer;
@@ -375,7 +376,7 @@ struct ProvinceData
 	int*                   currentCount;
 };
 
-struct game_state
+introspect("game_state: jotain") struct game_state
 {
 	memory_arena   arena;
 	Entity         entities[10000];
@@ -386,7 +387,6 @@ struct game_state
 
 	int            currentEntityCount;
 	ProvinceData   provinceData;
-
 
 	// TileMap tilemap;
 	// TilemapEditor editor;
@@ -403,10 +403,10 @@ struct AssetFileInfo
 };
 
 // 300ms nopeampi compile !!!
-#if EXE_COMPILE
+#if EXE_COMPILE 
 typedef unsigned long DWORD, *PDWORD, *LPDWORD;
 typedef struct _FILETIME {
 	DWORD dwLowDateTime;
 	DWORD dwHighDateTime;
-} FILETIME, *PFILETIME;
+} FILETIME, *PFILETIME; ]
 #endif

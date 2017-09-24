@@ -12,6 +12,12 @@
 #include "Entity.cpp"
 #include "fileSystem.cpp"
 
+
+
+// #include "meta.h"
+#include "meta.cpp"
+#include "graph.h"
+
 #undef max
 #undef min 
 
@@ -132,8 +138,233 @@ void SaveAllGameState(game_state* gameState)
 	}
 }
 
-const int mapSizeMultiplier = 4;
 
+#define IM_COL32_R_SHIFT    0
+#define IM_COL32_G_SHIFT    8
+#define IM_COL32_B_SHIFT    16
+#define IM_COL32_A_SHIFT    24
+#define IM_COL32_A_MASK     0xFF000000
+struct v4 { float x, y, z, w; };
+v4 ColorConvertU32ToFloat4(Uint32 in)
+{
+	float s = 1.0f / 255.0f;
+	return {
+		((in >> IM_COL32_R_SHIFT) & 0xFF) * s,
+		((in >> IM_COL32_G_SHIFT) & 0xFF) * s,
+		((in >> IM_COL32_B_SHIFT) & 0xFF) * s,
+		((in >> IM_COL32_A_SHIFT) & 0xFF) * s };
+}
+
+#include <sstream>
+//  #include <>
+
+// Graph<int, int> map(6);
+struct MapNode
+{
+	int   id;
+	float x, y; // for rendering and debugging 
+};
+
+#define MAX_PROVINCES 128
+Uint32 idToColor[MAX_PROVINCES];
+v2 positions[MAX_PROVINCES];
+std::map<Uint32, int> colorToId;
+int nodeCount = 0;
+
+void SaveNodes()
+{
+	FILE* file = fopen("test2.txt", "w");
+	char buffer[128];
+
+	// ;id;x;y;r;g;b;a;n;n;n;n;n;n;n;n;n;n;
+	for (int i = 0; i < nodeCount; i++)
+	{
+		auto color = ColorConvertU32ToFloat4(idToColor[i]);
+		v2 pos = positions[i];
+		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;\n",
+			i, pos.x, pos.y, (int)(color.w * 255), (int)(color.z * 255), (int)(color.y * 255), (int)(color.x * 255));
+		fwrite(buffer, sizeof(char), count, file);
+	}
+	fclose(file);
+}
+
+Uint32 createRGBA(int r, int g, int b, int a)
+{
+	return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8)
+		+ (a & 0xff);
+}
+
+#include "graph.h"
+Graph<MapNode, int> nodes(64);
+
+
+void LoadNodes()
+{
+	const int maxNeighbours = 8;
+	int* arcs = (int*)malloc(sizeof(int) * 64 * 8);
+	memset(arcs, -1, sizeof(int) * 64 * 8);
+
+	std::ifstream stream("test2.txt");
+	std::string line;
+	int lastSaved = 0;
+
+	while (std::getline(stream, line))
+	{
+		std::istringstream s(line);
+
+		if (line.at(0) == ';')
+			continue;
+		nodeCount++;
+
+		std::string field;
+		std::getline(s, field, ';');
+
+
+		std::cout << "id: " << field << ", ";
+		int id = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "x: " << field << ", ";
+		int x = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "y: " << field << ", ";
+		int y = atoi(field.c_str());
+
+
+		// nodes->push_back({ id, (float)x, (float)y });
+		// colorToId[id] = r g b a
+
+		int break2 = lastSaved * 2;
+
+		std::getline(s, field, ';');
+		std::cout << "r: " << field << ", ";
+		int r = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "g: " << field << ", ";
+		int g = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "b: " << field << ", ";
+		int b = atoi(field.c_str());
+
+		std::getline(s, field, ';');
+		std::cout << "a: " << field << ", ";
+		int a = atoi(field.c_str());
+
+
+		// replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+		positions[id] = { x, y };
+		Uint32 color = createRGBA(r, g, b, a);
+
+		//	Uint32 color = ImGui::GetColorU32({})
+		//	auto color2 = ImGui::GetColorU32({ (float)r / 255.f, g / 255.f, b/255.f, a/255.f });
+
+			// Uint32 color = ImGui::GetColorU32({(float)r, (float)g, (float)b, (float)a});
+			// auto color = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
+
+		colorToId[color] = id;
+		idToColor[id] = color;
+
+		MapNode node{ id, (float)x, (float)y };
+		nodes.AddNode(node, id);
+
+
+		std::cout << "Neighbours: ";
+		// memset(arcsId, -1, sizeof(int) * maxNeighbours);
+
+		int i = 0;
+		while (std::getline(s, field, ';') && i < maxNeighbours)
+		{
+			std::cout << field << ", ";
+			int neighboursId = atoi(field.c_str());
+			*(arcs + id * maxNeighbours + i) = neighboursId;
+			i++;
+		}
+		std::cout << "\n";
+		lastSaved = id;
+	}
+
+	printf("Adding Arcs!\n");
+	// set the arcs!
+	for (int id = 0; id < lastSaved + 1; id++)
+	{
+		for (int n = 0; n < maxNeighbours && (*(arcs + id * maxNeighbours + n)) != -1; n++)
+		{
+			int neigbourdId = *(arcs + id * maxNeighbours + n);
+			nodes.AddArc(id, neigbourdId, 1); // Note: Are weights ever needed!
+			printf("added arc from %i to %i \n", id, neigbourdId);
+		}
+	}
+
+	free(arcs);
+}
+
+#include <map>
+void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
+{
+	GraphNode<MapNode, int>* start = graph->nodes[startID];
+
+	std::queue<GraphNode<MapNode, int>*> queue;
+	queue.push(start);         
+	start->marked = true;
+
+	std::map<GraphNode<MapNode, int>*, GraphNode<MapNode, int>*> came_from;
+	came_from[start] = 0;
+
+	while (queue.size() != 0)
+	{
+		GraphNode<MapNode, int>* current = queue.front();
+
+		if (current->data.id == goalId)
+			break;
+
+		auto itr = current->archlist.begin(); // neighbours !
+		for (itr; itr != current->archlist.end(); itr++)
+		{
+			if (itr->node->marked == false)
+			{
+				itr->node->marked = true;
+				queue.push(itr->node);
+				came_from[itr->node] = current;
+			}
+		}
+		queue.pop();
+	}
+
+	// make path
+	GraphNode<MapNode, int>* current = graph->nodes[goalId];
+	std::vector<GraphNode<MapNode, int>*> path;
+	path.push_back(current);
+
+	while (current != start)
+	{
+		current = came_from[current];
+		path.push_back(current);
+	}
+	// path.push_back
+
+	// Python:
+	// path = [current]
+	// while current != start:
+	//		current = came_from[current]
+	//		path.append(current)
+
+	//	path.append(start) 
+	//	path.reverse()      
+
+	for (int i = 0; path.size(); i++)
+	{
+		auto node = path[i];
+		printf("%i, ", node->data.id);
+	}
+	printf("\n");
+	graph->ClearMarks();
+}
+
+
+const int mapSizeMultiplier = 4;
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -146,25 +377,36 @@ EXPORT void Loop(EngineCore* core)
 			(uint8_t *)core->memory->permanentStorage + sizeof(game_state));
 		memory_arena* arena = &gameState->arena;
 
+		core->memory->isInitialized = true;
+
 		L = core->script.L;
 		Debug::_Debugger = core->debugger; // hööh :-(
+		UpiEngine::ResourceManager::SetContext(core->ctx.textureCacheCtx);
 
+
+		//std::vector<MapNode> nodes;
+		printf("##################################################\n");
+		LoadNodes();
+		printf("##################################################\n");
+		// SaveNodes(&nodes);
+		// printf("##################################################\n");
+		// LoadNodes(&nodes);
+		// printf("##################################################\n");
+
+		gameState->provinceData.maxProvinces = MAX_PROVINCES;
+		gameState->provinceData.currentCount = &nodeCount;
+		gameState->provinceData.positions = positions;
+		gameState->provinceData.colorToId = &colorToId;
+		gameState->provinceData.idToColor = idToColor;
 
 		gameState->selectedEntitys = ((Entity**)PushArray2(arena, 1000, 4));
 		gameState->maxSelected = 1000;
 
-
 		// TODO: defaults some neat fileloading facilities would be cool
 		gameState->cameraSpeed = 50.0f;
 
-		// Initialize some npc's;
-		// floats = PushArray(&gameState->arena, 10000000, float);
-
-		core->memory->isInitialized = true;
-
 		gameState->entities[0].type = Entity_ninja;
 		gameState->entities[1].type = Entity_npc;
-
 
 		int j = 0;
 		for (int i = 0; i < (int)ArrayCount(gameState->entities); i++)
@@ -173,19 +415,24 @@ EXPORT void Loop(EngineCore* core)
 			j++;
 			gameState->entities[i].unit.targetX = -1;
 			gameState->entities[i].unit.targetY = -1;
+			gameState->entities[i].alive = true;
 		}
+
 
 		gameState->entities[2].type = Entity_unit;
 		gameState->entities[2].x = 300.f;
 		gameState->entities[2].y = 300.f;
-		gameState->entities[2].unit.side = 0xFFFF0000;
-
+		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
+		gameState->entities[2].unit.attackRange = 250.f;
+		// gameState->entities[2].unit.mainAttackCD = 
 
 		gameState->entities[3].type = Entity_player;
 		gameState->entities[3].player.cash = 100;
-		gameState->entities[3].player.side = 0xFFFF0000; // red!
+		gameState->entities[3].player.side = 0xFF00FF00; // green
 		gameState->player = &gameState->entities[3];
 		gameState->currentEntityCount = 4;
+
+
 
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
@@ -210,12 +457,22 @@ EXPORT void Loop(EngineCore* core)
 		}
 	}
 
+
 	/*************************************************/
 	// ENTITY UPDATE
-	for (int i = 0; i < gameState->currentEntityCount; i++)
+	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 	{
 		f(&gameState->entities[i], core);
+		if (!gameState->entities[i].alive)
+		{
+			// deletefunc
+			memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
+				sizeof(Entity));
+			--gameState->currentEntityCount;
+		}
 	}
+
+
 
 	// TODO: Nuke this init phase
 	static bool init = false;
@@ -226,9 +483,6 @@ EXPORT void Loop(EngineCore* core)
 		init = true;
 	}
 
-	// g_boxy.Update(core, gameState);
-
-	// pelaajan kontrollit
 	// TODO: Engine kamat engineen
 	InputManager* input = core->input;
 
@@ -269,19 +523,33 @@ EXPORT void Loop(EngineCore* core)
 		// FreeTexture(&tid);
 	}
 
-
 	// MOUSE debug code
 	WorldMap* map = &gameState->worldmap;
 	float mx = (input->mouse.x - map->dimensions.x) / mapSizeMultiplier;
 	float my = (map->dimensions.w - input->mouse.y) / mapSizeMultiplier;   // map->dimensions.w / 3 - input->mouse.y / 3;
 	Debug::drawBox(mx, my, 3.f, 3.f);
 
+
+	if (input->isKeyDown(SDL_SCANCODE_4))
+	{
+		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
+		auto iter = colorToId.find(color);
+
+		if (iter != colorToId.end())
+			printf("id: %x\n ", (iter->second));
+		else
+			printf("%x not found\n", color);
+	}
+
 	if (input->isKeyDown(SDL_SCANCODE_5))
 	{
 		WorldMap* map = &gameState->worldmap;
 		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
 		map->editor.editorColor = color;
+
 		printf("%x\n", color);
+		// printf("%x\n", idToColor[0]);
+		// printf("%i ", idToColor[0] == color);
 	}
 
 	if (input->isKeyDown(SDL_SCANCODE_6))
@@ -311,6 +579,11 @@ EXPORT void Loop(EngineCore* core)
 		WorldMap* map = &gameState->worldmap;
 		map->editor.inputX = input->mouse.x;
 		map->editor.inputY = input->mouse.y;
+	}
+
+	if (input->isKeyPressed(SDL_SCANCODE_9))
+	{
+		SaveNodes();
 	}
 }
 
@@ -703,6 +976,39 @@ EXPORT void Draw(EngineCore* core)
 		Entity* e = &gameState->entities[i];
 		r(e, core);
 	}
+
+
+
+	// Cool
+	char buffer[512];
+	for (u32 memberIndex = 0; memberIndex < ArrayCount(memberOf_game_state);
+		++memberIndex)
+	{
+		member_definition* member = memberOf_game_state + memberIndex;
+
+		switch (member->type)
+		{
+		case MetaType_bool32:
+			// _snprintf_s(buffer, 512, "%s: %b ", member->name, *(bool *)(((Uint8*)&gameState) + member->offset));
+			break;
+		case MetaType_int:
+			// _snprintf_s(buffer, 512, "%s: %i ", member->name, *(int *)(((Uint8*)&gameState) + member->offset));
+			break;
+		case MetaType_float: break;
+		case MetaType_uint32: break;
+		}
+	}
+	// printf("%s", buffer);
+
+
+	for (int i = 0; i < gameState->selectedCount; i++)
+	{
+		Entity* e = gameState->selectedEntitys[i];
+		float r = e->unit.attackRange;
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
+		Debug::drawCircle({ e->x, e->y }, white, r);
+	}
+
 	// TODO: Fontit resource managerille
 }
 

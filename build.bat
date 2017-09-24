@@ -25,6 +25,11 @@ del *.pdb > NUL 2> NUL
 
 rem simple preprocessor
 cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
+pushd ..\src
+..\bin\simple_preprocessor.exe > handmade_generated.h
+popd
+
+
 
 rem Box2D.lib  Box2D.lib
 

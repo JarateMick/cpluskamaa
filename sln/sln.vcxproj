@@ -37,6 +37,7 @@
     <ClCompile Include="..\src\InputRecorder.cpp" />
     <ClCompile Include="..\src\LuaScript.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\meta.cpp" />
     <ClCompile Include="..\src\Random.cpp" />
     <ClCompile Include="..\src\simple_preprocessor.cpp" />
     <ClCompile Include="..\src\TextureHolder.cpp" />
@@ -60,11 +61,13 @@
     <ClInclude Include="..\src\gl\SpriteFont.h" />
     <ClInclude Include="..\src\gl\TileSheet.h" />
     <ClInclude Include="..\src\gl\Vertex.h" />
+    <ClInclude Include="..\src\graph.h" />
     <ClInclude Include="..\src\Hex.h" />
     <ClInclude Include="..\src\imguiTools.h" />
     <ClInclude Include="..\src\LuaInclude.h" />
     <ClInclude Include="..\src\LuaScript.h" />
     <ClInclude Include="..\src\main.h" />
+    <ClInclude Include="..\src\meta.h" />
     <ClInclude Include="..\src\Random.h" />
     <ClInclude Include="..\src\TextureHolder.h" />
     <ClInclude Include="..\src\Tilemap.h" />

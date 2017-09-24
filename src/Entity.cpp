@@ -96,7 +96,7 @@ void f(Entity *e, EngineCore* core)
 				player->selectionRect.y = input->mouse.y;
 			}
 		}
-		else if (input->isMouseClicked(2))
+		else if (input->isMouseClicked(3))
 		{
 			player->selectedBuildingType = building_none;
 
@@ -104,12 +104,13 @@ void f(Entity *e, EngineCore* core)
 			// 1 -> select
 			// 2 -> clear selection
 
+			// move or attack here !!!
+
 			for (int i = 0; i < gameState->selectedCount; i++)
 			{
 				gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
 				gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
 			}
-
 			printf("target set");
 		}
 
@@ -144,8 +145,6 @@ void f(Entity *e, EngineCore* core)
 			gameState->selectedCount = selectedCount;
 			printf("selected %i entitys ", selectedCount);
 		}
-
-
 	}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
@@ -161,6 +160,33 @@ void f(Entity *e, EngineCore* core)
 			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, unit->side, core);
 		}
 
+		// attack logic
+		unit->mainAttackCD -= core->deltaTime;
+		auto attackTarget = unit->attackTarget;
+
+		if ((attackTarget) && unit->mainAttackCD < 0.f) // SHOOT // attack
+		{
+			// laske suunta targettiin
+			glm::vec2 targetVector{ attackTarget->x - e->x , attackTarget->y - e->y };
+			float lengthSquared = targetVector.x * targetVector.x + targetVector.y * targetVector.y;
+
+			if (lengthSquared < unit->attackRange * unit->attackRange)
+			{
+				// TODO: tuohon direction/koko offset niin tulee piipusta
+				Entity* bulletEntity = newEntity(e->x, e->y, Entity_bullet, gameState);
+
+				glm::vec2 direction = glm::normalize(targetVector);
+				bulletEntity->velX = direction.x;
+				bulletEntity->velY = direction.y;
+				bulletEntity->bullet.rangeSquared = unit->attackRange * unit->attackRange;
+				bulletEntity->bullet.speed = 2.f;
+				bulletEntity->bullet.startX = e->x;
+				bulletEntity->bullet.startY = e->y;
+
+				unit->mainAttackCD = 50.f;
+			}
+		}
+
 		if (unit->targetX != -1 && unit->targetY != -1)
 		{
 			glm::vec2 moveVec{ unit->targetX - e->x, unit->targetY - e->y };
@@ -168,7 +194,7 @@ void f(Entity *e, EngineCore* core)
 			// float length = glm::length(moveVec);
 			// korjaa
 			float length = /* sqrt */((moveVec.x * moveVec.x + moveVec.y * moveVec.y));
-			if (length < 2.f )
+			if (length < 2.f)
 			{
 				unit->targetX = -1;
 				unit->targetY = -1;
@@ -178,7 +204,7 @@ void f(Entity *e, EngineCore* core)
 				moveVec = glm::normalize(moveVec) * 0.1f * 1.f;
 				e->x += moveVec.x;
 				e->y += moveVec.y;
-				
+
 				Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
 				static SDL_PixelFormat *fmt = gameState->worldmap.provinces.surface->format;
 				Uint8 alpha = getAlpha(side, fmt);
@@ -189,24 +215,6 @@ void f(Entity *e, EngineCore* core)
 				}
 			}
 		}
-
-		/*	glm::vec2 playerMoveVev{ 0.f, 0.f };
-			if (input->isKeyDown(SDL_SCANCODE_DOWN))
-			{
-				playerMoveVev.y -= 1.f;
-			}
-			if (input->isKeyDown(SDL_SCANCODE_UP))
-			{
-				playerMoveVev.y += 1.f;
-			}
-			if (input->isKeyDown(SDL_SCANCODE_LEFT))
-			{
-				playerMoveVev.x -= 1.f;
-			}
-			if (input->isKeyDown(SDL_SCANCODE_RIGHT))
-			{
-				playerMoveVev.x += 1.f;
-			}*/
 	}
 	else if (auto building = GET_ENTITY(e, building))
 	{
@@ -215,7 +223,7 @@ void f(Entity *e, EngineCore* core)
 
 		building->timer += core->deltaTime;
 
-		if (building->timer > 10.f)
+		if (building->timer > 40.f)
 		{
 			switch (building->type)
 			{
@@ -228,6 +236,7 @@ void f(Entity *e, EngineCore* core)
 			{
 				// printf("gimme troop!\n");
 				Entity *ee = newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+				ee->unit.side = building->side;
 			} break;
 			default:
 				ASSERT(false); // , "building type not found!");
@@ -237,31 +246,82 @@ void f(Entity *e, EngineCore* core)
 			building->timer = 0.f;
 		}
 	}
+	else if (auto bullet = GET_ENTITY(e, bullet))
+	{
+		GetGameState(core);
+		// DefineInput(core);
+
+		// jos pelista saisi 100% determistisen niin matkan voisi 
+		// varmaan kalkuloida suoraan alussa frammeina
+
+		e->x += e->velX * core->deltaTime * bullet->speed; // speedx
+		e->y += e->velY * core->deltaTime * bullet->speed; // speedx
+
+		float x = e->x - bullet->startX;
+		float y = e->y - bullet->startY;
+		if (abs(x * x + y * y) > bullet->rangeSquared)
+		{
+			// max range reached!
+			e->alive = false;
+			printf("olen donezo\n");
+		}
+	}
 }
 
-//resevallokoi
+UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
+{
+	GLubyte a = color >> 24 & 255;
+	GLubyte r = color >> 16 & 255;
+	GLubyte g = color >> 8 & 255;
+	GLubyte b = color >> 0 & 255;
+	return UpiEngine::ColorRGBA8(b, g, r, a); // uint32 on muodossa ABGR
+}
 
-// var color : uint = 16742927;
-// var a : uint = color >> 24 & 255; // 255
-// var r : uint = color >> 16 & 255; // 255
-// var g : uint = color >> 8 & 255; // 122
-// var b : uint = color >> 0 & 255; // 15, wrote this a bit different than above just for example
+// tee kunnon spritesheet manager struct jotain jotain...
+glm::vec4 getUvFromUp(int index, glm::vec2 dims)
+{
+	int x = index / dims.x;
+	int y = index / dims.x;
+
+	glm::vec4 uvs;
+
+	uvs.x = x / dims.x;
+	uvs.y = 1.0f - y / dims.x;
+
+	uvs.z = 1.0f / dims.x;
+	uvs.w = 1.0f / dims.y;
+
+	return uvs;
+}
+
+glm::vec4 getUVs(int index, glm::vec2 dims)
+{
+	int xTile = index % (int)dims.x;
+	int yTile = index / dims.x;
+
+	glm::vec4 uvs;
+
+	uvs.x = xTile / (float)dims.x;
+	uvs.y = 1.0f - ((yTile + 1) / (float)dims.y);
+	uvs.z = 1.0f / dims.x;
+	uvs.w = 1.0f / dims.y;
+
+	return uvs;
+}
+
 
 void r(Entity *e, EngineCore* core)
 {
-	if (auto entity = GET_ENTITY(e, building))
+	if (auto building = GET_ENTITY(e, building))
 	{
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
+		// TODO: korjaa tekstuuri manager
+		static GLuint textureId = UpiEngine::ResourceManager::getTexture("building.png").id;
+		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, building->textureUv, textureId, 1.0f);
 	}
-	else if (auto entity = GET_ENTITY(e, unit))
+	else if (auto unit = GET_ENTITY(e, unit))
 	{
-		Uint32  ucolor = e->unit.side;
-		int a = ucolor >> 24 & 255;
-		int r = ucolor >> 16 & 255;
-		int g = ucolor >> 8  & 255;
-		int b = ucolor >> 0  & 255;
-
-		UpiEngine::ColorRGBA8 color(r, g, b, a);
+		Uint32 ucolor = unit->side;
+		auto color = Uin32ToColor(ucolor);
 		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
 	}
 	else if (auto entity = GET_ENTITY(e, script))
@@ -272,19 +332,17 @@ void r(Entity *e, EngineCore* core)
 	{
 		GetGameState(core);
 		DefineInput(core);
-		// core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
-		// Debug::drawTextf(0, "money: %i", player->cash);
-
-		// printf("cash %i", player->cash);
 
 		char buffer[64];
 		sprintf(buffer, "money: %i", player->cash);
-
 		Debug::drawText(buffer, 2);
 
 		if (player->selectingTroops)
 			player->selectionRect.DrawRect();
-		// Debug::drawBox(core->input->mouse.x, core->input->mouse.y, 30.f, 30.f);
+	}
+	else if (auto bullet = GET_ENTITY(e, bullet))
+	{
+		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 20, 20 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
 	}
 }
 
@@ -294,22 +352,23 @@ Entity* GetFirstAvaibleEntity(game_state* state)
 	return &state->entities[state->currentEntityCount++];
 }
 
-Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)
+EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state) 
 {
 	Entity* result = GetFirstAvaibleEntity(state);
 	result->x = x;
 	result->y = y;
 	result->type = type;
+	result->alive = true;
 	return result;
 }
 
+const glm::vec2 buildingTextureDims{ 2, 2 };
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side)
 {
 	WorldMap* map = &state->worldmap;
 
 	// pelaajaan tuo check
 	// map->GetPixelSideFromWorld((float)x, (float)y);
-
 	// vaativa check voiko rakennuksen rakentaa tahan // rakennus bitmap? // probably tarkistetaan vain ymparisto
 													  // quad tree alkoi kuulostaa kivalta
 	Entity* e = newEntity(x, y, Entity_building, state);
@@ -317,5 +376,20 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 	e->building.side = side;
 	e->building.timer = 0.f;
 
+	switch (type)
+	{
+	case building_none:
+		break;
+	case building_millitary_factory:
+		e->building.textureUv = getUVs(0, buildingTextureDims);
+		break;
+	case building_mill:
+		e->building.textureUv = getUVs(2, buildingTextureDims);
+		break;
+	case building_max:
+		break;
+	default:
+		break;
+	}
 	return true;
 }

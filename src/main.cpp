@@ -1,47 +1,43 @@
-#define VC_EXTRALEAN 1
 #define _MATH_DEFINES_DEFINED 1
 #define WIN32_LEAN_AND_MEAN 1
+#define VC_EXTRALEAN 1
 
-#include <chrono>
 #include <lua.hpp>
-#include <Windows.h>
-
-#include <algorithm>
-
-#include <string>
-#include <vector>
-#include <stdio.h>
-
-#include <stdint.h>
+// #include <Windows.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
+#include <atomic>
+#include <algorithm>
+#include <chrono>
+#include <cstdarg>
+#include <vector>
+#include <stdio.h>
+#include <stdint.h>
+#include <string>
+
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_draw.cpp"
 #include "Imgui/imgui_impl_sdl_gl3.cpp"
 #include "Imgui/imgui_demo.cpp"
 
+// #include <process.h>
+
+#include "game.h" 
+#include "imguiTools.h"
 #include "TextureHolder.h"
-#include <cstdarg>
-#include <process.h>
-
-#include <atomic>
-
-
+#include "fileSystem.cpp"      // aika hack
+#include "InputRecorder.cpp"
 
 // #include "imgui/imgui_internal.h"
-#include "game.h" 
-#include "fileSystem.cpp" // aika hack
-#include "imguiTools.h"
 //typedef struct  
 //{
 //	unsigned char buttons;
 //} nesinput;
 
-#include "InputRecorder.cpp"
 struct TextureFile
 {
 	std::string name;
@@ -657,229 +653,230 @@ const char* shaderFiles[SHADERFILECOUNT] = {
 	"Shaders/province.frag", "Shaders/province.vert"
 };
 
+#include "graph.h"
 
-#include <list>
-#include <queue>
-
-// template<class T>
-// class SLinkedList;
-
-template<class NodeType, class ArcType>
-class GraphArc;
-
-template<class NodeType, class ArcType>
-class GraphNode
-{
-public:
-	typedef GraphArc<NodeType, ArcType> Arc;
-	typedef GraphNode<NodeType, ArcType> Node;
-
-	NodeType data;
-	std::list<Arc> archlist;
-	bool marked;
-
-	void AddArc(Node* node, ArcType weight)
-	{
-		Arc a;
-		a.node = node;
-		a.weight = weight;
-		archlist.push_back(a);
-	}
-
-	Arc* GetArc(Node* node)
-	{
-		auto iter = archlist.begin();
-
-		for (iter; iter != archlist.end(); iter++)
-		{
-			if ((*iter).node == node)
-				return &(*iter);
-		}
-		return 0;
-
-		//auto iter = std::find(archlist.begin(), archlist.end(), node);
-		//if (iter != archlist.end())
-		//{
-		//	return &(*iter);
-		//}
-		//return nullptr;
-	}
-};
-
-
-template<class NodeType, class ArcType>
-class GraphArc
-{
-public:
-	GraphNode<NodeType, ArcType>* node;
-	ArcType weight;
-};
-
-template<class NodeType, class ArcType>
-class Graph
-{
-public:
-	typedef GraphArc<NodeType, ArcType> Arc;
-	typedef GraphNode<NodeType, ArcType> Node;
-
-	std::vector<Node*> nodes;
-	int count;
-
-	Graph(int size) : nodes(size)
-	{
-		int i;
-		for (i = 0; i < size; i++)
-		{
-			nodes[i] = 0;
-		}
-		count = 0;
-	}
-
-	~Graph()
-	{
-		int index;
-		for (index = 0; index < nodes.size(); index++)
-		{
-			if (nodes[index] != 0)
-			{
-				delete nodes[index];
-			}
-		}
-	}
-
-	bool AddNode(NodeType data, int index)
-	{
-		if (nodes[index] != 0)
-		{
-			return false;
-		}
-
-		nodes[index] = new Node;
-		nodes[index]->data = data;
-		nodes[index]->marked = false;
-		count++;
-
-		return true;
-	}
-
-	void RemoveNode(int index)
-	{
-		if (nodes[index] == 0)
-		{
-			return;
-		}
-
-		int node;
-		Arc* arc;
-
-		for (node = 0; node < nodes.size(); node++)
-		{
-			if (nodes[node] != 0)
-			{
-				arc = nodes[node]->GetArc(nodes[index]);
-				if (arc != 0)
-					RemoveArc(node, index);
-			}
-		}
-
-		delete node[index];
-		nodes[index] = 0;
-		count--;
-	}
-
-	bool AddArc(int from, int to, ArcType weight)
-	{
-		if (nodes[from] == 0 || nodes[to] == 0)
-		{
-			return false;
-		}
-		if (nodes[from]->GetArc(nodes[to]) != 0)
-		{
-			return false;
-		}
-		nodes[from]->AddArc(nodes[to], weight);
-		return true;
-	}
-
-	void RemoveArc(int from, int to)
-	{
-		if (nodes[from] == 0 || nodes[to] == 0)
-		{
-			return;
-		}
-
-		nodes[from]->RemoveArc(nodes[to]);
-	}
-
-	Arc* GetArc(int from, int to)
-	{
-		if (nodes[from] == 0 || nodes[to] == 0)
-		{
-			return 0;
-		}
-
-		return nodes[from]->GetArc(nodes[to]);
-	}
-
-	void ClearMarks()
-	{
-		int index;
-		for (index = 0; index < nodes.size(); index++)
-		{
-			if (nodes[index] != 0)
-			{
-				nodes[index]->marked = false;
-			}
-		}
-	}
-
-	void DepthFirst(Node* node, void(*process)(Node*))
-	{
-		if (node == 0)
-			return;
-
-		process(node);
-		node->marked = true;
-
-		auto iter = node->archlist.begin();
-		for (iter; iter != node->archlist.end(); iter++)
-		{
-			if (iter->node->marked == false)
-			{
-				DepthFirst((*iter).node, process);
-			}
-		}
-	}
-
-	// breadth-first sivu 511
-	void BreadthFirst(Node* node, void(*process)(Node*))
-	{
-		if (node == 0)
-			return;
-
-		std::queue<Node*> queue;
-
-		// list itr
-
-		queue.push(node);
-		node->marked = true;
-
-		while (queue.size() != 0)
-		{
-			process(queue.front());
-			auto itr = queue.front()->archlist.begin();
-			for (itr; itr != queue.front()->archlist.end(); itr++)
-			{
-				if (itr->node->marked == false)
-				{
-					itr->node->marked = true;
-					queue.push(itr->node);
-				}
-			}
-			queue.pop();
-		}
-	}
-};
+//#include <list>
+//#include <queue>
+//
+//// template<class T>
+//// class SLinkedList;
+//
+//template<class NodeType, class ArcType>
+//class GraphArc;
+//
+//template<class NodeType, class ArcType>
+//class GraphNode
+//{
+//public:
+//	typedef GraphArc<NodeType, ArcType> Arc;
+//	typedef GraphNode<NodeType, ArcType> Node;
+//
+//	NodeType data;
+//	std::list<Arc> archlist;
+//	bool marked;
+//
+//	void AddArc(Node* node, ArcType weight)
+//	{
+//		Arc a;
+//		a.node = node;
+//		a.weight = weight;
+//		archlist.push_back(a);
+//	}
+//
+//	Arc* GetArc(Node* node)
+//	{
+//		auto iter = archlist.begin();
+//
+//		for (iter; iter != archlist.end(); iter++)
+//		{
+//			if ((*iter).node == node)
+//				return &(*iter);
+//		}
+//		return 0;
+//
+//		//auto iter = std::find(archlist.begin(), archlist.end(), node);
+//		//if (iter != archlist.end())
+//		//{
+//		//	return &(*iter);
+//		//}
+//		//return nullptr;
+//	}
+//};
+//
+//
+//template<class NodeType, class ArcType>
+//class GraphArc
+//{
+//public:
+//	GraphNode<NodeType, ArcType>* node;
+//	ArcType weight;
+//};
+//
+//template<class NodeType, class ArcType>
+//class Graph
+//{
+//public:
+//	typedef GraphArc<NodeType, ArcType> Arc;
+//	typedef GraphNode<NodeType, ArcType> Node;
+//
+//	std::vector<Node*> nodes;
+//	int count;
+//
+//	Graph(int size) : nodes(size)
+//	{
+//		int i;
+//		for (i = 0; i < size; i++)
+//		{
+//			nodes[i] = 0;
+//		}
+//		count = 0;
+//	}
+//
+//	~Graph()
+//	{
+//		int index;
+//		for (index = 0; index < nodes.size(); index++)
+//		{
+//			if (nodes[index] != 0)
+//			{
+//				delete nodes[index];
+//			}
+//		}
+//	}
+//
+//	bool AddNode(NodeType data, int index)
+//	{
+//		if (nodes[index] != 0)
+//		{
+//			return false;
+//		}
+//
+//		nodes[index] = new Node;
+//		nodes[index]->data = data;
+//		nodes[index]->marked = false;
+//		count++;
+//
+//		return true;
+//	}
+//
+//	void RemoveNode(int index)
+//	{
+//		if (nodes[index] == 0)
+//		{
+//			return;
+//		}
+//
+//		int node;
+//		Arc* arc;
+//
+//		for (node = 0; node < nodes.size(); node++)
+//		{
+//			if (nodes[node] != 0)
+//			{
+//				arc = nodes[node]->GetArc(nodes[index]);
+//				if (arc != 0)
+//					RemoveArc(node, index);
+//			}
+//		}
+//
+//		delete node[index];
+//		nodes[index] = 0;
+//		count--;
+//	}
+//
+//	bool AddArc(int from, int to, ArcType weight)
+//	{
+//		if (nodes[from] == 0 || nodes[to] == 0)
+//		{
+//			return false;
+//		}
+//		if (nodes[from]->GetArc(nodes[to]) != 0)
+//		{
+//			return false;
+//		}
+//		nodes[from]->AddArc(nodes[to], weight);
+//		return true;
+//	}
+//
+//	void RemoveArc(int from, int to)
+//	{
+//		if (nodes[from] == 0 || nodes[to] == 0)
+//		{
+//			return;
+//		}
+//
+//		nodes[from]->RemoveArc(nodes[to]);
+//	}
+//
+//	Arc* GetArc(int from, int to)
+//	{
+//		if (nodes[from] == 0 || nodes[to] == 0)
+//		{
+//			return 0;
+//		}
+//
+//		return nodes[from]->GetArc(nodes[to]);
+//	}
+//
+//	void ClearMarks()
+//	{
+//		int index;
+//		for (index = 0; index < nodes.size(); index++)
+//		{
+//			if (nodes[index] != 0)
+//			{
+//				nodes[index]->marked = false;
+//			}
+//		}
+//	}
+//
+//	void DepthFirst(Node* node, void(*process)(Node*))
+//	{
+//		if (node == 0)
+//			return;
+//
+//		process(node);
+//		node->marked = true;
+//
+//		auto iter = node->archlist.begin();
+//		for (iter; iter != node->archlist.end(); iter++)
+//		{
+//			if (iter->node->marked == false)
+//			{
+//				DepthFirst((*iter).node, process);
+//			}
+//		}
+//	}
+//
+//	// breadth-first sivu 511
+//	void BreadthFirst(Node* node, void(*process)(Node*))
+//	{
+//		if (node == 0)
+//			return;
+//
+//		std::queue<Node*> queue;
+//
+//		// list itr
+//
+//		queue.push(node);
+//		node->marked = true;
+//
+//		while (queue.size() != 0)
+//		{
+//			process(queue.front());
+//			auto itr = queue.front()->archlist.begin();
+//			for (itr; itr != queue.front()->archlist.end(); itr++)
+//			{
+//				if (itr->node->marked == false)
+//				{
+//					itr->node->marked = true;
+//					queue.push(itr->node);
+//				}
+//			}
+//			queue.pop();
+//		}
+//	}
+//};
 
 //template<class NodeType, class ArcType>
 //void GraphNode::AddArc(Node* node, ArcType weight)
@@ -930,110 +927,6 @@ struct MapNode
 	int   id;
 	float x, y; // for rendering and debugging
 };
-
-
-#define MAX_PROVINCES 128
-Uint32 idToColor[MAX_PROVINCES];
-v2 positions[MAX_PROVINCES];
-std::map<Uint32, int> colorToId;
-int nodeCount = 0;
-
-
-// id;r;g;b;a; x;y; neighbours;
-void SaveNodes(std::vector<MapNode>* nodes)
-{
-	FILE* file = fopen("test2.txt", "w");
-	char buffer[128];
-
-	// ;id;x;y;r;g;b;a;n;n;n;n;n;n;n;n;n;n;
-	for (int i = 0; i < nodeCount; i++)
-	{
-		auto color = ImGui::ColorConvertU32ToFloat4(idToColor[i]);
-		v2 pos = positions[i];
-		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;\n", 
-									  i, pos.x, pos.y, (int)(color.w * 255), (int)(color.z * 255), (int)(color.y * 255), (int)(color.x * 255));
-		fwrite(buffer, sizeof(char), count, file);
-	}
-	fclose(file);
-}
-
-Uint32 createRGBA(int r, int g, int b, int a)
-{
-	return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8)
-		+ (a & 0xff);
-}
-
-void LoadNodes(std::vector<MapNode>* nodes)
-{
-	std::vector<std::vector<std::string>> data;
-	std::ifstream stream("test2.txt");
-	std::string line;
-
-	while (std::getline(stream, line))
-	{
-		std::istringstream s(line);
-		
-		if (line.at(0) == ';')
-			continue;
-		nodeCount++;
-
-		std::string field;
-		std::getline(s, field, ';');
-		
-
-		std::cout << "id: " << field << ", ";
-		int id = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "x: " << field << ", ";
-		int x = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "y: " << field << ", ";
-		int y = atoi(field.c_str());
-
-		nodes->push_back({ id, (float)x, (float)y });
-		// colorToId[id] = r g b a
-
-		std::getline(s, field, ';');
-		std::cout << "r: " << ", ";
-		int r = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "g: " << ", ";
-		int g = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "b: " << ", ";
-		int b = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "a: " << ", ";
-		int a = atoi(field.c_str());
-
-
-		  // replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
-		positions[id] = { x, y };
-		Uint32 color  = createRGBA(a, b, g, r);
-
-	//	Uint32 color = ImGui::GetColorU32({})
-	//	auto color2 = ImGui::GetColorU32({ (float)r / 255.f, g / 255.f, b/255.f, a/255.f });
-
-		// Uint32 color = ImGui::GetColorU32({(float)r, (float)g, (float)b, (float)a});
-		// auto color = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
-
-		colorToId[color] = id;
-		idToColor[id] = color;
-
-		std::cout << "Neighbours: ";
-		while (std::getline(s, field, ';'))
-		{
-			std::cout << field << ", ";
-		}
-		std::cout << "\n";
-		// node x y id
-	}
-}
 
 //void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
 //{
@@ -1156,10 +1049,6 @@ void FreeTexture(GLuint* texture)
 
 int main(int argc, char* argv[])
 {
-
-	Uint32 co = createRGBA(200, 255, 200, 0);
-	Uint32 cool = ImGui::GetColorU32({ 255 / 255.f, 0 / 255.f, 12 / 255.f, 200 / 255.f });
-
 	Graph<int, int> map(6);
 	map.AddNode(0, 0);
 	map.AddNode(1, 1);
@@ -1191,14 +1080,6 @@ int main(int argc, char* argv[])
 	map.DepthFirst(map.nodes[0], process);
 
 
-	printf("##################################################\n");
-	std::vector<MapNode> nodes;
-	LoadNodes(&nodes);
-	printf("##################################################\n");
-	// SaveNodes(&nodes);
-	printf("##################################################\n");
-	// LoadNodes(&nodes);
-	printf("##################################################\n");
 
 
 
@@ -1226,6 +1107,7 @@ int main(int argc, char* argv[])
 	//{
 	//	std::cout << itr.Item() << ", ";
 	//}
+		{}
 	//itr.Start();
 
 	//itr.Forth();
@@ -1243,6 +1125,16 @@ int main(int argc, char* argv[])
 
 	//std::cout << "linked list contains: ";
 	// SListIterator<int> itr = lista.GetIterator();
+
+
+	// void* jotain = malloc(8);
+	// (*(int*)jotain) = 1;
+	// int* iii = ((int*)jotain);
+	// iii++;
+	// *iii = 4;
+
+
+
 
 
 
@@ -1292,10 +1184,8 @@ int main(int argc, char* argv[])
 	printf("*** OpenGL Version: %s  ***\n", glGetString(GL_VERSION));
 
 	glViewport(0, 0, windowWidth, windowHeight);
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
 	initShaders(textureProgram);
@@ -1339,7 +1229,6 @@ int main(int argc, char* argv[])
 	gameMemory.transientStorage = ((uint8_t*)gameMemory.permanentStorage + gameMemory.permanentStorageSize);
 	inputState.memory = gameMemory.permanentStorage;
 	inputState.totalMemorySize = megaBytes(64); // + gigaBytes(1);
-
 
 	// TODO: Terminate thread
 	std::atomic<bool> fileLoadingThreadDone(false);
@@ -1393,19 +1282,14 @@ int main(int argc, char* argv[])
 	core.screenWidth = windowWidth;
 	core.screenHeight = windowHeight;
 	core.camera2D = &camera2D;
+	UpiEngine::ResourceManager::init();
+	core.ctx.textureCacheCtx = UpiEngine::ResourceManager::GetContext();
 
 
 
-
-	// moveta provinssi stuff game.c ___________________________________________________________
+	// TODO: korjaa resurssit
 	game_state *gameState = (game_state*)core.memory->permanentStorage;
-	gameState->provinceData.maxProvinces = MAX_PROVINCES;
-	gameState->provinceData.currentCount = &nodeCount;
 
-	gameState->provinceData.positions = positions;
-	gameState->provinceData.colorToId = &colorToId;
-	gameState->provinceData.idToColor = idToColor;
-	// moveta provinssi stuff game.c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	core.resources.FreeTexture = FreeTexture;
 	core.resources.SurfaceToGlTexture = TurnSurfaceIntoGlTexture;
@@ -1459,6 +1343,7 @@ int main(int argc, char* argv[])
 			printf("Lua file: %s loaded succesfully!\n", lua_main_filename);
 		}
 		else
+
 		{
 			fprintf(stderr, "%s\n", lua_tostring(L, -1));
 			debugBreak();
@@ -1490,11 +1375,12 @@ int main(int argc, char* argv[])
 
 
 	auto asdf = UpiEngine::ResourceManager::getTexture("tekstuuri");
-
 	core.filewatcher.init(shaderFiles, SHADERFILECOUNT, Resource_shader);
 
 	GLuint randomTexture = UpiEngine::ResourceManager::getTexture("test.png").id;
+	auto b = UpiEngine::ResourceManager::getTexture("building.png");
 
+	bool firstFrame = true;
 	while (!quit)
 	{
 		auto timePoint1(std::chrono::high_resolution_clock::now());
@@ -1648,6 +1534,7 @@ int main(int argc, char* argv[])
 					simpleRecorder.WriteToFile((path + recordName).c_str());
 					break;
 				}
+
 				recordNum++;
 			}
 
@@ -1659,7 +1546,12 @@ int main(int argc, char* argv[])
 		}
 
 
-		Sleep(1); // program runs too fast
+		if (!firstFrame)
+			Sleep(1); // program runs too fast input bug
+		firstFrame = false;
+
+
+
 
 		simpleRecorder.Update();
 		ImguiTest(clear_color, &core);
@@ -1894,7 +1786,6 @@ int main(int argc, char* argv[])
 		// printf("%f\n", ft);
 
 	}
-	SaveNodes(&nodes);
 	ImGui_ImplSdlGL3_Shutdown();
 	// SDL_GL_DeleteCOntext(glcontext);s	
 	SDL_DestroyWindow(window);
