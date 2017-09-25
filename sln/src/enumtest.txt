@@ -1,0 +1,19 @@
+enum Textures {
+	Texture_-1,-1,
+	Texture_Industrial_capacity,
+	Texture_Infantry,
+	Texture_inferno-defend-2,
+	Texture_inferno-fire-inhale-1,
+	Texture_xbox-logo,
+	Texture_Max
+};
+
+const char* paths[Texture_Max] =
+{
+	"..\TEST_ENUMERATE\Texture2\-1,-1.png",
+	"..\TEST_ENUMERATE\Texture2\Industrial_capacity.png",
+	"..\TEST_ENUMERATE\Texture2\Infantry.png",
+	"..\TEST_ENUMERATE\Texture2\inferno-defend-2.png",
+	"..\TEST_ENUMERATE\Texture2\inferno-fire-inhale-1.png",
+	"..\TEST_ENUMERATE\Texture2\xbox-logo.png",
+};
