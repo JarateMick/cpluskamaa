@@ -281,6 +281,7 @@ static void ParseStruct(Tokenizer* tokenizer)
 	}
 }
 
+// tesit
 static void parseIntrospectable(Tokenizer *tokenizer)
 {
 	if (RequireToken(tokenizer, Token_OpenParem))
@@ -307,13 +308,13 @@ static void parseIntrospectable(Tokenizer *tokenizer)
 
 int main(int ArgCount, char ** Args)
 {
-	char * filenames[2] =
+	char * filenames[1] =
 	{
 		"I:/Dev/SDL/allegro vanhat/src/game.h",
-		"I:/Dev/SDL/allegro vanhat/src/core.h",
+		// "I:/Dev/SDL/allegro vanhat/src/core.h",
 	};
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 1; i++)
 	{
 
 		char* Filecontents = ReadEntireFIleIntoMemoryAndNullTerminate(filenames[i]);

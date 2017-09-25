@@ -1,14 +1,17 @@
 ﻿#include "imguiTools.h"
 #include "imgui/imgui.h"
 #include "fileSystem.cpp"
+// #include "game.cpp"
 #include "entity.cpp"
+#include "core.h"
+
+
 // #include "utility.h"
 // #include "imgui/imgui.h"
 
 // structi johon tökättäisiin function pointerit
 // pelin IO systeemeihin
 // Nämä editor työkaluhin
-
 
 static EngineCore* g_tools_core;
 
@@ -713,6 +716,49 @@ EXPORT IMGUIFUNC(Imgui)
 		}
 	}
 
+
+	// Province editings
+	ImGui::NewLine();
+	static bool editNodes = false;
+	static std::vector<int> neighbours;
+
+	ImGui::Checkbox("Edit Nodes", &editNodes);
+
+	if (input->isMouseClicked() && editNodes)
+	{
+		Uint32 side = gameState->worldmap.GetSideUnderMouse(&core->input->mouse);
+		int id = GetColorToId(gameState, side);
+
+		if (id != -1)
+		{
+			neighbours.push_back(id);
+			GetConsoleInstance().AddLog("Added %i to neighbourlist", id);
+		}
+		else
+		{
+			GetConsoleInstance().AddLog("Can't add to neighbourslist");
+		}
+	}
+
+	if (ImGui::Button("Clear neighbour list"))
+	{
+		neighbours.clear();
+		GetConsoleInstance().AddLog("Cleared list");
+	}
+
+	ImGui::Text("Neighbours ");
+	for (int i = 0; i < neighbours.size(); i++)
+	{
+		ImGui::Text("%i", neighbours[i]); // Setti olis parempi ei samoja 2 kpl
+	}
+
+
+
+	if (ImGui::Button("save province data!"))
+	{
+		gameState->dirtyFlag = true;
+	}
+
 	ImGui::Begin("fake player gui");
 	if (ImGui::Button("build factory"))
 	{
@@ -724,6 +770,14 @@ EXPORT IMGUIFUNC(Imgui)
 	}
 	ImGui::End();
 }
+//								______  ______  _____   ______
+//							   /\__  _\/\  __`\/\  _`\ /\  __`\        
+//							    \/_/\ \/\ \ \/\ \ \ \/\ \ \ \/\ \  __   
+//                                 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \/\_\  
+//                                  \ \ \ \ \ \_\ \ \ \_\ \ \ \_\ \/_/_           korjaa jotain
+//                                   \ \_\ \ \_____\ \____/\ \_____\ /\_\
+//                                    \/_/  \/_____/\/___/  \/_____/ \/_/
+
 
 // ---------------------------------------------------------------------
 //if (ImGui::CollapsingHeader("Map Editor Settings"))

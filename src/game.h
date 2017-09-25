@@ -40,7 +40,6 @@ struct v2 { int x, y; };
 
 
 #include <lua.hpp>
-// #include <Windows.h> jes
 #include <SDL2\SDL_image.h>
 
 #include <cstdint>
@@ -55,6 +54,7 @@ struct v2 { int x, y; };
 // #include "Hex.h"
 #define Internal static
 
+struct game_state; 
 
 // TODO: Vec2  -> typedeffaa vec jne....
 // oma vs Glmstruct
@@ -206,8 +206,6 @@ struct scripting
 };
 
 
-
-
 class StackAllocator
 {
 public:
@@ -309,6 +307,7 @@ struct WorldMapEditor
 	float inputY;
 };
 
+const int mapSizeMultiplier = 4;
 struct WorldMap
 {
 	GLuint temptextureid;
@@ -326,6 +325,20 @@ struct WorldMap
 
 		// minimap :)
 		// sb->draw(glm::vec4{ 0.f, 0.f, 590.f, 480.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, temptextureid, 1.f);
+	}
+
+	Uint32 GetSideUnderMouse(const glm::vec2* mouse)
+	{
+		auto mousePos = GetMouse(mouse);
+		Uint32 color = provinces.GetPixel(mousePos.x, mousePos.y); // real size 
+		return color;
+	}
+
+	glm::vec2 GetMouse(const glm::vec2* mouse)
+	{
+		float mx = (mouse->x - dimensions.x) / mapSizeMultiplier;
+		float my = (dimensions.w - mouse->y) / mapSizeMultiplier;   // map->dimensions.w / 3 - input->mouse.y / 3;
+		return { mx, my };
 	}
 
 	Uint32 GetPixelSideFromWorld(int x, int y)
@@ -367,6 +380,7 @@ struct WorldMap
 	}
 };
 
+
 struct ProvinceData
 {
 	int                    maxProvinces;
@@ -376,7 +390,7 @@ struct ProvinceData
 	int*                   currentCount;
 };
 
-introspect("game_state: jotain") struct game_state
+introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
 	Entity         entities[10000];
@@ -393,7 +407,27 @@ introspect("game_state: jotain") struct game_state
 	WorldMap worldmap;
 
 	float cameraSpeed;
+
+	bool dirtyFlag;
 };
+
+inline int GetColorToId(game_state* state, Uint32 color)
+{
+	auto map = state->provinceData.colorToId;
+	auto iter = map->find(color);
+	if (iter != map->end())
+	{
+		return iter->second;
+	}
+	else
+	{
+		// __debugbreak();
+		// ASSERT(false);
+		return -1;
+	}
+}
+
+
 
 struct AssetFileInfo
 {

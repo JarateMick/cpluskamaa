@@ -21,7 +21,8 @@ enum meta_type
 	MetaType_hit_points,
 	MetaType_entity_reference,
 	MetaType_v2,
-	MetaTyp_real32,
+	MetaType_void,
+	MetaType_bool,
 };
 
 struct member_definition

@@ -10,4 +10,5 @@ member_definition memberOf_game_state[] =
 	{ MetaType_ProvinceData, "provinceData", (u32)&((game_state *)0)->provinceData }, 
 	{ MetaType_WorldMap, "worldmap", (u32)&((game_state *)0)->worldmap }, 
 	{ MetaType_float, "cameraSpeed", (u32)&((game_state *)0)->cameraSpeed }, 
+	{ MetaType_bool, "dirtyFlag", (u32)&((game_state *)0)->dirtyFlag }, 
 };

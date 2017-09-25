@@ -24,10 +24,10 @@ del *.pdb > NUL 2> NUL
 
 
 rem simple preprocessor
-cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
-pushd ..\src
-..\bin\simple_preprocessor.exe > handmade_generated.h
-popd
+REM cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
+REM pushd ..\src
+REM ..\bin\simple_preprocessor.exe > handmade_generated.h
+REM popd
 
 
 

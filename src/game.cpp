@@ -13,8 +13,6 @@
 #include "fileSystem.cpp"
 
 
-
-// #include "meta.h"
 #include "meta.cpp"
 #include "graph.h"
 
@@ -171,18 +169,29 @@ v2 positions[MAX_PROVINCES];
 std::map<Uint32, int> colorToId;
 int nodeCount = 0;
 
+Graph<MapNode, int> nodes(64);
 void SaveNodes()
 {
 	FILE* file = fopen("test2.txt", "w");
-	char buffer[128];
+	const int BufferSize = 256;
+	char buffer[BufferSize];
 
 	// ;id;x;y;r;g;b;a;n;n;n;n;n;n;n;n;n;n;
 	for (int i = 0; i < nodeCount; i++)
 	{
 		auto color = ColorConvertU32ToFloat4(idToColor[i]);
 		v2 pos = positions[i];
-		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;\n",
+		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;",
 			i, pos.x, pos.y, (int)(color.w * 255), (int)(color.z * 255), (int)(color.y * 255), (int)(color.x * 255));
+
+		
+		for (auto iter = nodes.nodes[i]->archlist.begin(); iter != nodes.nodes[i]->archlist.end() &&
+			count + sizeof(int) < BufferSize; iter++)
+		{
+			count += sprintf(buffer + count, "%i;", iter->node->data.id); 
+		}
+		count += sprintf(buffer + count, "\n");
+
 		fwrite(buffer, sizeof(char), count, file);
 	}
 	fclose(file);
@@ -195,7 +204,6 @@ Uint32 createRGBA(int r, int g, int b, int a)
 }
 
 #include "graph.h"
-Graph<MapNode, int> nodes(64);
 
 
 void LoadNodes()
@@ -342,7 +350,22 @@ void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 	{
 		current = came_from[current];
 		path.push_back(current);
+
+		if (current == 0)
+		{
+			printf("could't find path between %i and %i\n", startID, goalId);
+			return;
+		}
 	}
+	printf("the path between %i and %i is\n", startID, goalId);
+	for (int i = 0; i < path.size(); i++)
+	{
+		auto node = path[i];
+		printf("%i, ", node->data.id);
+	}
+	printf("\n");
+	graph->ClearMarks();
+
 	// path.push_back
 
 	// Python:
@@ -353,18 +376,9 @@ void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 
 	//	path.append(start) 
 	//	path.reverse()      
-
-	for (int i = 0; path.size(); i++)
-	{
-		auto node = path[i];
-		printf("%i, ", node->data.id);
-	}
-	printf("\n");
-	graph->ClearMarks();
 }
 
 
-const int mapSizeMultiplier = 4;
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -384,14 +398,10 @@ EXPORT void Loop(EngineCore* core)
 		UpiEngine::ResourceManager::SetContext(core->ctx.textureCacheCtx);
 
 
-		//std::vector<MapNode> nodes;
 		printf("##################################################\n");
 		LoadNodes();
 		printf("##################################################\n");
-		// SaveNodes(&nodes);
-		// printf("##################################################\n");
-		// LoadNodes(&nodes);
-		// printf("##################################################\n");
+
 
 		gameState->provinceData.maxProvinces = MAX_PROVINCES;
 		gameState->provinceData.currentCount = &nodeCount;
@@ -418,7 +428,6 @@ EXPORT void Loop(EngineCore* core)
 			gameState->entities[i].alive = true;
 		}
 
-
 		gameState->entities[2].type = Entity_unit;
 		gameState->entities[2].x = 300.f;
 		gameState->entities[2].y = 300.f;
@@ -431,7 +440,6 @@ EXPORT void Loop(EngineCore* core)
 		gameState->entities[3].player.side = 0xFF00FF00; // green
 		gameState->player = &gameState->entities[3];
 		gameState->currentEntityCount = 4;
-
 
 
 		// init some npc's
@@ -455,6 +463,9 @@ EXPORT void Loop(EngineCore* core)
 		{
 			printf("log restart failed: %s, %d", __FILE__, __LINE__);
 		}
+
+		nodes.ClearMarks();
+		BreadthFirst(0, &nodes, 7);
 	}
 
 
@@ -525,10 +536,11 @@ EXPORT void Loop(EngineCore* core)
 
 	// MOUSE debug code
 	WorldMap* map = &gameState->worldmap;
-	float mx = (input->mouse.x - map->dimensions.x) / mapSizeMultiplier;
-	float my = (map->dimensions.w - input->mouse.y) / mapSizeMultiplier;   // map->dimensions.w / 3 - input->mouse.y / 3;
-	Debug::drawBox(mx, my, 3.f, 3.f);
 
+	glm::vec2 mxy = gameState->worldmap.GetMouse(&input->mouse);
+	float mx = mxy.x;
+	float my = mxy.y;
+	Debug::drawBox(mx, my, 3.f, 3.f);
 
 	if (input->isKeyDown(SDL_SCANCODE_4))
 	{
@@ -581,9 +593,10 @@ EXPORT void Loop(EngineCore* core)
 		map->editor.inputY = input->mouse.y;
 	}
 
-	if (input->isKeyPressed(SDL_SCANCODE_9))
+	if (input->isKeyPressed(SDL_SCANCODE_9) || gameState->dirtyFlag)
 	{
 		SaveNodes();
+		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
 	}
 }
 
