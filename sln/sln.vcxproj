@@ -44,6 +44,7 @@
     <ClCompile Include="..\src\utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\array.h" />
     <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\Debug.h" />
     <ClInclude Include="..\src\DebugRenderer.h" />
@@ -69,6 +70,7 @@
     <ClInclude Include="..\src\main.h" />
     <ClInclude Include="..\src\meta.h" />
     <ClInclude Include="..\src\Random.h" />
+    <ClInclude Include="..\src\stretchy_buffer.h" />
     <ClInclude Include="..\src\TextureHolder.h" />
     <ClInclude Include="..\src\Tilemap.h" />
     <ClInclude Include="Algo\SLinkedList.h" />

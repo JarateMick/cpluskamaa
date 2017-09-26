@@ -56,5 +56,7 @@
     <ClInclude Include="..\src\core.h" />
     <ClInclude Include="..\src\meta.h" />
     <ClInclude Include="..\src\graph.h" />
+    <ClInclude Include="..\src\array.h" />
+    <ClInclude Include="..\src\stretchy_buffer.h" />
   </ItemGroup>
 </Project>
