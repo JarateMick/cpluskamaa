@@ -3,7 +3,7 @@ ctime -begin engine.ctm
 
 if not defined DEV_ENV_DIR (
 	rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-    call "H:\Visual Studio\VC\vcvarsall.bat" x64 
+   call "H:\Visual Studio\VC\vcvarsall.bat" x64 
 	rem call "I:\VisualStudio\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 set DEV_ENV_DIR= ???
@@ -25,6 +25,11 @@ del *.pdb > NUL 2> NUL
 
 rem simple preprocessor
 REM cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
+REM pushd ..\src
+REM ..\bin\simple_preprocessor.exe > handmade_generated.h
+REM popd
+
+
 
 rem Box2D.lib  Box2D.lib
 
