@@ -159,7 +159,7 @@ struct v4 { float x, y, z, w; };
 v4 ColorConvertU32ToFloat4(Uint32 in)
 {
 	float s = 1.0f / 255.0f;
-	return {
+	return{
 		((in >> IM_COL32_R_SHIFT) & 0xFF) * s,
 		((in >> IM_COL32_G_SHIFT) & 0xFF) * s,
 		((in >> IM_COL32_B_SHIFT) & 0xFF) * s,
@@ -197,11 +197,11 @@ void SaveNodes()
 		int count = sprintf(buffer, "%i;%i;%i;%i;%i;%i;%i;",
 			i, pos.x, pos.y, (int)(color.w * 255), (int)(color.z * 255), (int)(color.y * 255), (int)(color.x * 255));
 
-		
+
 		for (auto iter = nodes.nodes[i]->archlist.begin(); iter != nodes.nodes[i]->archlist.end() &&
 			count + sizeof(int) < BufferSize; iter++)
 		{
-			count += sprintf(buffer + count, "%i;", iter->node->data.id); 
+			count += sprintf(buffer + count, "%i;", iter->node->data.id);
 		}
 		count += sprintf(buffer + count, "\n");
 
@@ -403,6 +403,14 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 }
 
 
+void newNode(int index, int id, float x, float y)
+{
+	MapNode newNode{ id, x, y };
+	nodes.AddNode(newNode, index);
+}
+
+
+
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -469,6 +477,7 @@ EXPORT void Loop(EngineCore* core)
 
 
 		gameState->getAllProvinceNeighbours = getAllProvinceNeighbours;
+		gameState->newNode = newNode;
 
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
@@ -487,13 +496,17 @@ EXPORT void Loop(EngineCore* core)
 
 		gameState->worldmap.dimensions = glm::vec4{ 0.f, 0.f, surface->w * mapSizeMultiplier, surface->h * mapSizeMultiplier };
 
+
+
+
+
 		if (!Debug::restartLog())
 		{
 			printf("log restart failed: %s, %d", __FILE__, __LINE__);
 		}
 
 		nodes.ClearMarks();
-	//	BreadthFirst(0, &nodes, 7);
+		//	BreadthFirst(0, &nodes, 7);
 	}
 
 
@@ -581,16 +594,7 @@ EXPORT void Loop(EngineCore* core)
 			printf("%x not found\n", color);
 	}
 
-	if (input->isKeyDown(SDL_SCANCODE_5))
-	{
-		WorldMap* map = &gameState->worldmap;
-		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
-		map->editor.editorColor = color;
 
-		printf("%x\n", color);
-		// printf("%x\n", idToColor[0]);
-		// printf("%i ", idToColor[0] == color);
-	}
 
 	if (input->isKeyDown(SDL_SCANCODE_6))
 	{
@@ -614,19 +618,31 @@ EXPORT void Loop(EngineCore* core)
 		}
 	}
 
-	if (input->isKeyDown(SDL_SCANCODE_7))
+
+	if (input->isMouseDown(3)) // atm imgui toolssien nappi TODO: move
 	{
 		WorldMap* map = &gameState->worldmap;
+		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
+		map->editor.editorColor = color;
+
+		printf("%x\n", color);
+		// printf("%x\n", idToColor[0]);
+		// printf("%i ", idToColor[0] == color);
+
+		// WorldMap* map = &gameState->worldmap;
 		map->editor.inputX = input->mouse.x;
 		map->editor.inputY = input->mouse.y;
+
 	}
 
 	if (input->isKeyPressed(SDL_SCANCODE_9) || gameState->dirtyFlag)
 	{
 		SaveNodes();
+		// new nodes
+		// nodes.nodes[gameState->provinceEditor.selectedProvinceId]->;
 		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
 	}
-}	
+}
 
 /* Get Red component */
 //temp = pixel & fmt->Rmask;  /* Isolate red component */
@@ -733,8 +749,8 @@ void VisualizePath(std::vector<int>* path, game_state* state)
 		return;
 	}
 
-	v2 lastPos = state->provinceData.positions[path->at(path->size()-1)];
-	for (int i = path->size()-1; i > -1; i--)
+	v2 lastPos = state->provinceData.positions[path->at(path->size() - 1)];
+	for (int i = path->size() - 1; i > -1; i--)
 	{
 		int provinceID = path->at(i);
 		auto v2 = state->provinceData.positions[provinceID];
@@ -743,18 +759,24 @@ void VisualizePath(std::vector<int>* path, game_state* state)
 		Debug::drawBox({ v2.x, v2.y, 20, 20 });
 		lastPos = v2;
 	}
+
 }
 
 std::vector<int> getAllProvinceNeighbours(int id)
 {
 	std::vector<int> returnValue;
-	for (auto iter = nodes.nodes[id]->archlist.begin(); iter != nodes.nodes[id]->archlist.end(); ++iter)
+
+	if (nodes.nodes[id] != 0)
 	{
-		returnValue.push_back(iter->node->data.id);
+		for (auto iter = nodes.nodes[id]->archlist.begin(); iter != nodes.nodes[id]->archlist.end(); ++iter)
+		{
+			returnValue.push_back(iter->node->data.id);
+		}
 	}
+
 	return returnValue;
 }
-	
+
 
 // return {};
 
@@ -1061,8 +1083,8 @@ EXPORT void Draw(EngineCore* core)
 		VisualizePath(&path, gameState);
 	}
 
-	
-	
+
+
 
 
 
@@ -1155,12 +1177,12 @@ EXPORT void Draw(EngineCore* core)
 	// test.
 #endif
 	auto timePoint2(std::chrono::high_resolution_clock::now());
-    auto elapsedTime(timePoint2 - timePoint1);
+	auto elapsedTime(timePoint2 - timePoint1);
 
-    // lasFT = ft;
-    float ft{ std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
-    auto ftSeconds(ft / 1000.f);
-    auto fps(1.f / ftSeconds);
+	// lasFT = ft;
+	float ft{ std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+	auto ftSeconds(ft / 1000.f);
+	auto fps(1.f / ftSeconds);
 
 	//std::cout << fps << std::endl;
 

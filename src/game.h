@@ -427,6 +427,8 @@ introspect("game_state: hello world") struct game_state
 	ProvinceEditorData provinceEditor;
 	PathFindingUi      pathfindingUi;
 	std::vector<int>(*getAllProvinceNeighbours)(int);
+
+	void(*newNode)(int index, int id, float x, float y);
 };
 
 inline int GetColorToId(game_state* state, Uint32 color)

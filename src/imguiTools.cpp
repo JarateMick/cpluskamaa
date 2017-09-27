@@ -4,6 +4,7 @@
 // #include "game.cpp"
 #include "entity.cpp"
 #include "core.h"
+#include <map>
 // #include "game.cpp"
 
 
@@ -31,6 +32,35 @@ int str_cut(char *str, int begin, int len)
 
 	return len;
 }
+
+
+
+void SaveProvinceId(game_state* gameState, int inputId)
+{
+	ProvinceData* data = &gameState->provinceData;
+	WorldMap* map = &gameState->worldmap;
+	map->editor.inputProvinceId = inputId;
+
+	if (*data->currentCount < data->maxProvinces - 1)
+	{
+		// Uint32 color = reverse_nibbles(map->editor.inputProvinceId);
+
+		auto rgba = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
+		// -> abgr formaattiin
+
+		data->colorToId->insert(std::make_pair(map->editor.editorColor, map->editor.inputProvinceId));
+		data->idToColor[map->editor.inputProvinceId] = map->editor.editorColor;
+		data->positions[map->editor.inputProvinceId] = { (int)map->editor.inputX, (int)map->editor.inputY };
+
+		if (*data->currentCount == map->editor.inputProvinceId)
+			(*data->currentCount)++;
+
+		printf("SAVETETTU!");
+	}
+}
+
+
+
 
 // TODO: konsolin pitää olla osa corea!
 // Tällä hetkellä se on vain yksittäisenä jossain bit avaruudessa
@@ -393,6 +423,8 @@ void VisualizeNodes(std::vector<int>* path, int startId, game_state* state)
 
 		Debug::drawLine({ (float)startPos.x, (float)startPos.y }, { (float)v2.x, (float)v2.y });
 		Debug::drawBox({ v2.x, v2.y, 20, 20 });
+
+		// printf("(%i, %i)\n", v2.x, v2.y);
 	}
 }
 
@@ -541,6 +573,7 @@ EXPORT IMGUIFUNC(Imgui)
 	//	if (ImGui::Button("kirjoita tiedosto"))
 	//	{
 	//		printf("%i\n", selected);
+
 	//		writeEntireFile(contents, IM_ARRAYSIZE(contents), strNameOfFile);
 	//	}
 	//	static bool showFileButtonToggle = true;
@@ -625,8 +658,6 @@ EXPORT IMGUIFUNC(Imgui)
 
 	WorldMap* map = &gameState->worldmap;
 
-
-
 	static float colors[4];
 	static Uint32 replacement = 0;
 	replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
@@ -639,55 +670,36 @@ EXPORT IMGUIFUNC(Imgui)
 		colors[3] = color.w;
 	}
 
-	if (ImGui::ColorEdit4("vari", colors, true))
-	{
-		replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
-		map->editor.editorColor = replacement;
-	}
+	//if (ImGui::ColorEdit4("vari", colors, true))
+	//{
+	//	replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+	//	map->editor.editorColor = replacement;
+	//}
 
-	ImGui::Text("MousePos: %f, %f", input->mouse.x, input->mouse.y);
+	//ImGui::Text("MousePos: %f, %f", input->mouse.x, input->mouse.y);
 
-	ImGui::Text("CurrentInputPos: %i, %i", (int)map->editor.inputX, (int)map->editor.inputY);
+	//ImGui::Text("CurrentInputPos: %i, %i", (int)map->editor.inputX, (int)map->editor.inputY);
 
-	ImGui::InputText("Province ID: ", buffer, sizeof(buffer));
-	ImGui::SameLine();
-	if (ImGui::Button("save province ids"))
-	{
-		ProvinceData* data = &gameState->provinceData;
-		// save here / add some provinces
-		map->editor.inputProvinceId = atoi(buffer);
+	//ImGui::InputText("Province ID: ", buffer, sizeof(buffer));
+	//ImGui::SameLine();
+	//if (ImGui::Button("save province ids"))
+	//{
+	//	SaveProvinceId(gameState, atoi(buffer));
+	//}
 
-		if (*data->currentCount < data->maxProvinces - 1)
-		{
-			// Uint32 color = reverse_nibbles(map->editor.inputProvinceId);
-
-			auto rgba = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
-			// -> abgr formaattiin
-
-			data->colorToId->insert(std::make_pair(map->editor.editorColor, map->editor.inputProvinceId));
-			data->idToColor[map->editor.inputProvinceId] = map->editor.editorColor;
-			data->positions[map->editor.inputProvinceId] = { (int)map->editor.inputX, (int)map->editor.inputY };
-
-			if (*data->currentCount == map->editor.inputProvinceId)
-				(*data->currentCount)++;
-
-			printf("SAVETETTU!");
-		}
-	}
-
-	static bool pickingColor = false;
+	/*static bool pickingColor = false;
 	ImGui::Checkbox("Toggle color pickings mode (press 6 to pick color)", &pickingColor);
 	if (pickingColor)
 		ImGui::Text("Picking");
 	else
-		ImGui::Text("Coloring");
+		ImGui::Text("Coloring");*/
 
 
-	if (gameState->player)
-	{
-		auto vec4 = ImGui::ColorConvertU32ToFloat4(gameState->player->player.side);
-		ImGui::Text("hello");
-	}
+		/*if (gameState->player)
+		{
+			auto vec4 = ImGui::ColorConvertU32ToFloat4(gameState->player->player.side);
+			ImGui::Text("hello");
+		}*/
 
 
 	ImGui::Text("Spawn units");
@@ -742,44 +754,44 @@ EXPORT IMGUIFUNC(Imgui)
 
 
 	// Province editings
-	ImGui::NewLine();
-	static bool editNodes = false;
-	static std::vector<int> neighbours;
+	//ImGui::NewLine();
+	//static bool editNodes = false;
+	//static std::vector<int> neighbours;
 
-	ImGui::Checkbox("Edit Nodes", &editNodes);
+	//ImGui::Checkbox("Edit Nodes", &editNodes);
 
-	if (input->isMouseClicked() && editNodes)
-	{
-		Uint32 side = gameState->worldmap.GetSideUnderMouse(&core->input->mouse);
-		int id = GetColorToId(gameState, side);
+	//if (input->isMouseClicked() && editNodes)
+	//{
+	//	Uint32 side = gameState->worldmap.GetSideUnderMouse(&core->input->mouse);
+	//	int id = GetColorToId(gameState, side);
 
-		if (id != -1)
-		{
-			neighbours.push_back(id);
-			GetConsoleInstance().AddLog("Added %i to neighbourlist", id);
-		}
-		else
-		{
-			GetConsoleInstance().AddLog("Can't add to neighbourslist");
-		}
-	}
+	//	if (id != -1)
+	//	{
+	//		neighbours.push_back(id);
+	//		GetConsoleInstance().AddLog("Added %i to neighbourlist", id);
+	//	}
+	//	else
+	//	{
+	//		GetConsoleInstance().AddLog("Can't add to neighbourslist");
+	//	}
+	//}
 
-	if (ImGui::Button("Clear neighbour list"))
-	{
-		neighbours.clear();
-		GetConsoleInstance().AddLog("Cleared list");
-	}
+	//if (ImGui::Button("Clear neighbour list"))
+	//{
+	//	neighbours.clear();
+	//	GetConsoleInstance().AddLog("Cleared list");
+	//}
 
-	ImGui::Text("Neighbours ");
-	for (int i = 0; i < neighbours.size(); i++)
-	{
-		ImGui::Text("%i", neighbours[i]); // Setti olis parempi ei samoja 2 kpl
-	}
+	//ImGui::Text("Neighbours ");
+	//for (int i = 0; i < neighbours.size(); i++)
+	//{
+	//	ImGui::Text("%i", neighbours[i]); // Setti olis parempi ei samoja 2 kpl
+	//}
 
-	if (ImGui::Button("save province data!"))
-	{
-		gameState->dirtyFlag = true;
-	}
+	//if (ImGui::Button("save province data!"))
+	//{
+	//	gameState->dirtyFlag = true;
+	//}
 
 
 	// pathfinding part
@@ -801,72 +813,104 @@ EXPORT IMGUIFUNC(Imgui)
 	{
 		ImGui::Begin("Super editor", &superEditor);
 
-		if (input->isMouseClicked())
+		if (ImGui::Button("Save changes "))
 		{
-			Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
-			map->editor.editorColor = colorUnderMouse;
-
-			auto iter = gameState->provinceData.colorToId->find(colorUnderMouse);
-			if (iter != gameState->provinceData.colorToId->end())
+			gameState->dirtyFlag = true;
+			SaveProvinceId(gameState, map->editor.inputProvinceId);
+		}
+		else
+		{
+			if (input->isMouseClicked()) // mitä tapahtuu jos uusi provinssi
 			{
-				printf("%i", iter->second);
-				map->editor.inputProvinceId = iter->second;
+				Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+				map->editor.editorColor = colorUnderMouse;
+
+				auto iter = gameState->provinceData.colorToId->find(colorUnderMouse); // 
+				if (iter != gameState->provinceData.colorToId->end())
+				{
+					printf("%i", iter->second);
+					map->editor.inputProvinceId = iter->second;
+				}
+				else // uusi provinssi
+				{
+					// gameState->provinceData.colorToId
+					// gameState->provinceEditor.selectedProvinceId 
+					ProvinceData* provData = &gameState->provinceData;
+
+					int newProvinceId = *provData->currentCount;
+					(*provData->currentCount) += 1;
+
+					provData->colorToId->insert(std::make_pair(colorUnderMouse, newProvinceId));
+					provData->idToColor[newProvinceId] = colorUnderMouse;
+					provData->positions[newProvinceId] = { (int)input->mouse.x, (int)input->mouse.y };
+
+					map->editor.inputProvinceId = newProvinceId;
+					// debugBreak();
+					gameState->newNode(map->editor.inputProvinceId, map->editor.inputProvinceId, (int)input->mouse.x, (int)input->mouse.y);
+				}
+
+				// set up neighbours
+				std::vector<int>* neighbours = &gameState->provinceEditor.selectedNeighbours;
+				neighbours->clear();
+
+				std::vector<int> currentN = gameState->getAllProvinceNeighbours(map->editor.inputProvinceId);
+				*neighbours = currentN;
 			}
 
-			// set up neighbours
+			if (input->isMouseClicked(2))
+			{
+				Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+				map->editor.editorColor = colorUnderMouse;
+
+				auto iter = gameState->provinceData.colorToId->find(colorUnderMouse);
+
+				if (iter != gameState->provinceData.colorToId->end()) // onko id -> color
+				{
+					auto iter2 = std::find(gameState->provinceEditor.selectedNeighbours.begin(),
+						gameState->provinceEditor.selectedNeighbours.end(), iter->second);
+
+					if (iter2 == gameState->provinceEditor.selectedNeighbours.end())
+					{
+						gameState->provinceEditor.selectedNeighbours.push_back(iter->second);
+						printf("added %i ", iter->second);
+					}
+					else
+					{
+						auto begin = gameState->provinceEditor.selectedNeighbours.begin();
+						auto end = gameState->provinceEditor.selectedNeighbours.end();
+						gameState->provinceEditor.selectedNeighbours.erase(std::remove(begin, end, iter->second));
+
+						printf("removed %i ", iter->second);
+					}
+				}
+			}
+
+			// show data about current:
+			ImGui::Text("Current id: %i", map->editor.inputProvinceId);
 			std::vector<int>* neighbours = &gameState->provinceEditor.selectedNeighbours;
-			neighbours->clear();
-			std::vector<int> currentN = gameState->getAllProvinceNeighbours(gameState->provinceEditor.selectedProvinceId);
-			*neighbours = currentN;
-			// for(int i = 0; i < gameState->)
-			// neighbours->push_back();
-		}
-
-		if (input->isMouseClicked(3))
-		{
-			Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
-			map->editor.editorColor = colorUnderMouse;
-
-			auto iter = gameState->provinceData.colorToId->find(colorUnderMouse);
-
-			if (iter != gameState->provinceData.colorToId->end())
+			if (neighbours->size() > 0)
 			{
-				auto iter2 = std::find(gameState->provinceEditor.selectedNeighbours.begin(),
-					gameState->provinceEditor.selectedNeighbours.end(), iter->second);
 
-				if (iter2 != gameState->provinceEditor.selectedNeighbours.end()) 
+				ImGui::Text("Current Neighbours: ");
+				for (int i = 0; i < neighbours->size(); i++)
 				{
-					gameState->provinceEditor.selectedNeighbours.push_back(iter->second);
-					printf("added %i ", iter->second);
+					ImGui::Text("%i, ", neighbours->at(i)); // Setti olis parempi ei samoja 2 kpl
 				}
-				else
-				{
-					auto begin = gameState->provinceEditor.selectedNeighbours.begin();
-					auto end = gameState->provinceEditor.selectedNeighbours.end();
-					std::remove(begin, end, iter->second);
-					printf("removed %i ", iter->second);
-				}
+
+				// visualize current neighbours:
+				VisualizeNodes(neighbours, map->editor.inputProvinceId, gameState);
 			}
-		}
-
-		// show data about current:
-		ImGui::Text("Current id: %i", map->editor.inputProvinceId);
-		std::vector<int>* neighbours = &gameState->provinceEditor.selectedNeighbours;
-		if (neighbours->size() > 0)
-		{
-
-			ImGui::Text("Current Neighbours: ");
-			for (int i = 0; i < neighbours->size(); i++)
+			if (ImGui::ColorEdit4("vari", colors, true))
 			{
-				ImGui::Text("%i, ", neighbours->at(i)); // Setti olis parempi ei samoja 2 kpl
+				replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+				map->editor.editorColor = replacement;
 			}
 
-			// visualize current neighbours:
-			VisualizeNodes(neighbours, map->editor.inputProvinceId, gameState);
+			ImGui::Text("Province Capital: %i, %i", (int)map->editor.inputX, (int)map->editor.inputY);
+			ImGui::End();
 		}
-		ImGui::End();
+		// ImGui::InputText("Province id: ",  );
 	}
-
 
 	ImGui::Begin("fake player gui");
 	if (ImGui::Button("build factory"))
@@ -878,7 +922,6 @@ EXPORT IMGUIFUNC(Imgui)
 		gameState->player->player.selectedBuildingType = building_mill;
 	}
 	ImGui::End();
-
 }
 //								______  ______  _____   ______
 //							   /\__  _\/\  __`\/\  _`\ /\  __`\        

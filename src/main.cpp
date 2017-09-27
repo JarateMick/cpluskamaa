@@ -1049,7 +1049,13 @@ void FreeTexture(GLuint* texture)
 
 int main(int argc, char* argv[])
 {
-	Graph<int, int> map(6);
+
+
+
+
+
+
+	Graph<int, int> map(6); 
 	map.AddNode(0, 0);
 	map.AddNode(1, 1);
 	map.AddNode(2, 2);
