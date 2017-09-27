@@ -95,8 +95,12 @@ enum building_type
 
 // hello
 
+
 struct Entity
 {
+	Entity() = default;
+	~Entity() = default;
+
 	Entity_Enum type;
 	uint32_t	guid;
 
@@ -183,6 +187,13 @@ void r(Entity *e, EngineCore* core);
 Entity* GetFirstAvaibleEntity(game_state* state);
 EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state); //LUA_E_F
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side);
+
+EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState);
+
+
+
+
+
 
 #define GET_ENTITY(e, entity_type) ((e)->type == Entity_##entity_type ? &(e)->entity_type : 0)
 #define ENT(e, entity_type)        &((e)->entity_type)

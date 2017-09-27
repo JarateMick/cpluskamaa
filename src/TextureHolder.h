@@ -17,14 +17,17 @@ struct InputManager
 			lastFrameButton[i] = thisFrameButton[i];
 		}
 	}
+
 	void pressKey(int keyID)
 	{
 		thisFrame[keyID] = true;
 	}
+
 	void releaseKey(int keyID)
 	{
 		thisFrame[keyID] = false;
 	}
+
 	void pressMouse(int key)
 	{
 		if (key > MAX_BUTTONS - 1)
@@ -35,10 +38,12 @@ struct InputManager
 		}
 		thisFrameButton[key] = true;
 	}
+
 	void releaseMouse(int key)
 	{
 		thisFrameButton[key] = false;
 	}
+
 	bool isKeyDown(int keyID)
 	{
 		return thisFrame[keyID];

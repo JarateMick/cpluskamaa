@@ -390,6 +390,20 @@ struct ProvinceData
 	int*                   currentCount;
 };
 
+struct ProvinceEditorData
+{
+	std::vector<int> selectedNeighbours;
+	int           selectedProvinceId;
+};
+
+struct PathFindingUi
+{
+	int  startId, endId;
+	bool drawPath;
+};
+
+std::vector<int> getAllProvinceNeighbours(int id);
+
 introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
@@ -400,7 +414,8 @@ introspect("game_state: hello world") struct game_state
 	int            maxSelected;
 
 	int            currentEntityCount;
-	ProvinceData   provinceData;
+
+	ProvinceData   provinceData; 
 
 	// TileMap tilemap;
 	// TilemapEditor editor;
@@ -408,7 +423,10 @@ introspect("game_state: hello world") struct game_state
 
 	float cameraSpeed;
 
-	bool dirtyFlag;
+	bool dirtyFlag;                  // joku oma homma näille
+	ProvinceEditorData provinceEditor;
+	PathFindingUi      pathfindingUi;
+	std::vector<int>(*getAllProvinceNeighbours)(int);
 };
 
 inline int GetColorToId(game_state* state, Uint32 color)

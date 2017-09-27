@@ -4,20 +4,34 @@
 #include <string>
 #include <vector>
 
-#include <unordered_set>
-#include <algorithm>
-
 #include <lua.hpp>
 
 #include "Entity.cpp"
 #include "fileSystem.cpp"
 
-
 #include "meta.cpp"
 #include "graph.h"
 
+//#include "array.h"
+#include "util/collection_types.h"
+#include "util/array.h"
+#include "util/memory.cpp"
+//#include <array>
+
+
 #undef max
 #undef min 
+
+//
+// preprocessor
+// oma lispy> 
+//
+
+game_state* luasgamestate = nullptr;
+EXPORT __declspec(dllexport) void* getGameState()
+{
+	return luasgamestate;
+}
 
 using namespace std;
 StackAllocator g_singleFrameAllocator;
@@ -117,7 +131,6 @@ void RemoveEntity(int index, game_state* state)
 //  * boats
 //  * technology mode
 //  * diplomacy
-
 
 // Engine:
 //   * Hotloading variable tweak -> (from google sheets maybe?)
@@ -310,12 +323,12 @@ void LoadNodes()
 }
 
 #include <map>
-void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
+std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 {
 	GraphNode<MapNode, int>* start = graph->nodes[startID];
 
 	std::queue<GraphNode<MapNode, int>*> queue;
-	queue.push(start);         
+	queue.push(start);
 	start->marked = true;
 
 	std::map<GraphNode<MapNode, int>*, GraphNode<MapNode, int>*> came_from;
@@ -344,17 +357,26 @@ void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 	// make path
 	GraphNode<MapNode, int>* current = graph->nodes[goalId];
 	std::vector<GraphNode<MapNode, int>*> path;
+
+
+	std::vector<int> returnPath;
+	returnPath.reserve(16);
+
+
 	path.push_back(current);
+	returnPath.push_back(current->data.id);
 
 	while (current != start)
 	{
 		current = came_from[current];
 		path.push_back(current);
+		returnPath.push_back(current->data.id);
 
 		if (current == 0)
 		{
 			printf("could't find path between %i and %i\n", startID, goalId);
-			return;
+			ASSERT(false);
+			return returnPath;
 		}
 	}
 	printf("the path between %i and %i is\n", startID, goalId);
@@ -365,6 +387,8 @@ void BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 	}
 	printf("\n");
 	graph->ClearMarks();
+
+	return returnPath;
 
 	// path.push_back
 
@@ -390,6 +414,8 @@ EXPORT void Loop(EngineCore* core)
 		gameState->arena.InitalizeArena(core->memory->permanentStorageSize - sizeof(game_state),
 			(uint8_t *)core->memory->permanentStorage + sizeof(game_state));
 		memory_arena* arena = &gameState->arena;
+
+		luasgamestate = gameState; // game_state -> lua
 
 		core->memory->isInitialized = true;
 
@@ -442,6 +468,8 @@ EXPORT void Loop(EngineCore* core)
 		gameState->currentEntityCount = 4;
 
 
+		gameState->getAllProvinceNeighbours = getAllProvinceNeighbours;
+
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
 		e->type = Entity_script;
@@ -465,7 +493,7 @@ EXPORT void Loop(EngineCore* core)
 		}
 
 		nodes.ClearMarks();
-		BreadthFirst(0, &nodes, 7);
+	//	BreadthFirst(0, &nodes, 7);
 	}
 
 
@@ -598,7 +626,7 @@ EXPORT void Loop(EngineCore* core)
 		SaveNodes();
 		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
 	}
-}
+}	
 
 /* Get Red component */
 //temp = pixel & fmt->Rmask;  /* Isolate red component */
@@ -644,6 +672,7 @@ static const float HexHeightInMeter = hexHeight / hexWidth;
 struct Entity2
 {
 	void Update(int a)
+
 	{
 		this->x = a;
 		this->y = a;
@@ -696,9 +725,43 @@ void SetEntityVel(float velX, float velY, int id)
 	state->entities[id].velY = velY;
 }
 
+void VisualizePath(std::vector<int>* path, game_state* state)
+{
+	if (path->size() <= 0)
+	{
+		printf("no path");
+		return;
+	}
+
+	v2 lastPos = state->provinceData.positions[path->at(path->size()-1)];
+	for (int i = path->size()-1; i > -1; i--)
+	{
+		int provinceID = path->at(i);
+		auto v2 = state->provinceData.positions[provinceID];
+
+		Debug::drawLine({ (float)lastPos.x, (float)lastPos.y }, { (float)v2.x, (float)v2.y });
+		Debug::drawBox({ v2.x, v2.y, 20, 20 });
+		lastPos = v2;
+	}
+}
+
+std::vector<int> getAllProvinceNeighbours(int id)
+{
+	std::vector<int> returnValue;
+	for (auto iter = nodes.nodes[id]->archlist.begin(); iter != nodes.nodes[id]->archlist.end(); ++iter)
+	{
+		returnValue.push_back(iter->node->data.id);
+	}
+	return returnValue;
+}
+	
+
+// return {};
+
 // poistossa synccaa molemmat swap and win !
 // serialisoi     
 // id -> entity formaattiin luan sisällä
+
 
 //void SetAllEntitys()
 //{
@@ -900,6 +963,7 @@ void LuaErrorWrapper(game_state* state, EngineCore* core)
 	//	luaP = &lua;
 	//}
 
+
 	//(*luaP)["Input"]["mouse"]["x"] = input->mouseX;
 	//(*luaP)["Input"]["mouse"]["y"] = input->mouseY;
 
@@ -990,6 +1054,115 @@ EXPORT void Draw(EngineCore* core)
 		r(e, core);
 	}
 
+	if (gameState->pathfindingUi.drawPath)
+	{
+		auto* ui = &gameState->pathfindingUi;
+		auto path = BreadthFirst(ui->startId, &nodes, ui->endId);
+		VisualizePath(&path, gameState);
+	}
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	auto timePoint1(std::chrono::high_resolution_clock::now());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// BENCMARKTIMEEEEEEEEEEEEEEEEEEEEEEEEE!
+
+
+	// static Entity* lolentity = (Entity*)malloc(10000);
+	// static Entity* lolentity2 = (Entity*)malloc(10000);
+	// memcpy(lolentity, gameState->entities, 10000);
+	// memcpy(lolentity2, gameState->entities, 10000);
+
+	// free(lolentity);
+
+
+
+//	const int test = 10000000;
+#if 0 
+	//std::vector<int> thousand;
+	//thousand.resize(test);
+	//for (int i = 0; i < test; i++)
+	//{
+	//	thousand[i] = i;
+	//}
+#else
+	//using namespace foundation;
+
+	// static int array[test];
+	//static int* aaa = new int[test]; int* aa = aaa;
+	//for (int i = 0; i < (test); i++)
+	//{
+	////	array[i] = i;
+	//	*(aa + i) = i;
+	//}
+//	memset(array, 1, sizeof(array));
+
+	// static bool ini = false;
+	// if (!ini)
+	// {
+	// 	memory_globals::init();
+	// 	ini = true;
+	// }
+	// static foundation::Allocator& alloc = foundation::memory_globals::default_allocator(); 
+	//foundation::Array<int> uusi(alloc);
+	//foundation::array::resize(uusi, test);
+	//for (int i = 0; i < test; i++)
+	//	uusi[i] = i;
+
+
+	// foundation::array<int> testi;
+	// foundation::array<int> test;
+
+	// test.
+#endif
+	auto timePoint2(std::chrono::high_resolution_clock::now());
+    auto elapsedTime(timePoint2 - timePoint1);
+
+    // lasFT = ft;
+    float ft{ std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+    auto ftSeconds(ft / 1000.f);
+    auto fps(1.f / ftSeconds);
+
+	//std::cout << fps << std::endl;
 
 
 	// Cool

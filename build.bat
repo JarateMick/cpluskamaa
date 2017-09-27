@@ -25,11 +25,6 @@ del *.pdb > NUL 2> NUL
 
 rem simple preprocessor
 REM cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
-REM pushd ..\src
-REM ..\bin\simple_preprocessor.exe > handmade_generated.h
-REM popd
-
-
 
 rem Box2D.lib  Box2D.lib
 

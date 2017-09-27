@@ -7,8 +7,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_mixer.h>
+// #include <SDL2/SDL_ttf.h>
+// #include <SDL2/SDL_mixer.h>
 
 #include <atomic>
 #include <algorithm>
@@ -1367,12 +1367,9 @@ int main(int argc, char* argv[])
 		lua_settop(L, 0);
 	}
 
-
-
 	// lua_getglobal(L, "testiPrinter");
 	// lua_pcall(L, 0, 0, 0);
 	// lua_settop(L, 0);
-
 
 	auto asdf = UpiEngine::ResourceManager::getTexture("tekstuuri");
 	core.filewatcher.init(shaderFiles, SHADERFILECOUNT, Resource_shader);

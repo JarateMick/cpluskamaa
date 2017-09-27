@@ -4,6 +4,7 @@
 // #include "game.cpp"
 #include "entity.cpp"
 #include "core.h"
+// #include "game.cpp"
 
 
 // #include "utility.h"
@@ -374,6 +375,27 @@ void AddToConsole(const char* text)
 	GetConsoleInstance().AddLog("%s", text);
 }
 
+void VisualizeNodes(std::vector<int>* path, int startId, game_state* state)
+{
+	if (path->size() <= 0)
+	{
+		printf("no path\n");
+		return;
+	}
+
+	v2 startPos = state->provinceData.positions[startId];
+	Debug::drawBox({ startPos.x, startPos.y, 20, 20 });
+
+	for (int i = path->size() - 1; i > -1; i--)
+	{
+		int provinceID = path->at(i);
+		auto v2 = state->provinceData.positions[provinceID];
+
+		Debug::drawLine({ (float)startPos.x, (float)startPos.y }, { (float)v2.x, (float)v2.y });
+		Debug::drawBox({ v2.x, v2.y, 20, 20 });
+	}
+}
+
 EXPORT IMGUIFUNC(Imgui)
 {
 	ImGui::SetCurrentContext(context);
@@ -382,6 +404,8 @@ EXPORT IMGUIFUNC(Imgui)
 
 	static char buffer[248];
 	DefineInput(core);
+
+	Debug::_Debugger = core->debugger;
 
 	// Debug::console = &GetConsoleInstance().AddLog;
 	static bool init = false;
@@ -752,12 +776,97 @@ EXPORT IMGUIFUNC(Imgui)
 		ImGui::Text("%i", neighbours[i]); // Setti olis parempi ei samoja 2 kpl
 	}
 
-
-
 	if (ImGui::Button("save province data!"))
 	{
 		gameState->dirtyFlag = true;
 	}
+
+
+	// pathfinding part
+	ImGui::Separator();
+	ImGui::Text("Pathfinding: ");
+
+
+	PathFindingUi* pathui = &gameState->pathfindingUi;
+	ImGui::InputInt("StartID", &pathui->startId);
+	ImGui::InputInt("EndID", &pathui->endId);
+	ImGui::Checkbox("Show path", &pathui->drawPath);
+	//	ImGui::SameLine();
+
+		///////////////////////////////////////////////////////// SUPER EDITOR
+
+	static bool superEditor = false;
+	ImGui::Checkbox("super editor", &superEditor);
+	if (superEditor)
+	{
+		ImGui::Begin("Super editor", &superEditor);
+
+		if (input->isMouseClicked())
+		{
+			Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+			map->editor.editorColor = colorUnderMouse;
+
+			auto iter = gameState->provinceData.colorToId->find(colorUnderMouse);
+			if (iter != gameState->provinceData.colorToId->end())
+			{
+				printf("%i", iter->second);
+				map->editor.inputProvinceId = iter->second;
+			}
+
+			// set up neighbours
+			std::vector<int>* neighbours = &gameState->provinceEditor.selectedNeighbours;
+			neighbours->clear();
+			std::vector<int> currentN = gameState->getAllProvinceNeighbours(gameState->provinceEditor.selectedProvinceId);
+			*neighbours = currentN;
+			// for(int i = 0; i < gameState->)
+			// neighbours->push_back();
+		}
+
+		if (input->isMouseClicked(3))
+		{
+			Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+			map->editor.editorColor = colorUnderMouse;
+
+			auto iter = gameState->provinceData.colorToId->find(colorUnderMouse);
+
+			if (iter != gameState->provinceData.colorToId->end())
+			{
+				auto iter2 = std::find(gameState->provinceEditor.selectedNeighbours.begin(),
+					gameState->provinceEditor.selectedNeighbours.end(), iter->second);
+
+				if (iter2 != gameState->provinceEditor.selectedNeighbours.end()) 
+				{
+					gameState->provinceEditor.selectedNeighbours.push_back(iter->second);
+					printf("added %i ", iter->second);
+				}
+				else
+				{
+					auto begin = gameState->provinceEditor.selectedNeighbours.begin();
+					auto end = gameState->provinceEditor.selectedNeighbours.end();
+					std::remove(begin, end, iter->second);
+					printf("removed %i ", iter->second);
+				}
+			}
+		}
+
+		// show data about current:
+		ImGui::Text("Current id: %i", map->editor.inputProvinceId);
+		std::vector<int>* neighbours = &gameState->provinceEditor.selectedNeighbours;
+		if (neighbours->size() > 0)
+		{
+
+			ImGui::Text("Current Neighbours: ");
+			for (int i = 0; i < neighbours->size(); i++)
+			{
+				ImGui::Text("%i, ", neighbours->at(i)); // Setti olis parempi ei samoja 2 kpl
+			}
+
+			// visualize current neighbours:
+			VisualizeNodes(neighbours, map->editor.inputProvinceId, gameState);
+		}
+		ImGui::End();
+	}
+
 
 	ImGui::Begin("fake player gui");
 	if (ImGui::Button("build factory"))
@@ -769,6 +878,7 @@ EXPORT IMGUIFUNC(Imgui)
 		gameState->player->player.selectedBuildingType = building_mill;
 	}
 	ImGui::End();
+
 }
 //								______  ______  _____   ______
 //							   /\__  _\/\  __`\/\  _`\ /\  __`\        

@@ -110,6 +110,12 @@ namespace Debug
 		_Debugger->drawBox(destRect, color, angle);
 	}
 
+	void drawBox(const glm::vec4& destRect)
+	{
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255); // TODO: default color
+		_Debugger->drawBox(destRect, white, 0);
+	}
+
 	void drawBox(float x, float y, float w, float h)
 	{
 		static UpiEngine::ColorRGBA8 color(255, 255, 255, 255);
@@ -133,6 +139,14 @@ namespace Debug
 		glm::vec2 start2{ start.x, start.y };
 		glm::vec2 end2{ end.x, end.y };
 		drawLine(start2, end2, color);
+	}
+
+	void drawLine(v2_d start, v2_d end)
+	{
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255); // TODO: default color
+		glm::vec2 start2{ start.x, start.y };
+		glm::vec2 end2{ end.x, end.y };
+		drawLine(start2, end2, white);
 	}
 	
 };

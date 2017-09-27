@@ -1,6 +1,7 @@
 #include "Entity.h"
 #include "core.h"
 #include "game.h"
+#include "random.h"
 
 void f(Entity *e, EngineCore* core)
 {
@@ -361,6 +362,15 @@ EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum typ
 	result->alive = true;
 	return result;
 }
+
+
+
+EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState)
+{
+	auto* state = (game_state*)gameState;
+	return &state->entities[i];
+}
+
 
 const glm::vec2 buildingTextureDims{ 2, 2 };
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side)

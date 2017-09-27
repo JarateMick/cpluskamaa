@@ -1,5 +1,4 @@
 #include "Random.h"
-
 #include <random>
 
 namespace Random

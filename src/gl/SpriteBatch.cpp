@@ -1,6 +1,10 @@
 #include "SpriteBatch.h"
 #include <algorithm>
 
+
+// #include "util/array.h"
+
+
 namespace UpiEngine {
 
 	Glyph::Glyph(const glm::vec4 &destRect, const glm::vec4 &uvRect, GLuint Texture, float Depth, const ColorRGBA8 &color) :
