@@ -3,6 +3,47 @@
 #include "game.h"
 #include "random.h"
 
+// std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
+
+//std::vector<int> findPath(int startId, int goalId, game_state* gameState)
+//{
+//	return BreadthFirst(startId, gameState->MapNodes, goalId);
+//}
+
+inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData* prov)
+{
+	int targetId = path[id]; // eka on maali
+	auto v2 = prov->positions[targetId];
+	unit->unit.targetX = v2.x;
+	unit->unit.targetY = v2.y;
+}
+
+bool FollowPath(Entity* entityUnit, game_state* gameState)
+{
+	std::vector<int>& path = entityUnit->unit.path;
+	if (path.size() > 2)
+	{
+		// int targetId = path[path.size() - 2]; // eka on maali
+		// auto v2 = gameState->provinceData.positions[targetId];
+		// entityUnit->unit.targetX = v2.x;
+		// entityUnit->unit.targetY = v2.y;
+
+		SetTarget(entityUnit, path, path.size() - 2,&gameState->provinceData);
+		return true;
+	}
+	return false;
+	// mee viereiseen
+
+	// int targetId = path[path.size() - 1];
+	// auto v2 = gameState->provinceData.positions[targetId];
+	// gameState->selectedEntitys[targetId]->unit.targetX = v2.x;
+	// gameState->selectedEntitys[targetId]->unit.targetY = v2.y;
+
+	// gameState->selectedEntitys[i]->unit.targetX = path[path.size() - 1];
+	// gameState->selectedEntitys[i]->unit.targetY = path[path.size() - =]
+	// printf("lyhy\n");
+}
+
 void f(Entity *e, EngineCore* core)
 {
 	if (auto ninja = GET_ENTITY(e, ninja))
@@ -109,10 +150,54 @@ void f(Entity *e, EngineCore* core)
 
 			for (int i = 0; i < gameState->selectedCount; i++)
 			{
-				gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
-				gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
+				float x = gameState->selectedEntitys[i]->x;
+				float y = gameState->selectedEntitys[i]->y;
+
+				Uint32 side = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+				Uint32 current = gameState->worldmap.GetPixelSideFromWorld(x, y);
+				auto mouseIter = gameState->provinceData.colorToId->find(side);
+				auto goaliter = gameState->provinceData.colorToId->find(current);
+
+				if (mouseIter != gameState->provinceData.colorToId->end() && goaliter != gameState->provinceData.colorToId->end())
+				{
+					std::vector<int> path = BreadthFirst(goaliter->second, gameState->MapNodes, mouseIter->second);
+
+					gameState->selectedEntitys[i]->unit.path = path;
+					if (path.size() > 2)
+					{
+						int targetId = path[path.size() - 2]; // eka on maali
+						auto v2 = gameState->provinceData.positions[targetId];
+						gameState->selectedEntitys[i]->unit.targetX = v2.x;
+						gameState->selectedEntitys[i]->unit.targetY = v2.y;
+
+						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
+						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
+						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
+
+						printf("matka\n"); // seuraa reittiä
+					}
+					else  // mee viereiseen
+					{
+						int targetId = path[0];
+						auto v2 = gameState->provinceData.positions[targetId];
+						gameState->selectedEntitys[i]->unit.targetX = v2.x;
+						gameState->selectedEntitys[i]->unit.targetY = v2.y;
+
+						gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
+						gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
+						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
+						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
+						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
+					}
+
+					printf("target set");
+				}
+				else
+				{
+					printf("can't set target");
+					// ASSERT(false); // why you can pathfind here
+				}
 			}
-			printf("target set");
 		}
 
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
@@ -155,16 +240,46 @@ void f(Entity *e, EngineCore* core)
 		// if (unit->side == gameState.playerSide)
 		// {
 		// }
-		Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
-		if (side != unit->side)
+
+		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(e->x, e->y);
+		if (unit->lastFrameProv == mapId)
 		{
-			gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, unit->side, core);
+			// provinssi ei ole vaihtunut! -> jatka liikkumista ampumista jos tarvii
+			// -> älä captureta provinssia
 		}
+		else
+		{   // Provinssi on vaihtunut
+			Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
+
+			if (side != unit->side)
+			{
+				gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, unit->side, core);
+			}
+
+			if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
+			{
+				// kauas pois
+				unit->path.pop_back();
+				printf("pop: ");
+				printf("(%i, %i)\n", unit->targetX, unit->targetY);
+			}
+			else
+			{
+				//if (unit->path.size() > 1)
+				//{
+				//	// SetTarget(e, unit->path, 1, &gameState->provinceData);
+				//	// liiku vapaasti target locatioon?
+				//}
+				unit->targetX = unit->originalTargetX;
+				unit->targetY = unit->originalTargetY;
+			}
+			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
+		}
+		unit->lastFrameProv = mapId;
 
 		// attack logic
 		unit->mainAttackCD -= core->deltaTime;
 		auto attackTarget = unit->attackTarget;
-
 		if ((attackTarget) && unit->mainAttackCD < 0.f) // SHOOT // attack
 		{
 			// laske suunta targettiin
@@ -190,6 +305,7 @@ void f(Entity *e, EngineCore* core)
 
 		if (unit->targetX != -1 && unit->targetY != -1)
 		{
+
 			glm::vec2 moveVec{ unit->targetX - e->x, unit->targetY - e->y };
 
 			// float length = glm::length(moveVec);
@@ -199,6 +315,20 @@ void f(Entity *e, EngineCore* core)
 			{
 				unit->targetX = -1;
 				unit->targetY = -1;
+
+					// kauas pois
+				if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
+				{
+					unit->path.pop_back();
+					printf("pop");
+				}
+				else if (unit->path.size() > 0)
+				{
+					printf("origninal target (%i, %i)", unit->originalTargetX, unit->originalTargetY);
+					unit->targetX = unit->originalTargetX;
+					unit->targetY = unit->originalTargetY;
+					unit->path.pop_back();
+				}
 			}
 			else
 			{
@@ -235,8 +365,12 @@ void f(Entity *e, EngineCore* core)
 			} break;
 			case building_millitary_factory:
 			{
-				// printf("gimme troop!\n");
+				// printf("gimme troop!\n"
 				Entity *ee = newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+				ee->unit.targetX = -1;
+				ee->unit.targetY = -1;
+				ee->unit.originalTargetX = -1;
+				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
 			} break;
 			default:
@@ -323,7 +457,7 @@ void r(Entity *e, EngineCore* core)
 	{
 		Uint32 ucolor = unit->side;
 		auto color = Uin32ToColor(ucolor);
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
+		core->spriteBatch->draw(glm::vec4{ e->x - 20, e->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
 	}
 	else if (auto entity = GET_ENTITY(e, script))
 	{
@@ -333,6 +467,7 @@ void r(Entity *e, EngineCore* core)
 	{
 		GetGameState(core);
 		DefineInput(core);
+
 
 		char buffer[64];
 		sprintf(buffer, "money: %i", player->cash);
@@ -353,7 +488,7 @@ Entity* GetFirstAvaibleEntity(game_state* state)
 	return &state->entities[state->currentEntityCount++];
 }
 
-EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state) 
+EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)
 {
 	Entity* result = GetFirstAvaibleEntity(state);
 	result->x = x;

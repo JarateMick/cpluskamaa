@@ -11,6 +11,7 @@
 
 #include "Debug.h"
 #include "Random.cpp"
+#include "graph.h"
 
 #define ASSERTIONS_ENABLED 1
 #if ASSERTIONS_ENABLED
@@ -307,7 +308,7 @@ struct WorldMapEditor
 	float inputY;
 };
 
-const int mapSizeMultiplier = 4;
+const int mapSizeMultiplier = 10;
 struct WorldMap
 {
 	GLuint temptextureid;
@@ -343,12 +344,12 @@ struct WorldMap
 
 	Uint32 GetPixelSideFromWorld(int x, int y)
 	{
-		return provinces.GetPixel(x / 4, 480.f - y / 4); // real size 
+		return provinces.GetPixel(x / mapSizeMultiplier, 480.f - y / mapSizeMultiplier); // real size 
 	}
 
 	Uint32 GetCurrentHolder(int x, int y)
 	{
-		return visual.GetPixel(x / 4, 480.f - y / 4);
+		return visual.GetPixel(x / mapSizeMultiplier, 480.f - y / mapSizeMultiplier);
 	}
 
 	Uint32 GetPixelSide(int x, int y)
@@ -359,8 +360,8 @@ struct WorldMap
 
 	void changeSideWorld(int x, int y, Uint32 to, EngineCore* core)
 	{
-		x = (x - dimensions.x) / 4;
-		y = (dimensions.w - y) / 4;
+		x = (x - dimensions.x) / mapSizeMultiplier;
+		y = (dimensions.w - y) / mapSizeMultiplier;
 		Uint32 targetColor = GetPixelSide(x, y);
 
 		SDL_PixelFormat *fmt = provinces.surface->format;
@@ -404,6 +405,13 @@ struct PathFindingUi
 
 std::vector<int> getAllProvinceNeighbours(int id);
 
+struct MapNode
+{
+	int   id;
+	float x, y; // for rendering and debugging 
+};
+// Graph<MapNode, int> nodes(64);
+
 introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
@@ -428,6 +436,8 @@ introspect("game_state: hello world") struct game_state
 	PathFindingUi      pathfindingUi;
 	std::vector<int>(*getAllProvinceNeighbours)(int);
 
+	Graph<MapNode, int>* MapNodes;
+
 	void(*newNode)(int index, int id, float x, float y);
 };
 
@@ -447,7 +457,7 @@ inline int GetColorToId(game_state* state, Uint32 color)
 	}
 }
 
-
+std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId);
 
 struct AssetFileInfo
 {

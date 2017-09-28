@@ -2,9 +2,12 @@
 #include "imgui/imgui.h"
 #include "fileSystem.cpp"
 // #include "game.cpp"
-#include "entity.cpp"
+// #include "entity.cpp"
 #include "core.h"
 #include <map>
+#include "graph.h"
+#include <vector>
+#include "game.h"
 // #include "game.cpp"
 
 
@@ -414,7 +417,7 @@ void VisualizeNodes(std::vector<int>* path, int startId, game_state* state)
 	}
 
 	v2 startPos = state->provinceData.positions[startId];
-	Debug::drawBox({ startPos.x, startPos.y, 20, 20 });
+	Debug::drawBox({ startPos.x - 7, startPos.y - 7, 14, 14 });
 
 	for (int i = path->size() - 1; i > -1; i--)
 	{
@@ -422,7 +425,7 @@ void VisualizeNodes(std::vector<int>* path, int startId, game_state* state)
 		auto v2 = state->provinceData.positions[provinceID];
 
 		Debug::drawLine({ (float)startPos.x, (float)startPos.y }, { (float)v2.x, (float)v2.y });
-		Debug::drawBox({ v2.x, v2.y, 20, 20 });
+		Debug::drawBox({ v2.x - 7, v2.y - 7, 14, 14 });
 
 		// printf("(%i, %i)\n", v2.x, v2.y);
 	}
@@ -710,10 +713,10 @@ EXPORT IMGUIFUNC(Imgui)
 	{
 		for (int i = 0; i < SpawnCount; i++)
 		{
-			Entity* e = newEntity(input->mouse.x, input->mouse.y, Entity_unit, gameState);
-			Uint32 unitColor = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
-			e->unit.side = unitColor;
-			e->unit.attackRange = 200.f;
+			// Entity* e = newEntity(input->mouse.x, input->mouse.y, Entity_unit, gameState);
+			// Uint32 unitColor = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+			// e->unit.side = unitColor;
+			// e->unit.attackRange = 200.f;
 			// e->unit.
 		}
 	}
@@ -816,11 +819,24 @@ EXPORT IMGUIFUNC(Imgui)
 		if (ImGui::Button("Save changes "))
 		{
 			gameState->dirtyFlag = true;
+			auto* neighbours = &gameState->provinceEditor.selectedNeighbours;
+			for(int i = 0; i < neighbours->size(); i++)
+			{
+				int nIndex = neighbours->at(i);
+				auto* neighbourNode = gameState->MapNodes->nodes.at(nIndex);
+				gameState->MapNodes->nodes[map->editor.inputProvinceId]->AddArc(neighbourNode, 1); 
+				// HUOMIO! jos tulevaisuudessa addaad weightin KORJAAAA tömö
+			}
 			SaveProvinceId(gameState, map->editor.inputProvinceId);
+		}
+		else if (ImGui::Button("Force clear"))
+		{
+			// gameState->MapNodes->nodes[map->editor.inputProvinceId]->AddArc(neighbourNode, 1); 
+			gameState->MapNodes->nodes[map->editor.inputProvinceId]->archlist.clear();
 		}
 		else
 		{
-			if (input->isMouseClicked()) // mitä tapahtuu jos uusi provinssi
+			if (input->isMouseClicked() && input->isKeyDown(SDL_SCANCODE_5)) // mitä tapahtuu jos uusi provinssi
 			{
 				Uint32 colorUnderMouse = gameState->worldmap.GetSideUnderMouse(&input->mouse);
 				map->editor.editorColor = colorUnderMouse;
@@ -846,7 +862,9 @@ EXPORT IMGUIFUNC(Imgui)
 
 					map->editor.inputProvinceId = newProvinceId;
 					// debugBreak();
-					gameState->newNode(map->editor.inputProvinceId, map->editor.inputProvinceId, (int)input->mouse.x, (int)input->mouse.y);
+					// gameState->newNode(map->editor.inputProvinceId, map->editor.inputProvinceId, (int)input->mouse.x, (int)input->mouse.y);
+					MapNode node{ newProvinceId, input->mouse.x, input->mouse.y };
+					gameState->MapNodes->AddNode(node, newProvinceId);
 				}
 
 				// set up neighbours
@@ -907,9 +925,9 @@ EXPORT IMGUIFUNC(Imgui)
 			}
 
 			ImGui::Text("Province Capital: %i, %i", (int)map->editor.inputX, (int)map->editor.inputY);
-			ImGui::End();
 		}
 		// ImGui::InputText("Province id: ",  );
+		ImGui::End();
 	}
 
 	ImGui::Begin("fake player gui");

@@ -130,17 +130,21 @@ struct Entity
 			int strength;
 			Uint32 side;
 
+			Uint32 lastFrameProv;
+
 			int targetX, targetY;
+			int originalTargetX, originalTargetY;
 
 			Entity* attackTarget;
 
 			float mainAttackCD;
-			// void* target2;
-
 			float attackRange;
-				// attack speed jne...
-				// (instant attacks melee) <-> (type?)
-				// if in range attack jne...
+
+			std::vector<int> path; // LEAK!
+
+			// attack speed jne...
+			// (instant attacks melee) <-> (type?)
+			// if in range attack jne...
 		} unit;
 		struct
 		{
@@ -191,6 +195,8 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState);
 
 
+
+//std::vector<int> findPath(int startId, int goalId, game_state* gameState);
 
 
 

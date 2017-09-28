@@ -922,11 +922,11 @@ void process(GraphNode<int, int>* node)
 #include <string>
 #include <sstream>
 
-struct MapNode
-{
-	int   id;
-	float x, y; // for rendering and debugging
-};
+//struct MapNode
+//{
+//	int   id;
+//	float x, y; // for rendering and debugging
+//};
 
 //void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
 //{
@@ -1550,7 +1550,7 @@ int main(int argc, char* argv[])
 
 
 		if (!firstFrame)
-			Sleep(1); // program runs too fast input bug
+			//Sleep(1); // program runs too fast input bug
 		firstFrame = false;
 
 

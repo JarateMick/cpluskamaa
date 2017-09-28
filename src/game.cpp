@@ -25,7 +25,153 @@
 //
 // preprocessor
 // oma lispy> 
+// ota paikkasi auringon alta
+// 
+// fysiikka bodyja      -->      suurin osa varmaankin ympyröitä
+// 
+// ratkaise kaikki collisionit:
+// 
+// laita kaikki targetit oikein
+// 
+// addbody(      );
+// removebody(   );
+// 
+// mahdollisuus raycastata
 //
+
+struct PhysicsBody
+{
+	float x, y;       // 16  ->  20  ->  24 | render id
+	float r;
+	int owner;
+};
+	// int w, h;
+
+PhysicsBody physicsSystem[10000];
+int currentCount = 0;
+void addBody(float x, float y, float r, int id)
+{
+	physicsSystem[currentCount++] = PhysicsBody{ x, y, r, id };
+}
+
+void circleCollision(PhysicsBody* a, PhysicsBody* b)
+{
+	const float MIN_DISTANCE = a->r * 2.0f;
+
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
+	glm::vec2 distVec = centerPosA - centerPosB;
+
+	const float distance = glm::length(distVec);
+	const float collisionDepth = MIN_DISTANCE - distance;
+
+	if (collisionDepth > 0)
+	{
+		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * collisionDepth;
+
+#if 0
+		if (std::max(distVec.x, 0.0f) < std::max(distVec.y, 0.0f))
+		{
+			if (distVec.x < 0)
+				b->x -= collisionDepthVec.x;
+			else
+				b->x += collisionDepthVec.x;
+		}
+		else
+		{
+			if (distVec.y < 0)
+				b->y += collisionDepthVec.y;
+			else 
+				b->y -= collisionDepthVec.y;
+		}
+		// b->y += collisionDepthVec.y;
+#else
+		const glm::vec2 aResolution = collisionDepthVec / 2.0f; // +=
+		a->x += aResolution.x;
+		a->y += aResolution.y;
+
+		const glm::vec2 bResolution = collisionDepthVec / 2.f;  // -=
+		b->x -= bResolution.x;
+		b->y -= bResolution.y;
+		// agent->_position -= collisionDepthVec / 2.0f;
+#endif
+	}
+}
+
+void removeBody(int id)
+{
+	for(int i = 0; i < currentCount; i++)
+	{
+		if (physicsSystem[i].owner == id)
+		{
+			// physicsSystem[i].
+		}
+	}
+}
+
+void updateCollision(PhysicsBody* bodies, int count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		PhysicsBody* current = bodies + i;
+		for(int j = i + 1; j < count; j++) 
+		{
+			PhysicsBody* target = bodies + j;
+			circleCollision(current, target);
+		}
+	}
+}
+
+void renderPhysicsBodies(PhysicsBody* bodies, int count)
+{
+	for(int i = 0; i < count; i++)
+	{
+		PhysicsBody* current = bodies + i;
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
+		Debug::drawCircle(glm::vec2{ current->x, current->y }, white, current->r);
+	}
+}
+
+
+
+
+//void circleCircleCollision(Entity &ball, Entity &pin) noexcept
+//	{
+//
+//		if (!circleCollision(ball.getComponent<CCircle>(),
+//			pin.getComponent<CCircle>())) return;
+//
+//		auto& ballP(ball.getComponent<CPhysics>());
+//		auto& pinP(pin.getComponent<CPhysics>());
+//		static const float ballVelocity{ 0.3f };
+//
+//		//ballP.m_velocity.y = -ballVelocity;
+//		constexpr float BOOST_X{ 1.01f };
+//		constexpr float BOOST_Y{ 1.01f };
+//
+//		pinP.m_velocity = ballP.m_velocity;
+//
+//		pinP.m_velocity.x *= BOOST_X;
+//		pinP.m_velocity.y *= BOOST_Y;
+//		
+//		const sf::Vector2f friction(0.99f, 0.99f);
+//		ballP.m_velocity.x *= friction.x;
+//		ballP.m_velocity.y *= friction.y;
+//
+//		constexpr float TURN_RATE{ 0.005f };
+//		if (ballP.x() < pinP.x())	// vasemmalle palloa
+//		{
+//			ballP.m_velocity.x -=  TURN_RATE;
+//		}
+//		else
+//		{
+//			ballP.m_velocity.x +=  TURN_RATE;
+//		}
+//		pin.getComponent<CKillComponent>().setKillTimer(1000.f);
+//	}
+
+
+
 
 game_state* luasgamestate = nullptr;
 EXPORT __declspec(dllexport) void* getGameState()
@@ -170,19 +316,19 @@ v4 ColorConvertU32ToFloat4(Uint32 in)
 //  #include <>
 
 // Graph<int, int> map(6);
-struct MapNode
-{
-	int   id;
-	float x, y; // for rendering and debugging 
-};
+//struct MapNode
+//{
+//	int   id;
+//	float x, y; // for rendering and debugging 
+//};
 
 #define MAX_PROVINCES 128
 Uint32 idToColor[MAX_PROVINCES];
 v2 positions[MAX_PROVINCES];
 std::map<Uint32, int> colorToId;
 int nodeCount = 0;
-
 Graph<MapNode, int> nodes(64);
+
 void SaveNodes()
 {
 	FILE* file = fopen("test2.txt", "w");
@@ -369,14 +515,17 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 	while (current != start)
 	{
 		current = came_from[current];
-		path.push_back(current);
-		returnPath.push_back(current->data.id);
 
 		if (current == 0)
 		{
 			printf("could't find path between %i and %i\n", startID, goalId);
 			ASSERT(false);
 			return returnPath;
+		}
+		else
+		{
+			path.push_back(current);
+			returnPath.push_back(current->data.id);
 		}
 	}
 	printf("the path between %i and %i is\n", startID, goalId);
@@ -410,7 +559,6 @@ void newNode(int index, int id, float x, float y)
 }
 
 
-
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
@@ -426,6 +574,9 @@ EXPORT void Loop(EngineCore* core)
 		luasgamestate = gameState; // game_state -> lua
 
 		core->memory->isInitialized = true;
+
+
+		gameState->MapNodes = &nodes;
 
 		L = core->script.L;
 		Debug::_Debugger = core->debugger; // hööh :-(
@@ -496,6 +647,10 @@ EXPORT void Loop(EngineCore* core)
 
 		gameState->worldmap.dimensions = glm::vec4{ 0.f, 0.f, surface->w * mapSizeMultiplier, surface->h * mapSizeMultiplier };
 
+
+
+		addBody(20, 20, 10, 0);
+		addBody(40, 40, 10, 1);
 
 
 
@@ -625,7 +780,7 @@ EXPORT void Loop(EngineCore* core)
 		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
 		map->editor.editorColor = color;
 
-		printf("%x\n", color);
+		// printf("%x\n", color);
 		// printf("%x\n", idToColor[0]);
 		// printf("%i ", idToColor[0] == color);
 
@@ -832,7 +987,7 @@ EXPORT __declspec(dllexport) void Physics(v2* data, int count)
 
 	for (int i = 0; i < ID + 1; i++)
 	{
-		// al_draw_bitmap(bmp, data[i].x, data[i].y, 0);
+		// al_/draw_bitmap(bmp, data[i].x, data[i].y, 0);
 	}
 }
 
@@ -1084,10 +1239,37 @@ EXPORT void Draw(EngineCore* core)
 	}
 
 
+	// physicsSystem->x += core->deltaTime * 0.6f;
+	// physicsSystem->y += core->deltaTime * 0.6f;
 
+	// fysiikka					::testi::
 
+	currentCount = 0;
+	for(int i = 0; i < gameState->currentEntityCount; i++)
+	{
+		Entity* e = &gameState->entities[i];
+		if (e->type == Entity_unit)
+		{
+			*(physicsSystem + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
+			++currentCount;
+		}
+	}
 
+	printf("count: %i", currentCount);
+	
+	// Physics step
+	updateCollision(physicsSystem, currentCount);            
+	// renderPhysicsBodies(physicsSystem, currentCount);
 
+//	Entity* e =gameState->entities[i];
+	for(int i = 0; i < currentCount; i++)
+	{
+		PhysicsBody* body = physicsSystem + i;
+		Entity* e = &gameState->entities[body->owner];
+		e->x = body->x;
+		e->y = body->y;
+	}
+	
 
 
 
