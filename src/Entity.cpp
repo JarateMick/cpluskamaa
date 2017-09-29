@@ -2,6 +2,7 @@
 #include "core.h"
 #include "game.h"
 #include "random.h"
+#include <ResourceManager.h>
 
 // std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalId)
 
@@ -128,7 +129,7 @@ void f(Entity *e, EngineCore* core)
 				// build that building
 				buildBuilding(input->mouse.x, input->mouse.y, player->selectedBuildingType, gameState, player->side);
 
-				player->selectedBuildingType = building_none;
+				// player->selectedBuildingType = building_none;
 			}
 			else
 			{

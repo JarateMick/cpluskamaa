@@ -12,6 +12,7 @@
 #include "Debug.h"
 #include "Random.cpp"
 #include "graph.h"
+#include "../Include/SDL2/SDL.h"
 
 #define ASSERTIONS_ENABLED 1
 #if ASSERTIONS_ENABLED
@@ -36,17 +37,15 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
-
 struct v2 { int x, y; };
 
-
 #include <lua.hpp>
-#include <SDL2\SDL_image.h>
+// #include <SDL2\SDL_image.h>
 
 #include <cstdint>
 #include <vector>
 #include <functional>
-#include <math.h>
+// #include <math.h>
 #define CLAMP(x, upper, lower) (std::min(upper, std::max(x, lower)))
 
 #include "TextureHolder.h"
@@ -405,17 +404,18 @@ struct PathFindingUi
 
 std::vector<int> getAllProvinceNeighbours(int id);
 
-struct MapNode
+introspect("hello") struct MapNode
 {
 	int   id;
 	float x, y; // for rendering and debugging 
 };
 // Graph<MapNode, int> nodes(64);
 
+#define I
 introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
-	Entity         entities[10000];
+	Entity         entities[15000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 	int            selectedCount;
@@ -434,11 +434,11 @@ introspect("game_state: hello world") struct game_state
 	bool dirtyFlag;                  // joku oma homma näille
 	ProvinceEditorData provinceEditor;
 	PathFindingUi      pathfindingUi;
-	std::vector<int>(*getAllProvinceNeighbours)(int);
 
-	Graph<MapNode, int>* MapNodes;
-
-	void(*newNode)(int index, int id, float x, float y);
+	// fuck
+	I Graph<MapNode, int>* MapNodes;
+	I std::vector<int>(*getAllProvinceNeighbours)(int);
+	I void(*newNode)(int index, int id, float x, float y);
 };
 
 inline int GetColorToId(game_state* state, Uint32 color)

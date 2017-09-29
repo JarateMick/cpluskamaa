@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstring>
 
 
 char *ReadEntireFIleIntoMemoryAndNullTerminate(char *filename)
@@ -243,7 +244,8 @@ static void ParseMember(Tokenizer *tokenizer, Token structTypeToken, Token membe
 			break;
 
 		case Token_Identifier:
-			printf("	{ MetaType_%.*s, \"%.*s\", (u32)&((%.*s *)0)->%.*s }, \n",
+			printf("	{%s, MetaType_%.*s, \"%.*s\", (u32)&((%.*s *)0)->%.*s }, \n",
+				isPointer ? "MetaMemberFlag_IsPointer" : "0", 
 				(int)memberTypeToken.textLength, memberTypeToken.text,
 				(int)token.textLength, token.text,
 				(int)structTypeToken.textLength, structTypeToken.text,
@@ -258,19 +260,36 @@ static void ParseMember(Tokenizer *tokenizer, Token structTypeToken, Token membe
 	}
 }
 
+struct meta_struct
+{
+	char *name;
+	meta_struct *next;
+};
+static meta_struct *firstMetaSruct;
+
 static void ParseStruct(Tokenizer* tokenizer)
 {
 	Token nameToken = GetToken(tokenizer);
 	if (RequireToken(tokenizer, Token_OpenBraces))
 	{
-		printf("member_definition memberOf_%.*s[] = \n", (int)nameToken.textLength, nameToken.text);
+		printf("member_definition membersOf_%.*s[] = \n", (int)nameToken.textLength, nameToken.text);
 		printf("{\n");
 		for (;;)
 		{
 			Token memberToke = GetToken(tokenizer);
+
 			if (memberToke.type == Token_CloseBraces)
 			{
 				break;
+			}
+			else if (TokenEquals(memberToke, "I"))
+			{
+				for (;;)
+				{
+					Token token = GetToken(tokenizer);
+					if (token.type == Token_Semicolon)
+						break;
+				}
 			}
 			else
 			{
@@ -278,8 +297,16 @@ static void ParseStruct(Tokenizer* tokenizer)
 			}
 		}
 		printf("};\n");
+
+		meta_struct *meta = (meta_struct*)malloc(sizeof(meta_struct));
+		meta->name = (char *)malloc(nameToken.textLength + 1);
+		memcpy(meta->name, nameToken.text, nameToken.textLength);
+		meta->name[nameToken.textLength] = 0;
+		meta->next = firstMetaSruct;
+		firstMetaSruct = meta;
 	}
 }
+
 
 // tesit
 static void parseIntrospectable(Tokenizer *tokenizer)
@@ -305,6 +332,7 @@ static void parseIntrospectable(Tokenizer *tokenizer)
 }
 
 
+#define ArrayCount(array) ( sizeof(array) / sizeof((array)[0]))
 
 int main(int ArgCount, char ** Args)
 {
@@ -314,9 +342,9 @@ int main(int ArgCount, char ** Args)
 		// "I:/Dev/SDL/allegro vanhat/src/core.h",
 	};
 
-	for (int i = 0; i < 1; i++)
+	int i = sizeof filenames / sizeof (filenames[0]);
+	for (int i = 0; i < ArrayCount(filenames) ; i++)
 	{
-
 		char* Filecontents = ReadEntireFIleIntoMemoryAndNullTerminate(filenames[i]);
 
 		Tokenizer tokenizer = {};
@@ -343,6 +371,10 @@ int main(int ArgCount, char ** Args)
 				{
 					parseIntrospectable(&tokenizer);
 				}
+				else if(false)
+				{
+
+				}
 			} break;
 
 			default:
@@ -353,5 +385,12 @@ int main(int ArgCount, char ** Args)
 		}
 	}
 
-	getchar();
+	printf("#define META_HANDLE_TYPE_DUMD(MemberPtra, nextIntendLevel) \\\n");
+	for (meta_struct* meta = firstMetaSruct; meta; meta = meta->next)
+	{
+		printf("	case MetaType_%s: { dumpStruct(ArrayCount(membersOf_%s),membersOf_%s, memberPtr, nextIntendLevel + 1); } break; %s\n",
+			meta->name, meta->name, meta->name,
+			meta->next ? "\\" : "");
+	}
+	// getchar();
 }

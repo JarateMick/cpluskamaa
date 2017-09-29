@@ -48,13 +48,8 @@ const char *EntityNames[Entity_MAX] =
 	"bullet",
 };
 
-// #include "glm/vec2.hpp"
-// #include "glm/geometric.hpp"
-// #include "glm/glm.hpp"
-//
-//
+// oli
 
-#include "gl/SpriteBatch.h"
 struct Rect
 {
 	float x, y, w, h;

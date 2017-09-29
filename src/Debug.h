@@ -11,7 +11,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "gl/DebugRenderer.h"
+#include <DebugRenderer.h>
+// #include "gl/DebugRenderer.h"
 #define LOG_FILE "error.log"
 
 

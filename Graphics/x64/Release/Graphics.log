@@ -1,0 +1,26 @@
+﻿  Camera2D.cpp
+  DebugRenderer.cpp
+DebugRenderer.cpp(7): warning C4305: 'initializing': truncation from 'double' to 'float'
+DebugRenderer.cpp(112): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+DebugRenderer.cpp(144): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+DebugRenderer.cpp(162): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+DebugRenderer.cpp(236): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  GLSLProgram.cpp
+  ImageLoader.cpp
+  IOManager.cpp
+IOManager.cpp(19): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+IOManager.cpp(25): warning C4244: '-=': conversion from 'std::streamoff' to 'int', possible loss of data
+IOManager.cpp(47): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+IOManager.cpp(53): warning C4244: '-=': conversion from 'std::streamoff' to 'int', possible loss of data
+  picoPNG.cpp
+  ResourceManager.cpp
+  Sprite.cpp
+  SpriteBatch.cpp
+  SpriteFont.cpp
+  TextureCache.cpp
+  Generating Code...
+  glad.c
+SDL2_ttf.lib(SDL2_ttf.dll) : warning LNK4006: __NULL_IMPORT_DESCRIPTOR already defined in SDL2.lib(SDL2.dll); second definition ignored
+SDL2_mixer.lib(SDL2_mixer.dll) : warning LNK4006: __NULL_IMPORT_DESCRIPTOR already defined in SDL2.lib(SDL2.dll); second definition ignored
+opengl32.lib(OPENGL32.dll) : warning LNK4006: __NULL_IMPORT_DESCRIPTOR already defined in SDL2.lib(SDL2.dll); second definition ignored
+  Graphics.vcxproj -> I:\Dev\SDL\allegro vanhat\sln\x64\Release\Graphics.lib

@@ -1,22 +1,39 @@
 #pragma once
 
-#include "glad.c"
-#include "gl/IOManager.cpp"
-#include "gl/GLSLProgram.cpp"
-#include "gl/picoPNG.cpp" 
-#include "gl/ImageLoader.cpp"
-#include "gl/GLTexture.h"
-#include "gl/TextureCache.cpp"
-#include "gl/ResourceManager.cpp"
-#include "gl\SpriteBatch.cpp"
+// #include <sp>
+//#include <spritebatch.h>
+//
+//#include "glad.c"
+//#include "gl/IOManager.cpp"
+//#include "gl/GLSLProgram.cpp"
+//#include "gl/picoPNG.cpp" 
+// #include "gl/ImageLoader.cpp"
+
+#include  <GLTexture.h> 
+#include <TextureCache.h>
+#include <SpriteBatch.h>
+#include <SpriteFont.h>
+#include <TextureCache.h>
+#include <Camera2D.h>
+// #include "gl/TileSheet.h"
+// #include <>
 
 
-#include "gl/Camera2D.cpp"
-#include "gl/TileSheet.h"
+// #include <Sprite.h>
+
+//#include "gl/ResourceManager.cpp"
+//#include "gl\SpriteBatch.cpp"
+//
+
+// #include <ImageLoader.h>
+// #include <gl/GL.h>
+
+
+// #include "gl/Camera2D.cpp"
 
 // #include "gl\GLSLProgram.cpp"
-#include "gl/SpriteFont.cpp"
-#include "gl/DebugRenderer.cpp"
+// #include "gl/SpriteFont.cpp"
+// #include "gl/DebugRenderer.cpp"
 
 // todo: korjaa oikea resurrsi managers
 
@@ -45,7 +62,7 @@ struct EngineCore
 										// TODO: testaa ylempiä käytännössä
 	InputManager*  input;
 	game_memory*   memory;
-	UpiEngine::TileSheet*  	   testyTexture;
+	// UpiEngine::TileSheet*  	   testyTexture;
 	UpiEngine::Camera2D*   	   camera2D;
 	GLuint 			slopeMapTexture; // todo: remove
 

@@ -23,10 +23,24 @@ enum meta_type
 	MetaType_v2,
 	MetaType_void,
 	MetaType_bool,
+	MetaType_ProvinceEditorData,
+	MetaType_std,
+	MetaType_Graph,
+	MetaType_PathFindingUi,
+	MetaType_test1,
+	MetaType_test2,
+	MetaType_game_state,
+	MetaType_MapNode,
+};
+
+enum MetaFlags
+{
+	MetaMemberFlag_IsPointer = 0x1,
 };
 
 struct member_definition
 {
+	Uint32 flags;
 	meta_type type;
 	char*     name;
 	Uint32    offset;

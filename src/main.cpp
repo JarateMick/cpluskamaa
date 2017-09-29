@@ -2,6 +2,17 @@
 #define WIN32_LEAN_AND_MEAN 1
 #define VC_EXTRALEAN 1
 
+
+// #include <IOManager.h>
+// #include <GLSLProgram.h>
+// #include <picoPNG.h>
+// #include <ImageLoader.h>
+// #include <GLTexture.h>
+// #include <TextureCache.h>
+// #include <ResourceManager.h>
+// #include <picoPNG.h>
+
+
 #include <lua.hpp>
 // #include <Windows.h>
 
@@ -31,6 +42,7 @@
 #include "TextureHolder.h"
 #include "fileSystem.cpp"      // aika hack
 #include "InputRecorder.cpp"
+#include <ResourceManager.h>
 
 // #include "imgui/imgui_internal.h"
 //typedef struct  
@@ -597,26 +609,6 @@ std::string GetLastErrorAsString()
 	return message;
 }
 
-
-
-// #include "gl/picoPNG.cpp"
-
-// #include "glad.c" 
-
-// #include "gl/TextureCache.cpp"
-// #include "gl/ResourceManager.cpp"
-
-// #include "gl/SpriteBatch.cpp"
-// #include "gl/Camera2D.cpp"
-// #include "gl/GLTexture.h"
-
-// m_textureProgram.compileShaders("Shaders/colorShading.vert", "Shaders/colorShading.frag");
-// m_textureProgram.addAttribute("vertexPosition");
-// m_textureProgram.addAttribute("vertexColor");
-// m_textureProgram.addAttribute("vertexUV");
-// m_textureProgram.linkShaders();
-
-
 // doublebuffer
 // glclearcolor
 // ikkunan luonnin aika koodit
@@ -637,7 +629,7 @@ bool initShaders(UpiEngine::GLSLProgram& textureProgram)
 	return textureProgram.linkShaders();
 }
 
-#include <Raknet.h>
+// #include <Raknet.h>
 #include "Algo/SLinkedList.h"
 
 
@@ -1047,11 +1039,10 @@ void FreeTexture(GLuint* texture)
 	glDeleteTextures(1, texture);
 }
 
+
+
 int main(int argc, char* argv[])
 {
-
-
-
 
 
 
@@ -1224,7 +1215,7 @@ int main(int argc, char* argv[])
 	PlaybackState inputState{};
 
 	game_memory gameMemory = {};
-	gameMemory.permanentStorageSize = megaBytes(64);
+	gameMemory.permanentStorageSize = megaBytes(128);
 	gameMemory.transientStorageSize = gigaBytes((uint64_t)1);
 	uint64_t totalSize = gameMemory.permanentStorageSize + gameMemory.transientStorageSize;
 
@@ -1234,7 +1225,7 @@ int main(int argc, char* argv[])
 
 	gameMemory.transientStorage = ((uint8_t*)gameMemory.permanentStorage + gameMemory.permanentStorageSize);
 	inputState.memory = gameMemory.permanentStorage;
-	inputState.totalMemorySize = megaBytes(64); // + gigaBytes(1);
+	inputState.totalMemorySize = megaBytes(128); // + gigaBytes(1);
 
 	// TODO: Terminate thread
 	std::atomic<bool> fileLoadingThreadDone(false);

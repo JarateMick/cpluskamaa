@@ -3,26 +3,23 @@
 #include <chrono>
 #include <string>
 #include <vector>
-
-#include <lua.hpp>
+#include <iostream>
 
 #include "Entity.cpp"
 #include "fileSystem.cpp"
-
 #include "meta.cpp"
 #include "graph.h"
-
-//#include "array.h"
 #include "util/collection_types.h"
 #include "util/array.h"
 #include "util/memory.cpp"
-//#include <array>
 
+#include <lua.hpp>
+#include <SDL2/SDL_image.h>
 
 #undef max
 #undef min 
 
-//
+
 // preprocessor
 // oma lispy> 
 // ota paikkasi auringon alta
@@ -37,7 +34,11 @@
 // removebody(   );
 // 
 // mahdollisuus raycastata
-//
+
+// TODO: 
+//   * fysiikka jutut: spatial hash, quad tree
+//   * 
+//   * 
 
 struct PhysicsBody
 {
@@ -45,21 +46,130 @@ struct PhysicsBody
 	float r;
 	int owner;
 };
-	// int w, h;
 
-PhysicsBody physicsSystem[10000];
+void circleCollision(PhysicsBody* a, PhysicsBody* b);
+// 
+
+constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
+constexpr int CellsX = (5900 + 4000) / cellSize + 1;
+constexpr int CellsY = (4800 + 4000) / cellSize + 1;
+
+struct SpatialHash            // map width = textureW * 10, textureH * 10
+{
+	// hash map :(
+
+	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
+} hash4r;
+
+void initSpatial(SpatialHash* hash)
+{
+	for (int i = 0; i < CellsY; i++)
+	{
+		for(int j = 0; j < CellsX; j++)
+		{
+			hash->hashMap[i][j].reserve(256);
+			// hash->hashMap[i][j].clear();
+		}
+	}
+}
+
+void clearSpatial(SpatialHash* hash)
+{
+	for (int i = 0; i < CellsY; i++)
+	{
+		for(int j = 0; j < CellsX; j++)
+		{
+			hash->hashMap[i][j].clear();
+		}
+	}
+}
+
+inline v2 HashPoint(int x, int y)
+{
+	return { x / cellSize, y / cellSize };
+}
+
+inline v2 HashPoint(v2 v)
+{
+	return { v.x / cellSize, v.y / cellSize };
+}
+
+void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
+{
+	v2 min{ (int)body->x - (int)body->r, (int)body->y - (int)body->r};
+	v2 max{ (int)body->x + (int)body->r, (int)body->y + (int)body->r};
+	v2 point1 = HashPoint(min.x, max.x);
+	v2 point2 = HashPoint(min.x, max.y);
+	v2 point3 = HashPoint(min.y, max.x);
+	v2 point4 = HashPoint(min.y, max.y);
+
+	hash->hashMap[point1.y][point1.x].push_back(body);
+	hash->hashMap[point2.y][point2.x].push_back(body);
+	hash->hashMap[point3.y][point3.x].push_back(body);
+	hash->hashMap[point4.y][point4.x].push_back(body);
+}
+
+int CheckCollisions(SpatialHash* hash)
+{
+	int count = 0;
+	for (int i = 0; i < CellsY; i++)
+	{
+		for(int j = 0; j < CellsX; j++)
+		{
+			std::vector<PhysicsBody*>* v = &hash->hashMap[i][j];
+			std::sort(v->begin(), v->end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7 
+			const auto last = std::unique(v->begin(), v->end());
+			v->erase(last, v->end()); // vain samoja
+
+			for(int k = 0; k < v->size(); k++)
+			{
+				for(int kk = k + 1; kk < v->size(); kk++)
+				{
+					circleCollision(v->at(k), v->at(kk));
+					++count;
+				}
+			}
+		}
+	}
+	return count;
+}
+
+void AddToBucket(v2 pos, float w)
+{
+}
+
+void insertObject(SpatialHash* hash, PhysicsBody* body, v2 point)
+{
+	v2 p = HashPoint((int)body->x, (int)body->y);
+	hash->hashMap[p.y][p.x].push_back(body);
+}
+
+void InsertBox(SpatialHash* hash, PhysicsBody* body, v2 point)
+{
+}
+
+
+struct PhysicsOut
+{
+	float x, y;
+	float w, h;
+	int textureId;
+};
+
+
+PhysicsBody physicsBodies[15000];
 int currentCount = 0;
 void addBody(float x, float y, float r, int id)
 {
-	physicsSystem[currentCount++] = PhysicsBody{ x, y, r, id };
+	physicsBodies[currentCount++] = PhysicsBody{ x, y, r, id };
 }
 
 void circleCollision(PhysicsBody* a, PhysicsBody* b)
 {
 	const float MIN_DISTANCE = a->r * 2.0f;
 
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
 	glm::vec2 distVec = centerPosA - centerPosB;
 
 	const float distance = glm::length(distVec);
@@ -81,16 +191,16 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 		{
 			if (distVec.y < 0)
 				b->y += collisionDepthVec.y;
-			else 
+			else
 				b->y -= collisionDepthVec.y;
 		}
 		// b->y += collisionDepthVec.y;
 #else
-		const glm::vec2 aResolution = collisionDepthVec / 2.0f; // +=
+		const glm::vec2 aResolution = collisionDepthVec / 1.8f; // +=
 		a->x += aResolution.x;
 		a->y += aResolution.y;
 
-		const glm::vec2 bResolution = collisionDepthVec / 2.f;  // -=
+		const glm::vec2 bResolution = collisionDepthVec / 1.8f;  // -=
 		b->x -= bResolution.x;
 		b->y -= bResolution.y;
 		// agent->_position -= collisionDepthVec / 2.0f;
@@ -100,11 +210,11 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 
 void removeBody(int id)
 {
-	for(int i = 0; i < currentCount; i++)
+	for (int i = 0; i < currentCount; i++)
 	{
-		if (physicsSystem[i].owner == id)
+		if (physicsBodies[i].owner == id)
 		{
-			// physicsSystem[i].
+			// physicsBodies[i].
 		}
 	}
 }
@@ -114,7 +224,7 @@ void updateCollision(PhysicsBody* bodies, int count)
 	for (int i = 0; i < count; i++)
 	{
 		PhysicsBody* current = bodies + i;
-		for(int j = i + 1; j < count; j++) 
+		for (int j = i + 1; j < count; j++)
 		{
 			PhysicsBody* target = bodies + j;
 			circleCollision(current, target);
@@ -124,16 +234,13 @@ void updateCollision(PhysicsBody* bodies, int count)
 
 void renderPhysicsBodies(PhysicsBody* bodies, int count)
 {
-	for(int i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 		PhysicsBody* current = bodies + i;
 		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
 		Debug::drawCircle(glm::vec2{ current->x, current->y }, white, current->r);
 	}
 }
-
-
-
 
 //void circleCircleCollision(Entity &ball, Entity &pin) noexcept
 //	{
@@ -169,8 +276,6 @@ void renderPhysicsBodies(PhysicsBody* bodies, int count)
 //		}
 //		pin.getComponent<CKillComponent>().setKillTimer(1000.f);
 //	}
-
-
 
 
 game_state* luasgamestate = nullptr;
@@ -245,7 +350,7 @@ ImageData::ImageData(const char* filename)
 
 // pointer to pointer that nullifys other pointers 
 // sounds too complicated
-void RemoveEntity(int index, game_state* state)
+void RemoveEntity(const int index, game_state* state)
 {
 #if 1
 	state->entities[index].type = Entity_Invalid;
@@ -284,7 +389,6 @@ void RemoveEntity(int index, game_state* state)
 //   * Better solutions for -> . -> . 
 //   *
 
-
 void SaveAllGameState(game_state* gameState)
 {
 	FILE* file = fopen("gameState0", "wb");
@@ -294,7 +398,6 @@ void SaveAllGameState(game_state* gameState)
 		fclose(file);
 	}
 }
-
 
 #define IM_COL32_R_SHIFT    0
 #define IM_COL32_G_SHIFT    8
@@ -363,7 +466,15 @@ Uint32 createRGBA(int r, int g, int b, int a)
 }
 
 #include "graph.h"
+#include <iostream>
+#include <fstream>
 
+inline int GetNextInt(std::istringstream& stream, std::string& string, const char* title)
+{
+	std::getline(stream, string, ';');
+	std::cout << title << string << ", ";
+	return atoi(string.c_str());
+}
 
 void LoadNodes()
 {
@@ -379,57 +490,24 @@ void LoadNodes()
 	{
 		std::istringstream s(line);
 
-		if (line.at(0) == ';')
+		if (line.at(0) == ';') // rivi on kommentti ;
 			continue;
 		nodeCount++;
 
 		std::string field;
-		std::getline(s, field, ';');
 
+		int id = GetNextInt(s, field, "id: ");
+		int x  = GetNextInt(s, field, "x: ");
+		int y  = GetNextInt(s, field, "y: ");
 
-		std::cout << "id: " << field << ", ";
-		int id = atoi(field.c_str());
+		int r  = GetNextInt(s, field, "r: ");
+		int g  = GetNextInt(s, field, "g: ");
+		int b  = GetNextInt(s, field, "b: ");
+		int a  = GetNextInt(s, field, "a: ");
 
-		std::getline(s, field, ';');
-		std::cout << "x: " << field << ", ";
-		int x = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "y: " << field << ", ";
-		int y = atoi(field.c_str());
-
-
-		// nodes->push_back({ id, (float)x, (float)y });
-		// colorToId[id] = r g b a
-
-		int break2 = lastSaved * 2;
-
-		std::getline(s, field, ';');
-		std::cout << "r: " << field << ", ";
-		int r = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "g: " << field << ", ";
-		int g = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "b: " << field << ", ";
-		int b = atoi(field.c_str());
-
-		std::getline(s, field, ';');
-		std::cout << "a: " << field << ", ";
-		int a = atoi(field.c_str());
-
-
-		// replacement = ImGui::GetColorU32(ImVec4(colors[0], colors[1], colors[2], colors[3]));
+		// int break2 = lastSaved * 2;
 		positions[id] = { x, y };
 		Uint32 color = createRGBA(r, g, b, a);
-
-		//	Uint32 color = ImGui::GetColorU32({})
-		//	auto color2 = ImGui::GetColorU32({ (float)r / 255.f, g / 255.f, b/255.f, a/255.f });
-
-			// Uint32 color = ImGui::GetColorU32({(float)r, (float)g, (float)b, (float)a});
-			// auto color = ImGui::ColorConvertU32ToFloat4(map->editor.editorColor);
 
 		colorToId[color] = id;
 		idToColor[id] = color;
@@ -437,10 +515,7 @@ void LoadNodes()
 		MapNode node{ id, (float)x, (float)y };
 		nodes.AddNode(node, id);
 
-
 		std::cout << "Neighbours: ";
-		// memset(arcsId, -1, sizeof(int) * maxNeighbours);
-
 		int i = 0;
 		while (std::getline(s, field, ';') && i < maxNeighbours)
 		{
@@ -461,7 +536,7 @@ void LoadNodes()
 		{
 			int neigbourdId = *(arcs + id * maxNeighbours + n);
 			nodes.AddArc(id, neigbourdId, 1); // Note: Are weights ever needed!
-			printf("added arc from %i to %i \n", id, neigbourdId);
+			printf("added arc from %i to %i \n", id, neigbourdId);32
 		}
 	}
 
@@ -508,7 +583,6 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 	std::vector<int> returnPath;
 	returnPath.reserve(16);
 
-
 	path.push_back(current);
 	returnPath.push_back(current->data.id);
 
@@ -539,9 +613,8 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 
 	return returnPath;
 
-	// path.push_back
+	// Python: reverse:
 
-	// Python:
 	// path = [current]
 	// while current != start:
 	//		current = came_from[current]
@@ -575,6 +648,7 @@ EXPORT void Loop(EngineCore* core)
 
 		core->memory->isInitialized = true;
 
+		initSpatial(&hash4r);
 
 		gameState->MapNodes = &nodes;
 
@@ -1190,6 +1264,63 @@ EXPORT __declspec(dllexport) void testFuncy(int a, int b) //LUA_E_F
 }
 
 
+void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structPtr, int intendLevel = 0)
+{
+	// char buffer[512];
+	for (u32 memberIndex = 0; memberIndex < memberCount; ++memberIndex)
+	{
+		char TextBufferBase[256];
+		char *textBuffer = TextBufferBase;
+		for (int intend = 0; intend < intendLevel; ++intend)
+		{
+			*textBuffer++ = ' ';
+			*textBuffer++ = ' ';
+			*textBuffer++ = ' ';
+			*textBuffer++ = ' ';
+		}
+		textBuffer[0] = 0;
+
+		member_definition* member = memberData + memberIndex;
+		void *memberPtr = (((Uint8 *)structPtr) + member->offset);
+
+		if (member->flags & MetaMemberFlag_IsPointer)
+		{
+			memberPtr = *(void **)memberPtr;
+		}
+
+		if (memberPtr)
+		{
+
+
+			int textBufferLeft = TextBufferBase + sizeof(TextBufferBase) - textBuffer;
+			switch (member->type)
+			{
+			case MetaType_bool32:
+				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %b ", member->name, *(Uint32 *)memberPtr);
+				break;
+			case MetaType_int:
+				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(int *)memberPtr);
+				break;
+			case MetaType_float:
+				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %f ", member->name, *(float *)memberPtr);
+				break;
+			case MetaType_uint32:
+				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(Uint32 *)memberPtr);
+				break;
+
+				META_HANDLE_TYPE_DUMD(memberPtr, intendLevel + 1)
+
+					/*case MetaType_v3:
+
+						DEbugdumpt suct ( Arraycount membersof v3,  membesfof ve3,
+							memberptr
+					} break;*/
+			}
+			printf("%s\n", textBuffer);
+		}
+	}
+}
+
 
 EXPORT void Draw(EngineCore* core)
 {
@@ -1220,7 +1351,9 @@ EXPORT void Draw(EngineCore* core)
 	// core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f , 480.f  }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
 
 
+
 	gameState->worldmap.Draw(core->spriteBatch);
+
 
 	DrawAllEntitys(core);
 
@@ -1238,158 +1371,42 @@ EXPORT void Draw(EngineCore* core)
 		VisualizePath(&path, gameState);
 	}
 
+	// fysiikka	       --::testi::--
 
-	// physicsSystem->x += core->deltaTime * 0.6f;
-	// physicsSystem->y += core->deltaTime * 0.6f;
-
-	// fysiikka					::testi::
+	clearSpatial(&hash4r);
 
 	currentCount = 0;
-	for(int i = 0; i < gameState->currentEntityCount; i++)
+	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
 		Entity* e = &gameState->entities[i];
 		if (e->type == Entity_unit)
 		{
-			*(physicsSystem + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
+			*(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
+			AddBodyToGrid(physicsBodies + currentCount, &hash4r);
 			++currentCount;
 		}
 	}
 
-	printf("count: %i", currentCount);
-	
-	// Physics step
-	updateCollision(physicsSystem, currentCount);            
-	// renderPhysicsBodies(physicsSystem, currentCount);
+	// Physics step:
 
-//	Entity* e =gameState->entities[i];
-	for(int i = 0; i < currentCount; i++)
+	// updateCollision(physicsBodies, currentCount);
+	// renderPhysicsBodies(physicsBodies, currentCount);
+
+	int cols = CheckCollisions(&hash4r);
+
+	printf("count: (%i, coll: %i\n", currentCount, cols);
+	// updateCollision()
+
+	//	Entity* e =gameState->entities[i];
+	for (int i = 0; i < currentCount; i++)
 	{
-		PhysicsBody* body = physicsSystem + i;
+		PhysicsBody* body = physicsBodies + i;
 		Entity* e = &gameState->entities[body->owner];
 		e->x = body->x;
 		e->y = body->y;
 	}
-	
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	auto timePoint1(std::chrono::high_resolution_clock::now());
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// BENCMARKTIMEEEEEEEEEEEEEEEEEEEEEEEEE!
-
-
-	// static Entity* lolentity = (Entity*)malloc(10000);
-	// static Entity* lolentity2 = (Entity*)malloc(10000);
-	// memcpy(lolentity, gameState->entities, 10000);
-	// memcpy(lolentity2, gameState->entities, 10000);
-
-	// free(lolentity);
-
-
-
-//	const int test = 10000000;
-#if 0 
-	//std::vector<int> thousand;
-	//thousand.resize(test);
-	//for (int i = 0; i < test; i++)
-	//{
-	//	thousand[i] = i;
-	//}
-#else
-	//using namespace foundation;
-
-	// static int array[test];
-	//static int* aaa = new int[test]; int* aa = aaa;
-	//for (int i = 0; i < (test); i++)
-	//{
-	////	array[i] = i;
-	//	*(aa + i) = i;
-	//}
-//	memset(array, 1, sizeof(array));
-
-	// static bool ini = false;
-	// if (!ini)
-	// {
-	// 	memory_globals::init();
-	// 	ini = true;
-	// }
-	// static foundation::Allocator& alloc = foundation::memory_globals::default_allocator(); 
-	//foundation::Array<int> uusi(alloc);
-	//foundation::array::resize(uusi, test);
-	//for (int i = 0; i < test; i++)
-	//	uusi[i] = i;
-
-
-	// foundation::array<int> testi;
-	// foundation::array<int> test;
-
-	// test.
-#endif
-	auto timePoint2(std::chrono::high_resolution_clock::now());
-	auto elapsedTime(timePoint2 - timePoint1);
-
-	// lasFT = ft;
-	float ft{ std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
-	auto ftSeconds(ft / 1000.f);
-	auto fps(1.f / ftSeconds);
-
-	//std::cout << fps << std::endl;
-
-
-	// Cool
-	char buffer[512];
-	for (u32 memberIndex = 0; memberIndex < ArrayCount(memberOf_game_state);
-		++memberIndex)
-	{
-		member_definition* member = memberOf_game_state + memberIndex;
-
-		switch (member->type)
-		{
-		case MetaType_bool32:
-			// _snprintf_s(buffer, 512, "%s: %b ", member->name, *(bool *)(((Uint8*)&gameState) + member->offset));
-			break;
-		case MetaType_int:
-			// _snprintf_s(buffer, 512, "%s: %i ", member->name, *(int *)(((Uint8*)&gameState) + member->offset));
-			break;
-		case MetaType_float: break;
-		case MetaType_uint32: break;
-		}
-	}
-	// printf("%s", buffer);
-
+	// dumpStruct(ArrayCount(membersOf_test2), membersOf_test2, &test2);
 
 	for (int i = 0; i < gameState->selectedCount; i++)
 	{
