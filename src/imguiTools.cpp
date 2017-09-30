@@ -722,7 +722,7 @@ EXPORT IMGUIFUNC(Imgui)
 	}
 
 	static bool selectTarget = false;
-	ImGui::Checkbox("select target (g)", &selectTarget);
+	ImGui::Checkbox("select target (g)", &selectTarget); // GAMEPLAY KOODIA
 	if (selectTarget)
 	{
 		if (input->isKeyPressed(SDL_SCANCODE_G))

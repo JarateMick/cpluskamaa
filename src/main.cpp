@@ -1046,35 +1046,35 @@ int main(int argc, char* argv[])
 
 
 
-	Graph<int, int> map(6); 
-	map.AddNode(0, 0);
-	map.AddNode(1, 1);
-	map.AddNode(2, 2);
-	map.AddNode(3, 3);
-	map.AddNode(4, 4);
-	map.AddNode(5, 5);
+	//Graph<int, int> map(6); 
+	//map.AddNode(0, 0);
+	//map.AddNode(1, 1);
+	//map.AddNode(2, 2);
+	//map.AddNode(3, 3);
+	//map.AddNode(4, 4);
+	//map.AddNode(5, 5);
 
-	map.AddArc(0, 1, 10);
-	map.AddArc(1, 0, 10);
+	//map.AddArc(0, 1, 10);
+	//map.AddArc(1, 0, 10);
 
-	map.AddArc(2, 0, 10);
-	map.AddArc(0, 2, 10);
+	//map.AddArc(2, 0, 10);
+	//map.AddArc(0, 2, 10);
 
-	map.AddArc(3, 2, 1);
-	map.AddArc(2, 3, 1);
+	//map.AddArc(3, 2, 1);
+	//map.AddArc(2, 3, 1);
 
-	map.AddArc(4, 3, 1);
-	map.AddArc(3, 4, 1);
+	//map.AddArc(4, 3, 1);
+	//map.AddArc(3, 4, 1);
 
-	map.AddArc(0, 5, 1);
-	map.AddArc(5, 0, 1);
+	//map.AddArc(0, 5, 1);
+	//map.AddArc(5, 0, 1);
 
 
-	printf("breadt first: \n");
-	map.BreadthFirst(map.nodes[0], process);
-	map.ClearMarks();
-	printf("depth first: \n");
-	map.DepthFirst(map.nodes[0], process);
+	//printf("breadt first: \n");
+	//map.BreadthFirst(map.nodes[0], process);
+	//map.ClearMarks();
+	//printf("depth first: \n");
+	//map.DepthFirst(map.nodes[0], process);
 
 
 

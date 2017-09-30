@@ -93,7 +93,7 @@ enum building_type
 
 struct Entity
 {
-	Entity() = default;
+	Entity() {} // = default;
 	~Entity() = default;
 
 	Entity_Enum type;

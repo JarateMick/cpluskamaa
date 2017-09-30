@@ -31,6 +31,9 @@ enum meta_type
 	MetaType_test2,
 	MetaType_game_state,
 	MetaType_MapNode,
+	MetaType_BulletBody,
+	MetaType_BulletStart,
+	MetaType_vec2f,
 };
 
 enum MetaFlags

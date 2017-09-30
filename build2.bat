@@ -23,10 +23,10 @@ echo %cd%
 del *.pdb > NUL 2> NUL
 
 rem simple preprocessor
-cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
+rem cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
 rem use preprocessor
 pushd ..\src
-call ..\bin\simple_preprocessor.exe > handmade_generated.h
+rem call ..\bin\simple_preprocessor.exe > handmade_generated.h
 popd
 
 

@@ -19,6 +19,18 @@
 #undef max
 #undef min 
 
+#define NAME(ending) (func_timing##ending)
+
+#define START_TIMING() \
+	auto NAME(1)(std::chrono::high_resolution_clock::now()); \
+
+#define END_TIMING() \
+	auto NAME(2)(std::chrono::high_resolution_clock::now());	\
+	auto elapsedTime(NAME(2) - NAME(1));						\
+	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count()  );
+
+
+
 
 // preprocessor
 // oma lispy> 
@@ -50,9 +62,9 @@ struct PhysicsBody
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
-constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
-constexpr int CellsX = (5900 + 4000) / cellSize + 1;
-constexpr int CellsY = (4800 + 4000) / cellSize + 1;
+constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
+constexpr int CellsX = (5900) / cellSize + 1;
+constexpr int CellsY = (4800) / cellSize + 1;
 
 struct SpatialHash            // map width = textureW * 10, textureH * 10
 {
@@ -61,11 +73,23 @@ struct SpatialHash            // map width = textureW * 10, textureH * 10
 	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
 } hash4r;
 
+void debugDraw(SpatialHash* hash)
+{
+	for (int i = 0; i < CellsY; i++)
+	{
+		for (int j = 0; j < CellsX; j++)
+		{
+			glm::vec4 box(j * cellSize, i * cellSize, cellSize, cellSize);
+			Debug::drawBox(box);
+		}
+	}
+}
+
 void initSpatial(SpatialHash* hash)
 {
 	for (int i = 0; i < CellsY; i++)
 	{
-		for(int j = 0; j < CellsX; j++)
+		for (int j = 0; j < CellsX; j++)
 		{
 			hash->hashMap[i][j].reserve(256);
 			// hash->hashMap[i][j].clear();
@@ -77,7 +101,7 @@ void clearSpatial(SpatialHash* hash)
 {
 	for (int i = 0; i < CellsY; i++)
 	{
-		for(int j = 0; j < CellsX; j++)
+		for (int j = 0; j < CellsX; j++)
 		{
 			hash->hashMap[i][j].clear();
 		}
@@ -96,12 +120,12 @@ inline v2 HashPoint(v2 v)
 
 void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 {
-	v2 min{ (int)body->x - (int)body->r, (int)body->y - (int)body->r};
-	v2 max{ (int)body->x + (int)body->r, (int)body->y + (int)body->r};
-	v2 point1 = HashPoint(min.x, max.x);
+	v2 min{ (int)body->x - (int)body->r, (int)body->y - (int)body->r };
+	v2 max{ (int)body->x + (int)body->r, (int)body->y + (int)body->r };
+	v2 point1 = HashPoint(min.x, min.y);
 	v2 point2 = HashPoint(min.x, max.y);
-	v2 point3 = HashPoint(min.y, max.x);
-	v2 point4 = HashPoint(min.y, max.y);
+	v2 point3 = HashPoint(max.x, min.y);
+	v2 point4 = HashPoint(max.x, max.y);
 
 	hash->hashMap[point1.y][point1.x].push_back(body);
 	hash->hashMap[point2.y][point2.x].push_back(body);
@@ -114,19 +138,22 @@ int CheckCollisions(SpatialHash* hash)
 	int count = 0;
 	for (int i = 0; i < CellsY; i++)
 	{
-		for(int j = 0; j < CellsX; j++)
+		for (int j = 0; j < CellsX; j++)
 		{
 			std::vector<PhysicsBody*>* v = &hash->hashMap[i][j];
-			std::sort(v->begin(), v->end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7 
-			const auto last = std::unique(v->begin(), v->end());
-			v->erase(last, v->end()); // vain samoja
-
-			for(int k = 0; k < v->size(); k++)
+			if (!v->empty())
 			{
-				for(int kk = k + 1; kk < v->size(); kk++)
+				std::sort(v->begin(), v->end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7 
+				const auto last = std::unique(v->begin(), v->end());
+				v->erase(last, v->end()); // vain samoja
+
+				for (int k = 0; k < v->size(); k++)
 				{
-					circleCollision(v->at(k), v->at(kk));
-					++count;
+					for (int kk = k + 1; kk < v->size(); kk++)
+					{
+						circleCollision(v->at(k), v->at(kk));
+						++count;
+					}
 				}
 			}
 		}
@@ -157,11 +184,26 @@ struct PhysicsOut
 };
 
 
-PhysicsBody physicsBodies[15000];
+PhysicsBody physicsBodies[25000];
 int currentCount = 0;
 void addBody(float x, float y, float r, int id)
 {
 	physicsBodies[currentCount++] = PhysicsBody{ x, y, r, id };
+}
+
+
+// onko luoti Bodyn päällä
+bool circleCollision(BulletBody* a, PhysicsBody* b)
+{
+	const float MIN_DISTANCE = a->r + b->r;
+
+	glm::vec2 centerPosA = glm::vec2{ a->position.x, a->position.y } +glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
+	glm::vec2 distVec = centerPosA - centerPosB;
+	const float distance = glm::length(distVec);
+	const float collisionDepth = MIN_DISTANCE - distance;
+
+	return (collisionDepth > 0);
 }
 
 void circleCollision(PhysicsBody* a, PhysicsBody* b)
@@ -177,6 +219,15 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 
 	if (collisionDepth > 0)
 	{
+		if (distance == 0.f)
+		{
+			a->x += 30.f;
+			a->y += 30.f;
+			b->x -= 30.f;
+			b->y -= 30.f;
+			return;
+		}
+
 		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * collisionDepth;
 
 #if 0
@@ -196,13 +247,15 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 		}
 		// b->y += collisionDepthVec.y;
 #else
-		const glm::vec2 aResolution = collisionDepthVec / 1.8f; // +=
+		const glm::vec2 aResolution = collisionDepthVec / 2.f; // +=
 		a->x += aResolution.x;
 		a->y += aResolution.y;
 
-		const glm::vec2 bResolution = collisionDepthVec / 1.8f;  // -=
+		const glm::vec2 bResolution = collisionDepthVec / 2.0f;  // -=
 		b->x -= bResolution.x;
 		b->y -= bResolution.y;
+
+		// printf("%f\n", collisionDepthVec.x);
 		// agent->_position -= collisionDepthVec / 2.0f;
 #endif
 	}
@@ -277,6 +330,55 @@ void renderPhysicsBodies(PhysicsBody* bodies, int count)
 //		pin.getComponent<CKillComponent>().setKillTimer(1000.f);
 //	}
 
+// tama jarjestys:    1, 2, 3, 4, 5, 6
+//               :    4, 8, 4, 2, 8, 8       <-sorttaa
+
+//                    2  5  6  3  1  4
+//                    8  8  8  4  4  2
+
+
+//  entity[0]  =  entity[2]
+//  entity[1]  =  entity[5] 
+
+struct IndexValue
+{
+	int index, type;
+};
+
+static Entity* temp = new Entity;
+void SortAllEntitys(Entity* entities, int count)
+{
+	//temp = new Entity;
+	IndexValue* currentOrder = new IndexValue[count];
+
+	for (int i = 0; i < count; i++)
+	{
+		currentOrder[i] = { i, entities[i].type };
+	}
+
+	std::sort(currentOrder, currentOrder + count, [](IndexValue& a, IndexValue& b) {
+		return a.type < b.type;
+	});
+
+	for (int i = 0; i < count; i++)
+	{
+		memcpy(&temp, (entities + i), sizeof(Entity));
+		memcpy(entities + i, entities + currentOrder[i].index, sizeof(Entity));
+		memcpy(entities + currentOrder[i].index, &temp, sizeof(Entity));
+	}
+
+	delete[] currentOrder;
+}
+
+
+void SortAll(Entity* entities, int count) // 
+{
+	//std::sort(entities, entities + count, [](Entity& first, Entity& second)
+	//{
+	//	return first.type < second.type;
+	//});
+}
+
 
 game_state* luasgamestate = nullptr;
 EXPORT __declspec(dllexport) void* getGameState()
@@ -348,8 +450,6 @@ ImageData::ImageData(const char* filename)
 
 
 
-// pointer to pointer that nullifys other pointers 
-// sounds too complicated
 void RemoveEntity(const int index, game_state* state)
 {
 #if 1
@@ -497,13 +597,13 @@ void LoadNodes()
 		std::string field;
 
 		int id = GetNextInt(s, field, "id: ");
-		int x  = GetNextInt(s, field, "x: ");
-		int y  = GetNextInt(s, field, "y: ");
+		int x = GetNextInt(s, field, "x: ");
+		int y = GetNextInt(s, field, "y: ");
 
-		int r  = GetNextInt(s, field, "r: ");
-		int g  = GetNextInt(s, field, "g: ");
-		int b  = GetNextInt(s, field, "b: ");
-		int a  = GetNextInt(s, field, "a: ");
+		int r = GetNextInt(s, field, "r: ");
+		int g = GetNextInt(s, field, "g: ");
+		int b = GetNextInt(s, field, "b: ");
+		int a = GetNextInt(s, field, "a: ");
 
 		// int break2 = lastSaved * 2;
 		positions[id] = { x, y };
@@ -536,7 +636,7 @@ void LoadNodes()
 		{
 			int neigbourdId = *(arcs + id * maxNeighbours + n);
 			nodes.AddArc(id, neigbourdId, 1); // Note: Are weights ever needed!
-			printf("added arc from %i to %i \n", id, neigbourdId);32
+			printf("added arc from %i to %i \n", id, neigbourdId);
 		}
 	}
 
@@ -553,27 +653,27 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 	start->marked = true;
 
 	std::map<GraphNode<MapNode, int>*, GraphNode<MapNode, int>*> came_from;
-	came_from[start] = 0;
+	came_from[start] = 0; 
 
-	while (queue.size() != 0)
-	{
-		GraphNode<MapNode, int>* current = queue.front();
-
-		if (current->data.id == goalId)
-			break;
-
-		auto itr = current->archlist.begin(); // neighbours !
-		for (itr; itr != current->archlist.end(); itr++)
+		while (queue.size() != 0)
 		{
-			if (itr->node->marked == false)
+			GraphNode<MapNode, int>* current = queue.front();
+
+			if (current->data.id == goalId)
+				break;
+
+			auto itr = current->archlist.begin(); // neighbours !
+			for (itr; itr != current->archlist.end(); itr++)
 			{
-				itr->node->marked = true;
-				queue.push(itr->node);
-				came_from[itr->node] = current;
+				if (itr->node->marked == false)
+				{
+					itr->node->marked = true;
+					queue.push(itr->node);
+					came_from[itr->node] = current;
+				}
 			}
+			queue.pop();
 		}
-		queue.pop();
-	}
 
 	// make path
 	GraphNode<MapNode, int>* current = graph->nodes[goalId];
@@ -630,6 +730,65 @@ void newNode(int index, int id, float x, float y)
 	MapNode newNode{ id, x, y };
 	nodes.AddNode(newNode, index);
 }
+
+// float x = e->x - bullet->startX;
+// float y = e->y - bullet->startY;
+// if (abs(x * x + y * y) > bullet->rangeSquared)
+// {
+//		max range reached!
+//		e->alive = false;
+//		printf("olen donezo\n");
+// }
+
+
+int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* start, int count)
+{
+	for (int i = count - 1; i > -1; i--)
+	{
+		bodies[i].position += bulletAcceceration[i]; // TODO: DELTA JOUJOUJOU!
+
+		float x = bodies[i].position.x - start[i].position.x;
+		float y = bodies[i].position.y - start[i].position.y;
+
+		if (abs(x * x + y * y) > start[i].rangeSqrt)
+		{
+			// luoti kuoli! poista kaikki kerralla?
+			bodies[i]				= bodies[count - 1];
+			start[i]				= start[count - 1];
+			bulletAcceceration[i]   = bulletAcceceration[count - 1];
+
+			printf("kuoli");
+			--count;
+		}
+	}
+
+	return count;
+}
+
+int collideBullets(SpatialHash* hash, BulletBody* bulletBodies, int count)
+{
+	for (int i = count - 1; i > -1; i--)
+	{
+		BulletBody* body = bulletBodies + i;
+
+		auto point = HashPoint(body->position.x, body->position.y);
+		auto* bodies = &hash->hashMap[point.y][point.x];
+
+		for (int j = 0; j < bodies->size(); j++)
+		{
+			if (circleCollision(body, bodies->at(j)))
+			{
+				// bulletBodies->at(i)->owner <- ammu tota jätkää
+
+				bulletBodies[i] = bulletBodies[count - i];
+				--count;
+				break;
+			}
+		}
+	}
+	return count;
+}
+
 
 
 lua_State* L;
@@ -870,6 +1029,11 @@ EXPORT void Loop(EngineCore* core)
 		// new nodes
 		// nodes.nodes[gameState->provinceEditor.selectedProvinceId]->;
 		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
+	}
+
+	if (input->isKeyPressed(SDL_SCANCODE_H))
+	{
+		SortAllEntitys(gameState->entities, gameState->currentEntityCount);
 	}
 }
 
@@ -1322,6 +1486,27 @@ void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structP
 }
 
 
+//void startTiming(int line)
+//{
+//}
+////    int a = __LINE__;
+//
+//void endTiming()
+//{
+//}
+
+//auto timePoint1(std::chrono::high_resolution_clock::now());
+//auto delta_time = std::chrono::high_resolution_clock::now() - currentTime;
+//currentTime = std::chrono::high_resolution_clock::now();
+//simulationTime += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_time);
+//
+//auto timePoint2(std::chrono::high_resolution_clock::now());
+//auto elapsedTime(timePoint2 - timePoint1);
+//ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+//lastFT = ft;
+//ftSeconds = (ft / 1000.f);
+
+
 EXPORT void Draw(EngineCore* core)
 {
 	game_state *gameState = (game_state*)core->memory->permanentStorage;
@@ -1354,10 +1539,10 @@ EXPORT void Draw(EngineCore* core)
 
 	gameState->worldmap.Draw(core->spriteBatch);
 
-
-	DrawAllEntitys(core);
+	//  DrawAllEntitys(core);
 
 	// render all entitys
+
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
 		Entity* e = &gameState->entities[i];
@@ -1373,7 +1558,10 @@ EXPORT void Draw(EngineCore* core)
 
 	// fysiikka	       --::testi::--
 
+
+
 	clearSpatial(&hash4r);
+
 
 	currentCount = 0;
 	for (int i = 0; i < gameState->currentEntityCount; i++)
@@ -1387,17 +1575,18 @@ EXPORT void Draw(EngineCore* core)
 		}
 	}
 
+
 	// Physics step:
 
 	// updateCollision(physicsBodies, currentCount);
 	// renderPhysicsBodies(physicsBodies, currentCount);
 
-	int cols = CheckCollisions(&hash4r);
+	// int cols = CheckCollisions(&hash4r);
+	// printf("collisions: %i  entitys: %i \n", cols, currentCount);
 
-	printf("count: (%i, coll: %i\n", currentCount, cols);
 	// updateCollision()
-
 	//	Entity* e =gameState->entities[i];
+
 	for (int i = 0; i < currentCount; i++)
 	{
 		PhysicsBody* body = physicsBodies + i;
@@ -1406,16 +1595,39 @@ EXPORT void Draw(EngineCore* core)
 		e->y = body->y;
 	}
 
-	// dumpStruct(ArrayCount(membersOf_test2), membersOf_test2, &test2);
+	// Sta/r
+	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
+		gameState->bulletStart, gameState->bulletCount);
 
-	for (int i = 0; i < gameState->selectedCount; i++)
+	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, gameState->bulletCount);
+
+	for(int i = 0; i < gameState->bulletCount; i++)
 	{
-		Entity* e = gameState->selectedEntitys[i];
-		float r = e->unit.attackRange;
-		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
-		Debug::drawCircle({ e->x, e->y }, white, r);
+		const auto& pos = gameState->bulletBodies[i].position;
+		core->spriteBatch->draw(glm::vec4{ pos.x, pos.y, 15.f, 15.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
+			3, 1.0f); // depth !
 	}
 
-	// TODO: Fontit resource managerille
+
+	static bool diebugDraw = false;
+	if (diebugDraw)
+	{
+		// drawm
+		debugDraw(&hash4r);
+	}
+
+	// dumpStruct(ArrayCount(membersOf_test2), membersOf_test2, &test2);
+
+	// for (int i = 0; i < gameState->selectedCount; i++) {
+		// Entity* e = gameState->selectedEntitys[i];
+		// float r = e->unit.attackRange;
+		// static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
+		// Debug::drawCircle({ e->x, e->y }, white, r);
+	// }
+
 }
 
+
+// TODO: Fontit resource managerille
+
+// LUOTEJA

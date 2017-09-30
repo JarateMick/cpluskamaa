@@ -39,6 +39,7 @@
 
 struct v2 { int x, y; };
 
+
 #include <lua.hpp>
 // #include <SDL2\SDL_image.h>
 
@@ -54,6 +55,7 @@ struct v2 { int x, y; };
 // #include "Hex.h"
 #define Internal static
 
+typedef glm::vec2 vec2f;
 struct game_state; 
 
 // TODO: Vec2  -> typedeffaa vec jne....
@@ -63,7 +65,6 @@ struct game_state;
 //  + vecit helppoja tehdä
 // glm: 
 //   + mat4 voi olla ärsyttävä tehdä itse
-
 
 enum ResourceType
 {
@@ -370,9 +371,14 @@ struct WorldMap
 			FloodFillImage(&provinces, &visual, x, y, targetColor, to);
 
 			// taman jos tekee framen lopussa niin ei tarvitse tehda kuin yksi tekstruuri generaatio
-			core->resources.FreeTexture(&temptextureid);
-			temptextureid = core->resources.SurfaceToGlTexture(visual.surface);
+			UpdateTexture(core);
 		}
+	}
+
+	void UpdateTexture(EngineCore* core)
+	{
+		core->resources.FreeTexture(&temptextureid);
+		temptextureid = core->resources.SurfaceToGlTexture(visual.surface);
 	}
 
 	void CheckSide(Uint32 targetColor)
@@ -411,15 +417,36 @@ introspect("hello") struct MapNode
 };
 // Graph<MapNode, int> nodes(64);
 
+struct BulletBody
+{
+	vec2f      position;       // 16  ->  20  ->  24 | render id
+	float   r;
+	Uint32  side;
+};
+
+struct BulletStart
+{
+	vec2f    position;
+	float rangeSqrt;
+};
+
+constexpr int maxiumBullets = 5000;
+
+
 #define I
 introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
-	Entity         entities[15000];
+	Entity         entities[25000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 	int            selectedCount;
 	int            maxSelected;
+
+	BulletBody     bulletBodies[maxiumBullets];
+	BulletStart    bulletStart[maxiumBullets];
+	vec2f            BulletAccelerations[maxiumBullets];
+	int            bulletCount;
 
 	int            currentEntityCount;
 

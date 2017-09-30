@@ -11,6 +11,9 @@
 //	return BreadthFirst(startId, gameState->MapNodes, goalId);
 //}
 
+
+// one-to-many      many-to-one
+
 inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData* prov)
 {
 	int targetId = path[id]; // eka on maali
@@ -29,7 +32,7 @@ bool FollowPath(Entity* entityUnit, game_state* gameState)
 		// entityUnit->unit.targetX = v2.x;
 		// entityUnit->unit.targetY = v2.y;
 
-		SetTarget(entityUnit, path, path.size() - 2,&gameState->provinceData);
+		SetTarget(entityUnit, path, path.size() - 2, &gameState->provinceData);
 		return true;
 	}
 	return false;
@@ -199,6 +202,11 @@ void f(Entity *e, EngineCore* core)
 					// ASSERT(false); // why you can pathfind here
 				}
 			}
+
+			if (input->isMouseClicked(2))
+			{
+				// set targettoroo!
+			}
 		}
 
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
@@ -237,10 +245,6 @@ void f(Entity *e, EngineCore* core)
 	{
 		GetGameState(core);
 		DefineInput(core);
-
-		// if (unit->side == gameState.playerSide)
-		// {
-		// }
 
 		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(e->x, e->y);
 		if (unit->lastFrameProv == mapId)
@@ -281,7 +285,8 @@ void f(Entity *e, EngineCore* core)
 		// attack logic
 		unit->mainAttackCD -= core->deltaTime;
 		auto attackTarget = unit->attackTarget;
-		if ((attackTarget) && unit->mainAttackCD < 0.f) // SHOOT // attack
+
+		if (attackTarget && unit->mainAttackCD < 0.f) // shoot // attack // Shoot 
 		{
 			// laske suunta targettiin
 			glm::vec2 targetVector{ attackTarget->x - e->x , attackTarget->y - e->y };
@@ -290,6 +295,7 @@ void f(Entity *e, EngineCore* core)
 			if (lengthSquared < unit->attackRange * unit->attackRange)
 			{
 				// TODO: tuohon direction/koko offset niin tulee piipusta
+#if 0 
 				Entity* bulletEntity = newEntity(e->x, e->y, Entity_bullet, gameState);
 
 				glm::vec2 direction = glm::normalize(targetVector);
@@ -299,8 +305,28 @@ void f(Entity *e, EngineCore* core)
 				bulletEntity->bullet.speed = 2.f;
 				bulletEntity->bullet.startX = e->x;
 				bulletEntity->bullet.startY = e->y;
+#else
+				glm::vec2 direction = glm::normalize(targetVector);
 
-				unit->mainAttackCD = 50.f;
+				BulletBody body;
+				body.position.x = e->x;
+				body.position.y = e->y;
+				body.r = 10.f;
+				body.side = e->unit.side;
+
+				BulletStart start;
+				start.position = body.position;
+				start.rangeSqrt = unit->attackRange * unit->attackRange;
+
+				gameState->bulletBodies[gameState->bulletCount] = body;
+				gameState->BulletAccelerations[gameState->bulletCount] = direction;
+				gameState->bulletStart[gameState->bulletCount] = start;
+
+				++gameState->bulletCount;
+#endif
+
+				// bulletit checkkaa collisionit ite 
+				unit->mainAttackCD = 50.f;  // lista odottajistaa ?
 			}
 		}
 
@@ -317,7 +343,7 @@ void f(Entity *e, EngineCore* core)
 				unit->targetX = -1;
 				unit->targetY = -1;
 
-					// kauas pois
+				// kauas pois
 				if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
 				{
 					unit->path.pop_back();
@@ -347,6 +373,7 @@ void f(Entity *e, EngineCore* core)
 				}
 			}
 		}
+
 	}
 	else if (auto building = GET_ENTITY(e, building))
 	{
@@ -367,7 +394,13 @@ void f(Entity *e, EngineCore* core)
 			case building_millitary_factory:
 			{
 				// printf("gimme troop!\n"
+#if 1
 				Entity *ee = newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+#else
+				Entity *ee = newEntity(e->x, e->y - 15.f, Entity_unit, gameState);
+#endif
+				// printf("%f, %f", ee->x, ee->y);
+				ee->unit.attackRange = 100.f;
 				ee->unit.targetX = -1;
 				ee->unit.targetY = -1;
 				ee->unit.originalTargetX = -1;
