@@ -735,7 +735,8 @@ EXPORT IMGUIFUNC(Imgui)
 				Entity* e = &gameState->entities[i];
 				if (e->type == Entity_unit)
 				{
-					if (rect.Contains(e->x, e->y))
+					PhysicsBody* body = (gameState->bodies + i);
+					if (rect.Contains(body->x, body->y))
 					{
 						targetEntity = e;
 						break;

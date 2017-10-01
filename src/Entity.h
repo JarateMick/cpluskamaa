@@ -101,7 +101,9 @@ struct Entity
 
 	// pos
 	// glm::vec2 pos;
-	float x, y;
+
+	// float x, y;         let's get spicy
+
 	float velX, velY;
 	bool alive;
 
@@ -181,8 +183,8 @@ struct Entity
 struct EngineCore;
 struct game_state;
 
-void f(Entity *e, EngineCore* core);
-void r(Entity *e, EngineCore* core);
+void f(Entity *e, EngineCore* core, PhysicsBody* body);
+void r(Entity *e, EngineCore* core, PhysicsBody* body);
 
 Entity* GetFirstAvaibleEntity(game_state* state);
 EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state); //LUA_E_F

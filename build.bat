@@ -9,8 +9,7 @@ if not defined DEV_ENV_DIR (
 set DEV_ENV_DIR= ???
 
 rem eHa -O2 -Oi 
-set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 
-rem -Oi -Ox
+set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -Oi -Ox
 set LFLAGS= -incremental:no opengl32.lib  
 set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib Graphics.lib
 REM set INCLUDE=

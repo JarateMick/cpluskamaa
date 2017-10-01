@@ -58,12 +58,6 @@
 //   * 
 //   * 
 
-struct PhysicsBody
-{
-	float x, y;       // 16  ->  20  ->  24 | render id
-	float r;
-	int owner;
-};
 
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
@@ -190,7 +184,7 @@ struct PhysicsOut
 };
 
 
-PhysicsBody physicsBodies[25000];
+PhysicsBody physicsBodies[35000];
 int currentCount = 0;
 void addBody(float x, float y, float r, int id)
 {
@@ -879,8 +873,11 @@ EXPORT void Loop(EngineCore* core)
 		}
 
 		gameState->entities[2].type = Entity_unit;
-		gameState->entities[2].x = 300.f;
-		gameState->entities[2].y = 300.f;
+		physicsBodies[2].x = 300.f;
+		physicsBodies[2].y = 300.f;
+		physicsBodies[2].r = 15.f;
+		physicsBodies[2].owner = 2;
+
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
 		gameState->entities[2].unit.attackRange = 250.f;
 		gameState->entities[2].unit.hp = 100.f;
@@ -916,8 +913,11 @@ EXPORT void Loop(EngineCore* core)
 
 
 
-		addBody(20, 20, 10, 0);
-		addBody(40, 40, 10, 1);
+		gameState->bodies = physicsBodies;
+
+
+		// addBody(20, 20, 10, 0);
+		// addBody(40, 40, 10, 1);
 
 
 
@@ -1061,7 +1061,7 @@ EXPORT void Loop(EngineCore* core)
 	// ENTITY UPDATE
 	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 	{
-		f(&gameState->entities[i], core);
+		f(&gameState->entities[i], core, gameState->bodies);
 		if (!gameState->entities[i].alive)
 		{
 			// deletefunc
@@ -1084,33 +1084,36 @@ EXPORT void Loop(EngineCore* core)
 	// START_TIMING2()
 
 	currentCount = 0;
-	static Uint32 sides[25000];
+
+	// static Uint32 sides[25000]; // puolet =(
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
 		Entity* e = &gameState->entities[i];
 		if (e->type == Entity_unit)
 		{
-			*(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
-			AddBodyToGrid(physicsBodies + currentCount, &hash4r);
-			sides[e->guid] = e->unit.side; // fix theset
+			AddBodyToGrid(physicsBodies + i, &hash4r);
 			++currentCount;
+			// *(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
+			// sides[e->guid] = e->unit.side; // fix theset
 		}
 	}
 	// END_TIMING2()
 
 
-	// Physics step:
+    // Physics step:
 	CheckCollisions(&hash4r);
 
 
 	// START_TIMING()
-	for (int i = 0; i < currentCount; i++)
-	{
-		PhysicsBody* body = physicsBodies + i;
-		Entity* e = &gameState->entities[body->owner];
-		e->x = body->x;
-		e->y = body->y;
-	}
+
+	//for (int i = 0; i < currentCount; i++)
+	//{
+	//	PhysicsBody* body = physicsBodies + i;
+	//	Entity* e = &gameState->entities[body->owner];
+	//	e->x = body->x;
+	//	e->y = body->y;
+	//}
+
 	// END_TIMING()
 
 
@@ -1128,7 +1131,7 @@ EXPORT void Loop(EngineCore* core)
 	std::vector<int> damageOut;
 	damageOut.reserve(16);
 
-	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, sides, gameState->bulletCount, &bullets, &damageOut);
+	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, gameState->allSides, gameState->bulletCount, &bullets, &damageOut);
 	for (auto id : damageOut)
 	{
 		auto* unit = &gameState->entities[id].unit;
@@ -1164,6 +1167,7 @@ EXPORT void Loop(EngineCore* core)
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
 	}
 
+	printf("Entitys: %i\n", gameState->currentEntityCount);
 	// LOOPEND
 }
 
@@ -1239,30 +1243,6 @@ struct Entity2
 };
 
 
-game_state* state = 0;
-static int ID = -1;
-int CreateEntityHandle()
-{
-	Entity &e = state->entities[++ID];
-	e.x = 0.f;
-	e.y = 0.f;
-	e.type = Entity_script;
-	e.guid = ID;
-	return ID;
-}
-
-void SetEntityPosition(float x, float y, int id)
-{
-	Entity* e = &state->entities[id];
-	e->x = x;
-	e->y = y;
-}
-
-void SetEntityVel(float velX, float velY, int id)
-{
-	state->entities[id].velX = velX;
-	state->entities[id].velY = velY;
-}
 
 void VisualizePath(std::vector<int>* path, game_state* state)
 {
@@ -1341,54 +1321,7 @@ EXPORT __declspec(dllexport) void SetTile(int x, int y, int id)
 }
 
 const char* entitySetFunctionName = "foo2";
-EXPORT __declspec(dllexport) void Physics(v2* data, int count)
-{
-	// static ALLEGRO_BITMAP* bmp = al_load_bitmap("test.png");
 
-	for (int i = 0; i < ID + 1; i++)
-	{
-		Entity& e = state->entities[i];
-		data[i].x += e.velX;
-		data[i].y += e.velY;
-	}
-
-	for (int i = 0; i < ID + 1; i++)
-	{
-		// al_/draw_bitmap(bmp, data[i].x, data[i].y, 0);
-	}
-}
-
-void SetAllEntitysPositions()
-{
-	// (*luaP)[entitySetFunctionName]();
-}
-
-void DrawAllEntitys(EngineCore* core)
-{
-	// static ALLEGRO_BITMAP* bmp = al_load_bitmap("test.png");
-
-	// al_hold_bitmap_drawing(true);
-	for (int i = 0; i < ID; i++)
-	{
-		Entity& e = state->entities[i];
-		// al_draw_bitmap(bmp, e.x - core->cameraX, e.y - core->cameraY, 0);
-	}
-	// al_hold_bitmap_drawing(false);
-}
-
-//inline void my_panic(sol::optional<std::string> maybe_msg) {
-//	// std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
-//	if (maybe_msg) {
-//		const std::string& msg = maybe_msg.value();
-//		// std::cerr << "\terror message: " << msg << std::endl;
-//	}
-//	// When this function exits, Lua will exhibit default behavior and abort()
-//}
-
-// struct Vector2
-// {
-	// float x, y;
-// };
 
 EXPORT __declspec(dllexport) void SyncData(v2* data, int count)
 {
@@ -1636,16 +1569,16 @@ void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structP
 
 
 
-void DumpAllData(Bullets* bullets, int count)
-{
-	FILE* file = fopen("DUMP.txt", "w");
-
-	fwrite(bullets->bodies, sizeof(BulletStart), count, file);
-	fwrite(bullets->accelerations, sizeof(vec2f), count, file);
-	fwrite(bullets->start, sizeof(BulletStart), count, file);
-
-	fclose(file);
-}
+//void DumpAllData(Bullets* bullets, int count)
+//{
+//	FILE* file = fopen("DUMP.txt", "w+");
+//
+//	fwrite(bullets->bodies, sizeof(BulletStart), count, file);
+//	fwrite(bullets->accelerations, sizeof(vec2f), count, file);
+//	fwrite(bullets->start, sizeof(BulletStart), count, file);
+//
+//	fclose(file);
+//}
 
 // BulletStart* start;
 // vec2f*       accelerations;
@@ -1654,7 +1587,6 @@ void DumpAllData(Bullets* bullets, int count)
 EXPORT void Draw(EngineCore* core)
 {
 	game_state *gameState = (game_state*)core->memory->permanentStorage;
-	state = gameState;
 	DefineInput(core);
 
 	//SDL_GL_MakeCurrent(core->window, *core->glcontext);
@@ -1672,7 +1604,7 @@ EXPORT void Draw(EngineCore* core)
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
 		Entity* e = &gameState->entities[i];
-		r(e, core);
+		r(e, core, gameState->bodies + i);
 	}
 
 	if (gameState->pathfindingUi.drawPath)

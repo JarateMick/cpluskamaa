@@ -66,6 +66,13 @@ struct game_state;
 // glm: 
 //   + mat4 voi olla ärsyttävä tehdä itse
 
+struct PhysicsBody
+{
+	float x, y;       // 16  ->  20  ->  24 | render id
+	float r;
+	int owner;
+};
+
 enum ResourceType
 {
 	Resource_shader = 0,
@@ -437,17 +444,19 @@ constexpr int maxiumBullets = 10000;
 introspect("game_state: hello world") struct game_state
 {
 	memory_arena   arena;
-	Entity         entities[25000];
+	Entity         entities[35000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 	int            selectedCount;
 	int            maxSelected;
 
+	PhysicsBody*   bodies;
+	Uint32         allSides[35000];
+
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
 	vec2f          BulletAccelerations[maxiumBullets];
 	int            bulletCount;
-
 	int            currentEntityCount;
 
 	ProvinceData   provinceData; 

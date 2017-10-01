@@ -425,9 +425,9 @@ playBackInput(InputManager* manager, PlaybackState* state)
 }
 
 
-bool circleContains(float x, float y, float r, Entity* e)
+bool circleContains(float x, float y, float r, PhysicsBody* body)
 {
-	if (pow((x - e->x), 2) + pow((y - e->y), 2) < pow(r, 2)) // entity on sisällä
+	if (pow((x - body->x), 2) + pow((y - body->y), 2) < pow(r, 2)) // entity on sisällä
 	{
 		printf("contains");
 		return true;
@@ -466,7 +466,8 @@ void ImguiTest(ImVec4 clear_color, EngineCore* core)
 			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
 				Entity* e = &gameState->entities[i];
-				if (circleContains(core->input->mouse.x, core->input->mouse.y, 20.f, e))
+				PhysicsBody* body = gameState->bodies + i;
+				if (circleContains(core->input->mouse.x, core->input->mouse.y, 20.f, body))
 				{
 					selected = e;
 					entityFound = true;
@@ -498,14 +499,16 @@ void ImguiTest(ImVec4 clear_color, EngineCore* core)
 		if (entityFound)
 		{
 			ImGui::Text("Entity type: %s, ID:", EntityNames[selected->type], selected->guid);
-			ImGui::Text("Pos x:%f y:%f", selected->x, selected->y);
-			ImGui::DragFloat("x", &selected->x);
-			ImGui::DragFloat("y", &selected->y);
+			PhysicsBody* body = gameState->bodies + selected->guid;
+			ImGui::Text("Pos x:%f y:%f", body->x, body->y);
+			ImGui::DragFloat("x", &body->x);
+			ImGui::DragFloat("y", &body->y);
 
-			if (core->input->isMouseDown(1) && circleContains(core->input->mouse.x, core->input->mouse.y, 40.f, selected))
+			if (core->input->isMouseDown(1) && circleContains(core->input->mouse.x
+				, core->input->mouse.y, 40.f, body))
 			{
-				selected->x = core->input->mouse.x;
-				selected->y = core->input->mouse.y;
+				body->x = core->input->mouse.x;
+				body->y = core->input->mouse.y;
 			}
 
 			int newType = (int)selected->type;

@@ -12,8 +12,8 @@
 //}
 
 
-const float UNIT_SPEED       = 1.0f;   // ~ archer speed
-const int UNIT_BASE_HP       = 100;
+const float UNIT_SPEED = 1.0f;   // ~ archer speed
+const int UNIT_BASE_HP = 100;
 const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
 
 // one-to-many      many-to-one
@@ -52,67 +52,70 @@ bool FollowPath(Entity* entityUnit, game_state* gameState)
 	// printf("lyhy\n");
 }
 
-void f(Entity *e, EngineCore* core)
+void f(Entity *e, EngineCore* core, PhysicsBody* body)
 {
-	if (auto ninja = GET_ENTITY(e, ninja))
-	{
-		int x{ 0 };
-		int y{ 0 };
-		if (core->input->isKeyDown(SDL_SCANCODE_UP))
-			--y;
-		if (core->input->isKeyDown(SDL_SCANCODE_DOWN))
-			++y;
-		if (core->input->isKeyDown(SDL_SCANCODE_LEFT))
-			--x;
-		if (core->input->isKeyDown(SDL_SCANCODE_RIGHT))
-			++x;
 
-		if (x != 0 || y != 0)
-		{
-			// glm::vec2 normal = glm::normalize(glm::vec2{x, y});
-			// e->pos.x += (normal.x * core->deltaTime * 0.5f);
-			// e->pos.y += (normal.y * core->deltaTime * 0.5f);
-			e->x += (float)x * core->deltaTime * 25.f;
-			e->y += (float)y * core->deltaTime * 25.f;
-			//printf("%f", y * core->deltaTime * 0.5f);
-		}
-		//e->y += sinf(e->x) * 5;
-	}
-	else if (auto npc = GET_ENTITY(e, npc))
-	{
-		if (core->input->isKeyPressed(SDL_SCANCODE_SPACE))
-		{
-			// printf("ninjas are gays!\n");
-		}
-	}
-	else if (auto entity = GET_ENTITY(e, script))
+	//if (auto ninja = GET_ENTITY(e, ninja))
+	//{
+	//	int x{ 0 };
+	//	int y{ 0 };
+	//	if (core->input->isKeyDown(SDL_SCANCODE_UP))
+	//		--y;
+	//	if (core->input->isKeyDown(SDL_SCANCODE_DOWN))
+	//		++y;
+	//	if (core->input->isKeyDown(SDL_SCANCODE_LEFT))
+	//		--x;
+	//	if (core->input->isKeyDown(SDL_SCANCODE_RIGHT))
+	//		++x;
+
+	//	if (x != 0 || y != 0)
+	//	{
+	//		// glm::vec2 normal = glm::normalize(glm::vec2{x, y});
+	//		// e->pos.x += (normal.x * core->deltaTime * 0.5f);
+	//		// e->pos.y += (normal.y * core->deltaTime * 0.5f);
+	//		e->x += (float)x * core->deltaTime * 25.f;
+	//		e->y += (float)y * core->deltaTime * 25.f;
+	//		//printf("%f", y * core->deltaTime * 0.5f);
+	//	}
+	//	//e->y += sinf(e->x) * 5;
+	//}
+	//else if (auto npc = GET_ENTITY(e, npc))
+	//{
+	//	if (core->input->isKeyPressed(SDL_SCANCODE_SPACE))
+	//	{
+	//		// printf("ninjas are gays!\n");
+	//	}
+	//}
+	//if (auto entity = GET_ENTITY(e, script))
+	//{
+	//	GetGameState(core);
+	//	DefineInput(core);
+
+	//	// nuista clikattavista voisi laittaa jonnekin mukavammin saataville core->clicables
+	//	// tai sitten tekisi entity updatesta systeemi maisen
+
+	//	//if (core->input->isMouseClicked(1))
+	//	//{
+	//	//	for (int i = 0; i < gameState->currentEntityCount; i++) {
+
+	//	//		Entity& e = gameState->entities[i];
+	//	//		if (e.type == Entity_script)
+	//	//		{
+	//	//			auto script = GET_ENTITY(&e, script);
+	//	//			//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
+	//	//			{
+	//	//				// hitbox clicked! show message
+	//	//			}
+	//	//		}
+	//	//	}
+	//	//}
+	//}
+	if (auto player = GET_ENTITY(e, player))
 	{
 		GetGameState(core);
 		DefineInput(core);
 
-		// nuista clikattavista voisi laittaa jonnekin mukavammin saataville core->clicables
-		// tai sitten tekisi entity updatesta systeemi maisen
 
-		//if (core->input->isMouseClicked(1))
-		//{
-		//	for (int i = 0; i < gameState->currentEntityCount; i++) {
-
-		//		Entity& e = gameState->entities[i];
-		//		if (e.type == Entity_script)
-		//		{
-		//			auto script = GET_ENTITY(&e, script);
-		//			//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
-		//			{
-		//				// hitbox clicked! show message
-		//			}
-		//		}
-		//	}
-		//}
-	}
-	else if (auto player = GET_ENTITY(e, player))
-	{
-		GetGameState(core);
-		DefineInput(core);
 
 		// lista controlloiduista entitytyista id / pointerit
 		// tehdaan valintoja sen perusteella rectilla -> vetaa nelion
@@ -158,8 +161,13 @@ void f(Entity *e, EngineCore* core)
 
 			for (int i = 0; i < gameState->selectedCount; i++)
 			{
+#if 0
 				float x = gameState->selectedEntitys[i]->x;
 				float y = gameState->selectedEntitys[i]->y;
+#else
+				float x = (body + e->guid)->x;
+				float y = (body + e->guid)->y;
+#endif
 
 				Uint32 side = gameState->worldmap.GetSideUnderMouse(&input->mouse);
 				Uint32 current = gameState->worldmap.GetPixelSideFromWorld(x, y);
@@ -234,7 +242,7 @@ void f(Entity *e, EngineCore* core)
 				Entity* e = &gameState->entities[i];
 				if (e->type == Entity_unit)
 				{
-					if (player->selectionRect.Contains(e->x, e->y))
+					if (player->selectionRect.Contains((body + e->guid)->x, (body + e->guid)->y))
 					{
 						if (selectedCount < gameState->maxSelected)
 							gameState->selectedEntitys[selectedCount++] = e;
@@ -251,7 +259,10 @@ void f(Entity *e, EngineCore* core)
 		GetGameState(core);
 		DefineInput(core);
 
-		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(e->x, e->y);
+		float x = (body + e->guid)->x;
+		float y = (body + e->guid)->y;
+
+		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(x, y);
 		if (unit->lastFrameProv == mapId)
 		{
 			// provinssi ei ole vaihtunut! -> jatka liikkumista ampumista jos tarvii
@@ -259,11 +270,18 @@ void f(Entity *e, EngineCore* core)
 		}
 		else
 		{   // Provinssi on vaihtunut
+#if 0
 			Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
+#else
+
+			// float x = (body + e->guid)->x;
+			// float y = (body + e->guid)->y;
+			Uint32 side = gameState->worldmap.GetCurrentHolder(x, y);
+#endif
 
 			if (side != unit->side)
 			{
-				gameState->worldmap.changeSideWorld((int)e->x, (int)e->y, unit->side, core);
+				gameState->worldmap.changeSideWorld(x, y, unit->side, core); // jou
 			}
 
 			if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
@@ -293,8 +311,16 @@ void f(Entity *e, EngineCore* core)
 
 		if (attackTarget && unit->mainAttackCD < 0.f) // shoot // attack // Shoot 
 		{
+#if 1
+			// float x = (body + e->guid)->x;
+			// float y = (body + e->guid)->y;
+#else
+			glm::vec2 targetVector{ attackTarget->x - x , attackTarget->y - y };
+#endif
+
 			// laske suunta targettiin
-			glm::vec2 targetVector{ attackTarget->x - e->x , attackTarget->y - e->y };
+			glm::vec2 targetVector{ (body + attackTarget->guid)->x - x, (body + attackTarget->guid)->y - y };
+
 			float lengthSquared = targetVector.x * targetVector.x + targetVector.y * targetVector.y;
 
 			if (lengthSquared < unit->attackRange * unit->attackRange)
@@ -314,8 +340,8 @@ void f(Entity *e, EngineCore* core)
 				glm::vec2 direction = glm::normalize(targetVector);
 
 				BulletBody body;
-				body.position.x = e->x;
-				body.position.y = e->y;
+				body.position.x = x; // e->x
+				body.position.y = y; // e->y
 				body.r = BULLET_BASE_SIZE;
 				body.side = unit->side;
 
@@ -342,7 +368,7 @@ void f(Entity *e, EngineCore* core)
 		if (unit->targetX != -1 && unit->targetY != -1)
 		{
 
-			glm::vec2 moveVec{ unit->targetX - e->x, unit->targetY - e->y };
+			glm::vec2 moveVec{ unit->targetX - x, unit->targetY - y };
 
 			// float length = glm::length(moveVec);
 			// korjaa
@@ -369,16 +395,26 @@ void f(Entity *e, EngineCore* core)
 			else
 			{
 				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
+#if 0
 				e->x += moveVec.x;
 				e->y += moveVec.y;
+#else
+				(body + e->guid)->x += moveVec.x;
+				(body + e->guid)->y += moveVec.y;
+#endif
 
-				Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
+				Uint32 side = gameState->worldmap.GetCurrentHolder((int)x, (int)y);
 				static SDL_PixelFormat *fmt = gameState->worldmap.provinces.surface->format;
 				Uint8 alpha = getAlpha(side, fmt);
 				if (side == 0xFF000000 || alpha == 0) // can't move here
 				{
+#if 0
 					e->x -= moveVec.x;
 					e->y -= moveVec.y;
+#else
+					(body + e->guid)->x -= moveVec.x;
+					(body + e->guid)->y -= moveVec.y;
+#endif
 				}
 			}
 		}
@@ -403,8 +439,13 @@ void f(Entity *e, EngineCore* core)
 			case building_millitary_factory:
 			{
 				// printf("gimme troop!\n"
+
+				float x = (body + e->guid)->x;
+				float y = (body + e->guid)->y;
 #if 1
-				Entity *ee = newEntity(e->x + Random::floatInRange(-25.f, 25.f), e->y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+				Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+				(body + ee->guid)->r = 15.f;
+				(body + ee->guid)->owner = ee->guid;
 #else
 				Entity *ee = newEntity(e->x, e->y - 15.f, Entity_unit, gameState);
 #endif
@@ -416,6 +457,9 @@ void f(Entity *e, EngineCore* core)
 				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
 				ee->unit.hp = UNIT_BASE_HP;
+				gameState->allSides[e->guid] = building->side;
+
+
 			} break;
 			default:
 				ASSERT(false); // , "building type not found!");
@@ -491,19 +535,19 @@ glm::vec4 getUVs(int index, glm::vec2 dims)
 }
 
 
-void r(Entity *e, EngineCore* core)
+void r(Entity *e, EngineCore* core, PhysicsBody* body)
 {
 	if (auto building = GET_ENTITY(e, building))
 	{
 		// TODO: korjaa tekstuuri manager
 		static GLuint textureId = UpiEngine::ResourceManager::getTexture("building.png").id;
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 40, 40 }, building->textureUv, textureId, 1.0f);
+		core->spriteBatch->draw(glm::vec4{ body->x, body->y, 40, 40 }, building->textureUv, textureId, 1.0f);
 	}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		Uint32 ucolor = unit->side;
 		auto color = Uin32ToColor(ucolor);
-		core->spriteBatch->draw(glm::vec4{ e->x - 20, e->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
+		core->spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, color);
 	}
 	else if (auto entity = GET_ENTITY(e, script))
 	{
@@ -538,8 +582,14 @@ Entity* GetFirstAvaibleEntity(game_state* state)
 EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)
 {
 	Entity* result = GetFirstAvaibleEntity(state);
-	result->x = x;
-	result->y = y;
+
+	// result->x = x;
+	// result->y = y;
+
+	(state->bodies + result->guid)->x = x;
+	(state->bodies + result->guid)->y = y;
+	// state->phy
+
 	result->type = type;
 	result->alive = true;
 	return result;
