@@ -29,7 +29,13 @@
 	auto elapsedTime(NAME(2) - NAME(1));						\
 	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count()  );
 
+#define START_TIMING2() \
+	auto NAME(3)(std::chrono::high_resolution_clock::now()); \
 
+#define END_TIMING2() \
+	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
+	auto elapsedTime2(NAME(4) - NAME(3));						\
+	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
 
 
 // preprocessor
@@ -62,7 +68,7 @@ struct PhysicsBody
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
-constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
+constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
 constexpr int CellsX = (5900) / cellSize + 1;
 constexpr int CellsY = (4800) / cellSize + 1;
 
@@ -373,7 +379,7 @@ void SortAllEntitys(Entity* entities, int count)
 
 void SortAll(Entity* entities, int count) // 
 {
-	//std::sort(entities, entities + count, [](Entity& first, Entity& second)
+	//std::sort(entities, entities + size, [](Entity& first, Entity& second)
 	//{
 	//	return first.type < second.type;
 	//});
@@ -653,27 +659,27 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 	start->marked = true;
 
 	std::map<GraphNode<MapNode, int>*, GraphNode<MapNode, int>*> came_from;
-	came_from[start] = 0; 
+	came_from[start] = 0;
 
-		while (queue.size() != 0)
+	while (queue.size() != 0)
+	{
+		GraphNode<MapNode, int>* current = queue.front();
+
+		if (current->data.id == goalId)
+			break;
+
+		auto itr = current->archlist.begin(); // neighbours !
+		for (itr; itr != current->archlist.end(); itr++)
 		{
-			GraphNode<MapNode, int>* current = queue.front();
-
-			if (current->data.id == goalId)
-				break;
-
-			auto itr = current->archlist.begin(); // neighbours !
-			for (itr; itr != current->archlist.end(); itr++)
+			if (itr->node->marked == false)
 			{
-				if (itr->node->marked == false)
-				{
-					itr->node->marked = true;
-					queue.push(itr->node);
-					came_from[itr->node] = current;
-				}
+				itr->node->marked = true;
+				queue.push(itr->node);
+				came_from[itr->node] = current;
 			}
-			queue.pop();
 		}
+		queue.pop();
+	}
 
 	// make path
 	GraphNode<MapNode, int>* current = graph->nodes[goalId];
@@ -745,7 +751,9 @@ int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* 
 {
 	for (int i = count - 1; i > -1; i--)
 	{
-		bodies[i].position += bulletAcceceration[i]; // TODO: DELTA JOUJOUJOU!
+		bodies[i].position += bulletAcceceration[i] * 4.f; // TODO: MIKA ON LUODIN NOPEUS JOUJOUJOU!!!
+
+		// printf("bullet (%f, %f)\n", bodies[i].position.x, bodies[i].position.y);
 
 		float x = bodies[i].position.x - start[i].position.x;
 		float y = bodies[i].position.y - start[i].position.y;
@@ -753,42 +761,66 @@ int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* 
 		if (abs(x * x + y * y) > start[i].rangeSqrt)
 		{
 			// luoti kuoli! poista kaikki kerralla?
-			bodies[i]				= bodies[count - 1];
-			start[i]				= start[count - 1];
-			bulletAcceceration[i]   = bulletAcceceration[count - 1];
+			bodies[i] = bodies[count - 1];
+			start[i] = start[count - 1];
+			bulletAcceceration[i] = bulletAcceceration[count - 1];
 
 			printf("kuoli");
 			--count;
 		}
 	}
-
 	return count;
 }
 
-int collideBullets(SpatialHash* hash, BulletBody* bulletBodies, int count)
+struct Bullets
 {
-	for (int i = count - 1; i > -1; i--)
+	BulletStart* start;
+	vec2f*       accelerations;
+	BulletBody*  bodies;
+};
+
+void swapAll(int i, int count, Bullets* bullets)
+{
+	BulletBody*  bodies = bullets->bodies;
+	BulletStart* start = bullets->start;
+	vec2f*       acc = bullets->accelerations;
+
+	bodies[i] = bodies[count - 1];
+	start[i] = start[count - 1];
+	acc[i] = acc[count - 1];
+}
+
+
+int collideBullets(SpatialHash* hash, BulletBody* bulletBodies, Uint32* sides, int size, Bullets* bullets, std::vector<int>* damageOut)
+{
+	for (int i = size - 1; i > -1; i--)
 	{
 		BulletBody* body = bulletBodies + i;
 
 		auto point = HashPoint(body->position.x, body->position.y);
-		auto* bodies = &hash->hashMap[point.y][point.x];
 
-		for (int j = 0; j < bodies->size(); j++)
+		if (point.x > 0)
 		{
-			if (circleCollision(body, bodies->at(j)))
+			auto* bodies = &hash->hashMap[point.y][point.x];
+			for (int j = 0; j < bodies->size(); j++)
 			{
-				// bulletBodies->at(i)->owner <- ammu tota jätkää
+				PhysicsBody* physicsBody = bodies->at(j);
+				if (sides[physicsBody->owner] != body->side)
+				{
+					if (circleCollision(body, physicsBody))
+					{
+						damageOut->push_back(physicsBody->owner);
+						swapAll(i, size, bullets);
 
-				bulletBodies[i] = bulletBodies[count - i];
-				--count;
-				break;
+						--size;
+						break;
+					}
+				}
 			}
 		}
 	}
-	return count;
+	return size;
 }
-
 
 
 lua_State* L;
@@ -851,9 +883,11 @@ EXPORT void Loop(EngineCore* core)
 		gameState->entities[2].y = 300.f;
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
 		gameState->entities[2].unit.attackRange = 250.f;
+		gameState->entities[2].unit.hp = 100.f;
 		// gameState->entities[2].unit.mainAttackCD = 
 
 		gameState->entities[3].type = Entity_player;
+		gameState->entities[3].player.selectedBuildingType = building_none;
 		gameState->entities[3].player.cash = 100;
 		gameState->entities[3].player.side = 0xFF00FF00; // green
 		gameState->player = &gameState->entities[3];
@@ -898,21 +932,6 @@ EXPORT void Loop(EngineCore* core)
 	}
 
 
-	/*************************************************/
-	// ENTITY UPDATE
-	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
-	{
-		f(&gameState->entities[i], core);
-		if (!gameState->entities[i].alive)
-		{
-			// deletefunc
-			memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
-				sizeof(Entity));
-			--gameState->currentEntityCount;
-		}
-	}
-
-
 
 	// TODO: Nuke this init phase
 	static bool init = false;
@@ -931,27 +950,27 @@ EXPORT void Loop(EngineCore* core)
 		SaveAllGameState(gameState);
 	}
 
-	static char *saveFile = "testailu.data";
-	if (input->isKeyPressed(SDL_SCANCODE_1))
-	{
-		// SaveAllEntitys(gameState, "entity.sav");
-	}
-	else if (input->isKeyPressed(SDL_SCANCODE_2))
-	{
-		// LoadAllEntity(gameState, "entity.sav");
-		//lua_State* L = core->script.L;
-		//lua_getglobal(L, "LoadTileMap");
-		//lua_pushnumber(L, 100);
+	// static char *saveFile = "testailu.data";
+	//if (input->isKeyPressed(SDL_SCANCODE_1))
+	//{
+	//	// SaveAllEntitys(gameState, "entity.sav");
+	//}
+	//else if (input->isKeyPressed(SDL_SCANCODE_2))
+	//{
+	//	// LoadAllEntity(gameState, "entity.sav");
+	//	//lua_State* L = core->script.L;
+	//	//lua_getglobal(L, "LoadTileMap");
+	//	//lua_pushnumber(L, 100);
 
-		//if (lua_pcall(L, 1, 0, 0) != 0)
-		//{
-		//	Debug::logError("what the fuck!");
-		//	Debug::logError(lua_tostring(L, -1));
-		//	fprintf(stderr, "%s\n", lua_tostring(L, -1));
-		//	debugBreak();
-		//}
-		//lua_pop(L, 1);
-	}
+	//	//if (lua_pcall(L, 1, 0, 0) != 0)
+	//	//{
+	//	//	Debug::logError("what the fuck!");
+	//	//	Debug::logError(lua_tostring(L, -1));
+	//	//	fprintf(stderr, "%s\n", lua_tostring(L, -1));
+	//	//	debugBreak();
+	//	//}
+	//	//lua_pop(L, 1);
+	//}
 
 	static bool initted = false;
 	static GLuint tid;
@@ -982,8 +1001,6 @@ EXPORT void Loop(EngineCore* core)
 			printf("%x not found\n", color);
 	}
 
-
-
 	if (input->isKeyDown(SDL_SCANCODE_6))
 	{
 		WorldMap* map = &gameState->worldmap;
@@ -996,6 +1013,7 @@ EXPORT void Loop(EngineCore* core)
 
 		if (targetcolor != 0xFF000000 && alpha != 0)
 		{
+
 			FloodFillImage(&map->provinces, &map->visual, mx, my, targetcolor, Uint32(map->editor.editorColor));
 
 			// core->resources.FreeTexture(&tid);
@@ -1005,7 +1023,6 @@ EXPORT void Loop(EngineCore* core)
 			core->resources.SurfaceToGlTexture(map->visual.surface);
 		}
 	}
-
 
 	if (input->isMouseDown(3)) // atm imgui toolssien nappi TODO: move
 	{
@@ -1035,6 +1052,119 @@ EXPORT void Loop(EngineCore* core)
 	{
 		SortAllEntitys(gameState->entities, gameState->currentEntityCount);
 	}
+
+
+
+
+
+	/**********************************************************************************************/
+	// ENTITY UPDATE
+	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
+	{
+		f(&gameState->entities[i], core);
+		if (!gameState->entities[i].alive)
+		{
+			// deletefunc
+			printf("delet\n");
+			memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
+				sizeof(Entity));
+			gameState->entities[i].guid = i;
+
+			--gameState->currentEntityCount;
+		}
+	}
+
+
+
+
+	clearSpatial(&hash4r);
+
+	//START_TIMING()
+
+	// START_TIMING2()
+
+	currentCount = 0;
+	static Uint32 sides[25000];
+	for (int i = 0; i < gameState->currentEntityCount; i++)
+	{
+		Entity* e = &gameState->entities[i];
+		if (e->type == Entity_unit)
+		{
+			*(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
+			AddBodyToGrid(physicsBodies + currentCount, &hash4r);
+			sides[e->guid] = e->unit.side; // fix theset
+			++currentCount;
+		}
+	}
+	// END_TIMING2()
+
+
+	// Physics step:
+	CheckCollisions(&hash4r);
+
+
+	// START_TIMING()
+	for (int i = 0; i < currentCount; i++)
+	{
+		PhysicsBody* body = physicsBodies + i;
+		Entity* e = &gameState->entities[body->owner];
+		e->x = body->x;
+		e->y = body->y;
+	}
+	// END_TIMING()
+
+
+	// luoti fysiikat
+	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
+		gameState->bulletStart, gameState->bulletCount);
+
+
+
+	Bullets bullets;
+	bullets.bodies = gameState->bulletBodies;
+	bullets.accelerations = gameState->BulletAccelerations;
+	bullets.start = gameState->bulletStart;
+
+	std::vector<int> damageOut;
+	damageOut.reserve(16);
+
+	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, sides, gameState->bulletCount, &bullets, &damageOut);
+	for (auto id : damageOut)
+	{
+		auto* unit = &gameState->entities[id].unit;
+		unit->hp -= 10; // hyvää lääppäää
+
+		printf("%i\n", id);
+
+		if (unit->hp < 0)
+		{
+			// dead
+			gameState->entities[id].alive = false;
+		}
+	}
+
+	// luoti fysiikat
+	// END_TIMING()
+
+	float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
+	if (input->isKeyDown(SDL_SCANCODE_W))
+	{
+		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
+	}
+	if (input->isKeyDown(SDL_SCANCODE_S))
+	{
+		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, -cameraSpeed });
+	}
+	if (input->isKeyDown(SDL_SCANCODE_A))
+	{
+		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ -cameraSpeed, 0 });
+	}
+	if (input->isKeyDown(SDL_SCANCODE_D))
+	{
+		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
+	}
+
+	// LOOPEND
 }
 
 /* Get Red component */
@@ -1152,7 +1282,6 @@ void VisualizePath(std::vector<int>* path, game_state* state)
 		Debug::drawBox({ v2.x, v2.y, 20, 20 });
 		lastPos = v2;
 	}
-
 }
 
 std::vector<int> getAllProvinceNeighbours(int id)
@@ -1189,11 +1318,11 @@ std::vector<int> getAllProvinceNeighbours(int id)
 //	}
 //}
 
-//void SetAllEntitys2(int count, const char* table)
+//void SetAllEntitys2(int size, const char* table)
 //
 //{
 //	sol::table entity = (*luaP)[table]; // func
-//	for (int i = 1; i < count; i++)
+//	for (int i = 1; i < size; i++)
 //	{
 //		Entity& e = state->entities[i];
 //		e.x = entity[i]["x"] = e.x + e.velX;
@@ -1318,7 +1447,6 @@ void Hello(void* vecs)
 	// printf("hei %i", v[1].x);
 }
 
-
 void LuaErrorWrapper(game_state* state, EngineCore* core)
 {
 	InputManager* input = core->input;
@@ -1348,7 +1476,7 @@ void LuaErrorWrapper(game_state* state, EngineCore* core)
 	//	// lua["Update"] = &Entity2::Update;
 	//	// lua["DrawLots"] = &DrawLotsOfEntitys;
 	//	// lua["DrawUpdate"] = &DrawUpdateEntity;
-	//	// void SetAllEntitys2(int count, const char* table)
+	//	// void SetAllEntitys2(int size, const char* table)
 	//	// lua["SetAllEntity2"] = &SetAllEntitys2;
 	//	//usertype<Entity2> Entity2Type(
 	//	//	"Update", &Entity2::Update,
@@ -1502,10 +1630,26 @@ void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structP
 //
 //auto timePoint2(std::chrono::high_resolution_clock::now());
 //auto elapsedTime(timePoint2 - timePoint1);
-//ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+//ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).size() };
 //lastFT = ft;
 //ftSeconds = (ft / 1000.f);
 
+
+
+void DumpAllData(Bullets* bullets, int count)
+{
+	FILE* file = fopen("DUMP.txt", "w");
+
+	fwrite(bullets->bodies, sizeof(BulletStart), count, file);
+	fwrite(bullets->accelerations, sizeof(vec2f), count, file);
+	fwrite(bullets->start, sizeof(BulletStart), count, file);
+
+	fclose(file);
+}
+
+// BulletStart* start;
+// vec2f*       accelerations;
+// BulletBody*  bodies;
 
 EXPORT void Draw(EngineCore* core)
 {
@@ -1515,33 +1659,15 @@ EXPORT void Draw(EngineCore* core)
 
 	//SDL_GL_MakeCurrent(core->window, *core->glcontext);
 	// TODO: Free camera from main
-	float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
-	if (input->isKeyDown(SDL_SCANCODE_W))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_S))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, -cameraSpeed });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_A))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ -cameraSpeed, 0 });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_D))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
-	}
+
 
 	// core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f , 480.f  }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
 
-
+	// printf("totalENtitys %i\n", gameState->currentEntityCount);
 
 	gameState->worldmap.Draw(core->spriteBatch);
 
 	//  DrawAllEntitys(core);
-
-	// render all entitys
 
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
@@ -1559,26 +1685,6 @@ EXPORT void Draw(EngineCore* core)
 	// fysiikka	       --::testi::--
 
 
-
-	clearSpatial(&hash4r);
-
-
-	currentCount = 0;
-	for (int i = 0; i < gameState->currentEntityCount; i++)
-	{
-		Entity* e = &gameState->entities[i];
-		if (e->type == Entity_unit)
-		{
-			*(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
-			AddBodyToGrid(physicsBodies + currentCount, &hash4r);
-			++currentCount;
-		}
-	}
-
-
-	// Physics step:
-
-	// updateCollision(physicsBodies, currentCount);
 	// renderPhysicsBodies(physicsBodies, currentCount);
 
 	// int cols = CheckCollisions(&hash4r);
@@ -1587,26 +1693,15 @@ EXPORT void Draw(EngineCore* core)
 	// updateCollision()
 	//	Entity* e =gameState->entities[i];
 
-	for (int i = 0; i < currentCount; i++)
-	{
-		PhysicsBody* body = physicsBodies + i;
-		Entity* e = &gameState->entities[body->owner];
-		e->x = body->x;
-		e->y = body->y;
-	}
-
-	// Sta/r
-	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
-		gameState->bulletStart, gameState->bulletCount);
-
-	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, gameState->bulletCount);
-
-	for(int i = 0; i < gameState->bulletCount; i++)
+	for (int i = 0; i < gameState->bulletCount; i++)
 	{
 		const auto& pos = gameState->bulletBodies[i].position;
-		core->spriteBatch->draw(glm::vec4{ pos.x, pos.y, 15.f, 15.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
-			3, 1.0f); // depth !
+		static auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png").id;
+		static auto yellow = UpiEngine::ColorRGBA8(255, 255, 0, 255);
+		core->spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
+			notWorking, 1.0f, yellow); // depth !
 	}
+
 
 
 	static bool diebugDraw = false;
@@ -1618,16 +1713,13 @@ EXPORT void Draw(EngineCore* core)
 
 	// dumpStruct(ArrayCount(membersOf_test2), membersOf_test2, &test2);
 
-	// for (int i = 0; i < gameState->selectedCount; i++) {
+	// for (int i = 0; i < gameState->selectedCount; i++)  {
 		// Entity* e = gameState->selectedEntitys[i];
 		// float r = e->unit.attackRange;
 		// static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
 		// Debug::drawCircle({ e->x, e->y }, white, r);
 	// }
-
 }
 
 
 // TODO: Fontit resource managerille
-
-// LUOTEJA

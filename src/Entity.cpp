@@ -12,6 +12,10 @@
 //}
 
 
+const float UNIT_SPEED       = 1.0f;   // ~ archer speed
+const int UNIT_BASE_HP       = 100;
+const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
+
 // one-to-many      many-to-one
 
 inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData* prov)
@@ -207,6 +211,7 @@ void f(Entity *e, EngineCore* core)
 			{
 				// set targettoroo!
 			}
+
 		}
 
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
@@ -311,8 +316,8 @@ void f(Entity *e, EngineCore* core)
 				BulletBody body;
 				body.position.x = e->x;
 				body.position.y = e->y;
-				body.r = 10.f;
-				body.side = e->unit.side;
+				body.r = BULLET_BASE_SIZE;
+				body.side = unit->side;
 
 				BulletStart start;
 				start.position = body.position;
@@ -323,10 +328,14 @@ void f(Entity *e, EngineCore* core)
 				gameState->bulletStart[gameState->bulletCount] = start;
 
 				++gameState->bulletCount;
+
+
+				// printf("bullet at start fo shoting %i \n", gameState->bulletCount);
+
 #endif
 
 				// bulletit checkkaa collisionit ite 
-				unit->mainAttackCD = 50.f;  // lista odottajistaa ?
+				unit->mainAttackCD = 1.5f;  // lista odottajistaa ?
 			}
 		}
 
@@ -359,7 +368,7 @@ void f(Entity *e, EngineCore* core)
 			}
 			else
 			{
-				moveVec = glm::normalize(moveVec) * 0.1f * 1.f;
+				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
 				e->x += moveVec.x;
 				e->y += moveVec.y;
 
@@ -382,7 +391,7 @@ void f(Entity *e, EngineCore* core)
 
 		building->timer += core->deltaTime;
 
-		if (building->timer > 40.f)
+		if (building->timer > 5.f)
 		{
 			switch (building->type)
 			{
@@ -400,12 +409,13 @@ void f(Entity *e, EngineCore* core)
 				Entity *ee = newEntity(e->x, e->y - 15.f, Entity_unit, gameState);
 #endif
 				// printf("%f, %f", ee->x, ee->y);
-				ee->unit.attackRange = 100.f;
+				ee->unit.attackRange = 250.f;
 				ee->unit.targetX = -1;
 				ee->unit.targetY = -1;
 				ee->unit.originalTargetX = -1;
 				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
+				ee->unit.hp = UNIT_BASE_HP;
 			} break;
 			default:
 				ASSERT(false); // , "building type not found!");
@@ -415,26 +425,28 @@ void f(Entity *e, EngineCore* core)
 			building->timer = 0.f;
 		}
 	}
-	else if (auto bullet = GET_ENTITY(e, bullet))
-	{
-		GetGameState(core);
-		// DefineInput(core);
 
-		// jos pelista saisi 100% determistisen niin matkan voisi 
-		// varmaan kalkuloida suoraan alussa frammeina
+	// depricated:
+	//else if (auto bullet = GET_ENTITY(e, bullet))
+	//{
+	//	GetGameState(core);
+	//	// DefineInput(core);
 
-		e->x += e->velX * core->deltaTime * bullet->speed; // speedx
-		e->y += e->velY * core->deltaTime * bullet->speed; // speedx
+	//	// jos pelista saisi 100% determistisen niin matkan voisi 
+	//	// varmaan kalkuloida suoraan alussa frammeina
 
-		float x = e->x - bullet->startX;
-		float y = e->y - bullet->startY;
-		if (abs(x * x + y * y) > bullet->rangeSquared)
-		{
-			// max range reached!
-			e->alive = false;
-			printf("olen donezo\n");
-		}
-	}
+	//	e->x += e->velX * core->deltaTime * bullet->speed; // speedx
+	//	e->y += e->velY * core->deltaTime * bullet->speed; // speedx
+
+	//	float x = e->x - bullet->startX;
+	//	float y = e->y - bullet->startY;
+	//	if (abs(x * x + y * y) > bullet->rangeSquared)
+	//	{
+	//		// max range reached!
+	//		e->alive = false;
+	//		printf("olen donezo\n");
+	//	}
+	//}
 }
 
 UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
@@ -502,7 +514,6 @@ void r(Entity *e, EngineCore* core)
 		GetGameState(core);
 		DefineInput(core);
 
-
 		char buffer[64];
 		sprintf(buffer, "money: %i", player->cash);
 		Debug::drawText(buffer, 2);
@@ -510,16 +521,18 @@ void r(Entity *e, EngineCore* core)
 		if (player->selectingTroops)
 			player->selectionRect.DrawRect();
 	}
-	else if (auto bullet = GET_ENTITY(e, bullet))
-	{
-		core->spriteBatch->draw(glm::vec4{ e->x, e->y, 20, 20 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
-	}
+	// else if (auto bullet = GET_ENTITY(e, bullet))
+	// {
+		// core->spriteBatch->draw(glm::vec4{ e->x, e->y, 20, 20 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f);
+	// }
 }
 
 Entity* GetFirstAvaibleEntity(game_state* state)
 {
 	ASSERT(state->currentEntityCount < ArrayCount(state->entities));
-	return &state->entities[state->currentEntityCount++];
+	Entity* result = &state->entities[state->currentEntityCount];
+	result->guid = state->currentEntityCount++;
+	return result;
 }
 
 EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state)

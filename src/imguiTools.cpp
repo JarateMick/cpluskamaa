@@ -934,6 +934,8 @@ EXPORT IMGUIFUNC(Imgui)
 	if (ImGui::Button("build factory"))
 	{
 		gameState->player->player.selectedBuildingType = building_millitary_factory;
+
+		gameState->player->player.side = gameState->worldmap.editor.editorColor;
 	}
 	if (ImGui::Button("build mill"))
 	{

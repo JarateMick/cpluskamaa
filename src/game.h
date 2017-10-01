@@ -430,7 +430,7 @@ struct BulletStart
 	float rangeSqrt;
 };
 
-constexpr int maxiumBullets = 5000;
+constexpr int maxiumBullets = 10000;
 
 
 #define I
@@ -445,7 +445,7 @@ introspect("game_state: hello world") struct game_state
 
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
-	vec2f            BulletAccelerations[maxiumBullets];
+	vec2f          BulletAccelerations[maxiumBullets];
 	int            bulletCount;
 
 	int            currentEntityCount;

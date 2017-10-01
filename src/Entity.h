@@ -120,11 +120,10 @@ struct Entity
 		} npc;
 		struct Unit
 		{
-			int damage;
-			int moveSpeed;
-			int strength;
+			// int damage;
+			// int moveSpeed;
+			// int strength;
 			Uint32 side;
-
 			Uint32 lastFrameProv;
 
 			int targetX, targetY;
@@ -135,7 +134,9 @@ struct Entity
 			float mainAttackCD;
 			float attackRange;
 
-			std::vector<int> path; // LEAK!
+			int hp;
+
+			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht
 
 			// attack speed jne...
 			// (instant attacks melee) <-> (type?)

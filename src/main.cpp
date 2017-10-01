@@ -1065,6 +1065,7 @@ int main(int argc, char* argv[])
 
 	//map.AddArc(4, 3, 1);
 	//map.AddArc(3, 4, 1);
+	/**********************************************************************************************/
 
 	//map.AddArc(0, 5, 1);
 	//map.AddArc(5, 0, 1);
@@ -1104,7 +1105,7 @@ int main(int argc, char* argv[])
 	//{
 	//	std::cout << itr.Item() << ", ";
 	//}
-		{}
+	{}
 	//itr.Start();
 
 	//itr.Forth();
@@ -1357,7 +1358,7 @@ int main(int argc, char* argv[])
 		sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
 		printf("%s", buffer);
 		core.AddToConsole(buffer);
-	//	debugBreak();
+		//	debugBreak();
 	}
 	else
 	{
@@ -1367,12 +1368,19 @@ int main(int argc, char* argv[])
 	// lua_getglobal(L, "testiPrinter");
 	// lua_pcall(L, 0, 0, 0);
 	// lua_settop(L, 0);
-
-	auto asdf = UpiEngine::ResourceManager::getTexture("tekstuuri");
-	core.filewatcher.init(shaderFiles, SHADERFILECOUNT, Resource_shader);
-
+	{
+		auto asdf = UpiEngine::ResourceManager::getTexture("tekstuuri");
+		core.filewatcher.init(shaderFiles, SHADERFILECOUNT, Resource_shader);
+	}
 	GLuint randomTexture = UpiEngine::ResourceManager::getTexture("test.png").id;
-	auto b = UpiEngine::ResourceManager::getTexture("building.png");
+	{
+		auto b = UpiEngine::ResourceManager::getTexture("building.png");
+
+		auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png");
+	}
+
+	auto realTime(std::chrono::high_resolution_clock::now());
+	auto simulationTIMER(std::chrono::high_resolution_clock::now());
 
 	bool firstFrame = true;
 	while (!quit)
@@ -1382,6 +1390,7 @@ int main(int argc, char* argv[])
 		auto delta_time = std::chrono::high_resolution_clock::now() - currentTime;
 		currentTime = std::chrono::high_resolution_clock::now();
 		simulationTime += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_time);
+
 
 		// TODO: thread pool
 		if (fileLoadingThreadDone)
@@ -1465,8 +1474,8 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-				}
-			} break;
+					}
+				} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1474,15 +1483,21 @@ int main(int argc, char* argv[])
 				if (ev.key.keysym.scancode > 0 && ev.key.keysym.scancode < SDL_SCANCODE_3)
 				{
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
-				}
+				}		auto timePoint2(std::chrono::high_resolution_clock::now());
+				auto elapsedTime(timePoint2 - timePoint1);
+				ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+				lastFT = ft;
+				ftSeconds = (ft / 1000.f);
+
+
 			} break;
 			}
-		} // POLL EvENTS
+			} // POLL EvENTS
 
-				// number |= 1 << x;   // setting bit 
-				// number &= ~(1 << x); // clear 
+					// number |= 1 << x;   // setting bit 
+					// number &= ~(1 << x); // clear 
 
-				// nesInput.buttons = 0xFF;
+					// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1542,7 +1557,7 @@ int main(int argc, char* argv[])
 
 		if (!firstFrame)
 			//Sleep(1); // program runs too fast input bug
-		firstFrame = false;
+			firstFrame = false;
 
 
 
@@ -1604,7 +1619,7 @@ int main(int argc, char* argv[])
 				debugBreak();
 			}
 		}
-				// fprintf(stderr, "%s\n", lua_tostring(L, -1));
+		// fprintf(stderr, "%s\n", lua_tostring(L, -1));
 
 		int steps = 0;
 		currentSlice += lastFT;
@@ -1615,11 +1630,18 @@ int main(int argc, char* argv[])
 
 
 		// Wow that's a huge loop!
+#if 0
 
 		int updates = 0;
-		for (; currentSlice >= FT_SLICE; currentSlice -= FT_SLICE)	// hud input should be polled!
+		for (; currentSlice >= FT_SLICE; currentSlice -= FT_SLICE)	// hud input should be polled!!!
 		{
-			if (updates > 10) break;
+			if (updates > 10)
+			{
+				break;
+			}
+			// printf("jarraut++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+			// break;
+
 
 			simulationTime -= timestep;
 			updates++;
@@ -1657,88 +1679,174 @@ int main(int argc, char* argv[])
 
 					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
 					inputManager.update(); // TODO: maybe poll for input
+		}
+				core.advanceNextFrame = false;
+	}
+}
+#else
+		// while (1) {
+		// int  gameOn = 1
+		realTime = std::chrono::high_resolution_clock::now();
+		// int realTime = Gettime();
+		//using chrono::
+		// using namespace std::chrono_literals;
+		int updates = 0;
+		while (simulationTIMER < realTime || core.beginSkipToFrame)
+		{
+			simulationTIMER += std::chrono::milliseconds(16); //Timeslice is ALWAYS 16ms. 
+			// LoopPtr(&core);
+			// printf("Update %i \n", updates);
+			bool allowBreak = false;
+			if (core.pause)
+				allowBreak = true;
+
+
+			if (!core.pause || core.advanceNextFrame)
+			{
+				for (int i = 0; i < g_frameAdvanceCount; i++)
+				{
+					if (g_frameAdvanceCount > 1)
+					{
+						simulationTIMER = std::chrono::high_resolution_clock::now();
+						allowBreak = true;
+					}
+
+					if (inputState.recording)
+					{
+						recordInput(&inputManager, &inputState);
+					}
+					else if (inputState.playing)
+					{
+						playBackInput(&inputManager, &inputState);
+					}
+
+					LoopPtr(&core); // GAME LOOP
+					g_currentFrame++;
+
+					if (core.beginSkipToFrame)
+					{
+						if (core.skipToFrame == g_currentFrame)
+						{
+							core.beginSkipToFrame = false;
+							core.pause = true;
+							g_frameAdvanceCount = 1;
+							break;
+						}
+						else
+						{
+							g_frameAdvanceCount = 100;  // laske max simulointi nopeus skipaten framet, jotenkinh smooth
+						}
+					}
+
+					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
+					inputManager.update(); // TODO: maybe poll for input
 				}
 				core.advanceNextFrame = false;
 			}
-		}
 
-		if (inputManager.isKeyDown(SDL_SCANCODE_E))
-		{
-			camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
-
-			if (camera2D.getScale() < 0.01f)
+			if (allowBreak)
 			{
-				camera2D.setScale(0.01f);
+				break;
 			}
 		}
-		if (inputManager.isKeyDown(SDL_SCANCODE_Q))
+
+		//			RenderWorld();
+#endif
+
+		bool skippingDraw = false; // todo: korjaa 
+		if (core.skipToFrame)
 		{
-			camera2D.setScale(camera2D.getScale() + 0.0005f);
+			static int counter = 0;
+			counter++;
+			if (counter < 50)
+			{
+				skippingDraw = true;
+				counter = 0;
+			}
 		}
-		// printf("%f\n", camera2D.getScale());
-		ImGui::Text("camera: %f", camera2D.getScale());
 
-		camera2D.update();
-		hudCamera.update();
+		if (true)
+		{
 
-		// glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
-		glClearDepth(1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			if (inputManager.isKeyDown(SDL_SCANCODE_E))
+			{
+				camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
 
-		textureProgram.use();
+				if (camera2D.getScale() < 0.01f)
+				{
+					camera2D.setScale(0.01f);
+				}
+			}
+			if (inputManager.isKeyDown(SDL_SCANCODE_Q))
+			{
+				camera2D.setScale(camera2D.getScale() + 0.0005f);
+			}
 
-		glActiveTexture(GL_TEXTURE0);
-		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
-		glUniform1i(textureLocation, 0);
+			// printf("%f\n", camera2D.getScale());
+			ImGui::Text("camera: %f", camera2D.getScale());
+
+			camera2D.update();
+			hudCamera.update();
+
+			// glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+			glClearDepth(1.0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			textureProgram.use();
+
+			glActiveTexture(GL_TEXTURE0);
+			GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
+			glUniform1i(textureLocation, 0);
 
 		https://www.latex-project.org/
 		// httpss://www.latex-project.org2/
 		// https://www.latex-project.org/
 
-	
-
-		GLint plocation = textureProgram.getUniformLocation("P");
-		glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
-		glUniformMatrix4fv(plocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
-
-		spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
-
-		spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
 
 
-		DrawPtr(&core);
+			GLint plocation = textureProgram.getUniformLocation("P");
+			glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
+			glUniformMatrix4fv(plocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
+
+			spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
+
+			spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
+
+
+			DrawPtr(&core);
 
 
 
-		//		map.BreadthFirst(map.nodes[0], )
-		//		map.ClearMarks();
+			//		map.BreadthFirst(map.nodes[0], )
+			//		map.ClearMarks();
 
 
-		spriteBatch.end();
-		spriteBatch.renderBatch();
+			spriteBatch.end();
+			spriteBatch.renderBatch();
 
-		//*************************************debug*******************************
+			//*************************************debug*******************************
 
-		glm::mat4 hudCameraMatrix = hudCamera.getCameraMatrix();
-		glUniformMatrix4fv(plocation, 1, GL_FALSE, &(hudCameraMatrix[0][0]));
+			glm::mat4 hudCameraMatrix = hudCamera.getCameraMatrix();
+			glUniformMatrix4fv(plocation, 1, GL_FALSE, &(hudCameraMatrix[0][0]));
 
-		hudSpriteBatch.begin();
-		debugger._dDrawSlots(hudSpriteBatch);
-		hudSpriteBatch.end();
+			hudSpriteBatch.begin();
+			debugger._dDrawSlots(hudSpriteBatch);
+			hudSpriteBatch.end();
 
-		hudSpriteBatch.renderBatch();
+			hudSpriteBatch.renderBatch();
 
-		glBindTexture(GL_TEXTURE_2D, 0);
-		textureProgram.unuse();
-
-
-		debugger.render(cameraMatrix, 2.0f);
-		debugger.end();
+			glBindTexture(GL_TEXTURE_2D, 0);
+			textureProgram.unuse();
 
 
-		ImGui::Render();
-		SDL_GL_SwapWindow(window);
+			debugger.render(cameraMatrix, 2.0f);
+			debugger.end();
 
+
+			ImGui::Render();
+			SDL_GL_SwapWindow(window);
+
+		}
 		//if (ft != 0.f)
 		//{
 		//	auto fps(1.f / ftSeconds);
@@ -1777,6 +1885,8 @@ int main(int argc, char* argv[])
 		ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
 		lastFT = ft;
 		ftSeconds = (ft / 1000.f);
+
+
 		// printf("%f\n", ft);
 
 	}
