@@ -439,9 +439,8 @@ struct BulletStart
 
 constexpr int maxiumBullets = 10000;
 
-
 #define I
-introspect("game_state: hello world") struct game_state
+introspect("game_state:") struct game_state
 {
 	memory_arena   arena;
 	Entity         entities[35000];

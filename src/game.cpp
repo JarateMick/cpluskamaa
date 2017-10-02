@@ -1062,6 +1062,7 @@ EXPORT void Loop(EngineCore* core)
 	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 	{
 		f(&gameState->entities[i], core, gameState->bodies);
+
 		if (!gameState->entities[i].alive)
 		{
 			// deletefunc
@@ -1070,17 +1071,19 @@ EXPORT void Loop(EngineCore* core)
 				sizeof(Entity));
 			gameState->entities[i].guid = i;
 
+			// swap all
+			physicsBodies[i] = gameState->bodies[gameState->currentEntityCount - 1];
+			gameState->allSides[i] = gameState->allSides[gameState->currentEntityCount - 1];
+
+
 			--gameState->currentEntityCount;
 		}
 	}
 
 
-
-
 	clearSpatial(&hash4r);
 
 	//START_TIMING()
-
 	// START_TIMING2()
 
 	currentCount = 0;
@@ -1131,13 +1134,13 @@ EXPORT void Loop(EngineCore* core)
 	std::vector<int> damageOut;
 	damageOut.reserve(16);
 
-	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, gameState->allSides, gameState->bulletCount, &bullets, &damageOut);
+	gameState->bulletCount = collideBullets(&hash4r, gameState->bulletBodies, gameState->allSides,
+		gameState->bulletCount, &bullets, &damageOut);
+
 	for (auto id : damageOut)
 	{
 		auto* unit = &gameState->entities[id].unit;
 		unit->hp -= 10; // hyvää lääppäää
-
-		printf("%i\n", id);
 
 		if (unit->hp < 0)
 		{
@@ -1167,7 +1170,6 @@ EXPORT void Loop(EngineCore* core)
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
 	}
 
-	printf("Entitys: %i\n", gameState->currentEntityCount);
 	// LOOPEND
 }
 
@@ -1595,7 +1597,6 @@ EXPORT void Draw(EngineCore* core)
 
 	// core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f , 480.f  }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
 
-	// printf("totalENtitys %i\n", gameState->currentEntityCount);
 
 	gameState->worldmap.Draw(core->spriteBatch);
 

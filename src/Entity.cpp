@@ -165,8 +165,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				float x = gameState->selectedEntitys[i]->x;
 				float y = gameState->selectedEntitys[i]->y;
 #else
-				float x = (body + e->guid)->x;
-				float y = (body + e->guid)->y;
+				float x = (body + gameState->selectedEntitys[i]->guid)->x;
+				float y = (body + gameState->selectedEntitys[i]->guid)->y;
 #endif
 
 				Uint32 side = gameState->worldmap.GetSideUnderMouse(&input->mouse);
@@ -188,8 +188,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
 						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
-						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 
+						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 						printf("matka\n"); // seuraa reittiä
 					}
 					else  // mee viereiseen
@@ -239,13 +239,15 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			int selectedCount = 0;
 			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
-				Entity* e = &gameState->entities[i];
-				if (e->type == Entity_unit)
+				Entity* ee = &gameState->entities[i];
+				printf("Entitys: %i\n", gameState->currentEntityCount);
+
+				if (ee->type == Entity_unit)
 				{
-					if (player->selectionRect.Contains((body + e->guid)->x, (body + e->guid)->y))
+					if (player->selectionRect.Contains((body + ee->guid)->x, (body + ee->guid)->y))
 					{
 						if (selectedCount < gameState->maxSelected)
-							gameState->selectedEntitys[selectedCount++] = e;
+							gameState->selectedEntitys[selectedCount++] = ee;
 					}
 				}
 			}
@@ -457,8 +459,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
 				ee->unit.hp = UNIT_BASE_HP;
-				gameState->allSides[e->guid] = building->side;
-
+				gameState->allSides[ee->guid] = building->side; // tarkka kenen guid fuck
 
 			} break;
 			default:
