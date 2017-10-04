@@ -34,6 +34,7 @@
     <ClCompile Include="..\src\simple_preprocessor.cpp" />
     <ClCompile Include="..\src\TextureHolder.cpp" />
     <ClCompile Include="..\src\utility.h" />
+    <ClCompile Include="Batch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\array.h" />
@@ -56,6 +57,7 @@
     <ClInclude Include="..\src\TextureHolder.h" />
     <ClInclude Include="..\src\Tilemap.h" />
     <ClInclude Include="Algo\SLinkedList.h" />
+    <ClInclude Include="Batch.h" />
     <ClInclude Include="stb_sprintf.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

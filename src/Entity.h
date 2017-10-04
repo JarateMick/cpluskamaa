@@ -96,16 +96,16 @@ struct Entity
 	Entity() {} // = default;
 	~Entity() = default;
 
-	Entity_Enum type;
-	uint32_t	guid;
+	Entity_Enum type;                 // 4
+	uint32_t	guid;                 // 4
 
 	// pos
 	// glm::vec2 pos;
 
 	// float x, y;         let's get spicy
 
-	float velX, velY;
-	bool alive;
+	float velX, velY;                           // 8
+	bool alive;                                 // 1
 
 	// vel
 	// acc
@@ -126,19 +126,19 @@ struct Entity
 			// int moveSpeed;
 			// int strength;
 			Uint32 side;
-			Uint32 lastFrameProv;
+			Uint32 lastFrameProv; // 4 // 4     
 
-			int targetX, targetY;
-			int originalTargetX, originalTargetY;
+			int targetX, targetY; // 4 // 4             16
+			int originalTargetX, originalTargetY; // 4 // 4  24
 
-			Entity* attackTarget;
+			Entity* attackTarget;     // 4     28
 
-			float mainAttackCD;
-			float attackRange;
+			float mainAttackCD;     // 4    32
+			float attackRange;     // 4     36
 
-			int hp;
+			int hp;                // 4     40
 
-			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht
+			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht     12_52
 
 			// attack speed jne...
 			// (instant attacks melee) <-> (type?)
@@ -157,23 +157,21 @@ struct Entity
 			// currently Selected entities! pointer
 			int cash;
 			building_type selectedBuildingType;
-
 			Rect selectionRect;
 			bool selectingTroops;
 		} player;
 		struct
 		{
-			building_type type;
+			glm::vec4     textureUv;
 			Uint32        side;
+			building_type type;
 			float         timer;
 			GLbyte        textureId;
-			glm::vec4     textureUv;
 		} building;
 		struct // TODO: (optimointi) bulletit voisi laittaa omaksi arrayksi koska paljon pienimpi
 		{
 			// int exparationFrame;  // laske speed/frame ja vertaile tata laskemisen sijasta ?
 			float speed;
-
 			float rangeSquared;
 			float startX, startY;
 		} bullet;

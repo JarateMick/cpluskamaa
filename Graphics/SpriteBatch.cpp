@@ -146,6 +146,55 @@ namespace UpiEngine {
 		glBindVertexArray(0);
 	}
 
+	// gl_InstanceID -> mikä instanc 0,1,2,3,4
+
+	void createEmptyVbo(int floatCount)
+	{
+		// int vbo = glad_glGenBuffers()
+		// gl bind buffer array buffer 
+		// buffer data
+
+
+	}
+
+	void nulll()
+	{
+		// vertex Buffer Object
+
+		int amount = 10;
+
+		unsigned int buffer;
+		glGenBuffers(1, &buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		// glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
+		for (unsigned int i = 0; i < rock.meshes.size(); i++)
+		{
+			unsigned int VAO = rock.meshes[i].VAO;
+			glBindVertexArray(VAO);
+			// vertex Attributes
+			GLsizei vec4Size = sizeof(glm::vec4);
+			glEnableVertexAttribArray(3);
+			glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+			glEnableVertexAttribArray(4);
+			glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
+			glEnableVertexAttribArray(5);
+
+			glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+			glEnableVertexAttribArray(6);
+			glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+			glVertexAttribDivisor(3, 1);
+			glVertexAttribDivisor(4, 1);
+			glVertexAttribDivisor(5, 1);
+			glVertexAttribDivisor(6, 1);
+
+			glBindVertexArray(0);
+		}
+	}
+
+
+
 	void SpriteBatch::createRenderBatches()
 	{
 		std::vector <Vertex> vertices;

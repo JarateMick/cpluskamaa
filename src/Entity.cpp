@@ -13,7 +13,7 @@
 
 
 const float UNIT_SPEED = 1.0f;   // ~ archer speed
-const int UNIT_BASE_HP = 100;
+const int   UNIT_BASE_HP = 100;
 const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
 
 // one-to-many      many-to-one
@@ -595,7 +595,6 @@ EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum typ
 	result->alive = true;
 	return result;
 }
-
 
 
 EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState)

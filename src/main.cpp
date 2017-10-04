@@ -2,6 +2,8 @@
 #define WIN32_LEAN_AND_MEAN 1
 #define VC_EXTRALEAN 1
 
+#include <chrono>
+
 
 // #include <IOManager.h>
 // #include <GLSLProgram.h>
@@ -560,6 +562,7 @@ static void load_thread(PlaybackState* data)
 		replayBuffer->FileHandle = CreateFileA(replayBuffer->fileName, GENERIC_WRITE | GENERIC_READ, 0, 0, CREATE_ALWAYS, 0, 0);
 
 		LARGE_INTEGER maxSize;
+
 		maxSize.QuadPart = inputState->totalMemorySize;
 		replayBuffer->MemoryMap = CreateFileMapping(replayBuffer->FileHandle,
 			0, PAGE_READWRITE, maxSize.HighPart, maxSize.LowPart, 0);
@@ -930,6 +933,7 @@ void process(GraphNode<int, int>* node)
 //		replacement->set_pixel(startX, startY, replacementColor);
 //		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
 //		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
+
 //		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
 //		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
 //	}
@@ -1044,10 +1048,178 @@ void FreeTexture(GLuint* texture)
 
 
 
+// std::thread<>
+std::thread LogicThread;
+
+
+// HULLUTTELUA!!!
+
+glm::vec2 translations[200000]{};
+
+static UpiEngine::GLSLProgram instancedShader;
+unsigned int instanced()
+{
+	int index = 0;
+	float offset = 0.1f;
+	for (int y = -10; y < 10; y += 2)
+	{
+		for (int x = -10; x < 10; x += 2)
+		{
+			glm::vec2 translation;
+			translation.x = (float)x / 10.0f + offset;
+			translation.y = (float)y / 10.0f + offset;
+			translations[index++] = translation;
+		}
+	}
+
+	unsigned int instanceVBO;
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100 * 100, &translations[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// set up vertex data (and buffer(s)) and configure vetex attributes
+	float quadVertices[] = {
+		// positions     // colors
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
+	};
+
+	unsigned int quadVAO, quadVBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	// also set instance data
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO); // this attribute comes from a different vertex buffer
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
+
+
+	instancedShader.compileShaders("Shaders/Hulluttelu.vert", "Shaders/Hulluttelu.frag");
+	// instancedShader.addAttribute("vertexPosition");
+	// instancedShader.addAttribute("vertexColor");
+	// instancedShader.addAttribute("vertexUV");
+	instancedShader.linkShaders();
+
+	return quadVAO;
+}
+
+float quadVertices2[] = {
+	// positions     // colors
+	-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+	 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+	-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+
+	-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+	 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+	 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
+};
+
+void createEmptyVBO(int floatCount)
+{
+	unsigned int vbo;
+	glGenBuffers(1, &vbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices2), quadVertices2, GL_STREAM_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void AddPerInstancedAttribute(int vao, int vbo, int attribute, int dataSize,
+	int instancedDataLength, int fofset)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindVertexArray(vao);
+	glVertexAttribPointer(attribute, dataSize, GL_FLOAT, false, instancedDataLength * 4, (void*)fofset);
+}
+
+struct vertex2 { float x, y, u, v, r, g, b};
+unsigned int vaoo, vboo;
+void init() 
+{
+	if (vaoo == 0)
+	{
+		glGenVertexArrays(1, &vaoo);
+	}
+	glBindVertexArray(vaoo);
+
+	if (vboo == 0)
+	{
+		glGenBuffers(1, &vboo);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, vboo);
+
+	glEnableVertexAttribArray(0); // kertoo opengl mitä haluamme käyttää eka attribute arrrayta tarvitsee vain yhden koska käytämme vain sijaintia
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+
+	// glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position)); //kertoo sijainnin mistä alkaa ja kuinka piirträä pointer juttu dataan vbo jotain
+	// glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, color)); // kertoo attribute pointerin värin
+	// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+
+	glBindVertexArray(0);
+}
+
+
+
+// SAME VBO
+
+// glVertexAttribPointer( attr, size, FLAOT, false, strid, offset);
+
+// vec2 Pos, vec3 Color, vec2 UV, 
+
+// bindTexture();
+
+// big emtpy vbo
+
+// int -> int
+// int = vbo
+// int vbo = gen buffert
+// bind guffer array buffer vbo
+// buffer data = gl array buffer float count * 4 , gl15 STREAM DRAW
+// glbindbuffer(0);
+
+
+// add per isntacded
+
+// int vao 
+// int vbo, int attribut int dataSize, int instaced data length, int offset
+
+
+// bingbuffer array_buffer, vbo
+// binfvertexarray (vao)
+// gl vertex attribpointer(attrivute, dataSize, FLOAT, false, instandedtatLEng, offset * 4);
+// gl.vertexattribdivisior(attribute, 1);
+// gl. bingbuffer(0)
+//  unbind vao
+
+
+// max_instanced
+// max_DATA_LENGTH = 21; -> number of float per particle aka  x, y, u v , r g b -> 7
+// int vbo 
+
+// create vbo (instance_data-_leng * max instances
+// guad.getVaoId(), vbo
+// // add insta
+
+
 int main(int argc, char* argv[])
 {
 
-
+	// printf("%i", sizeof Entity);
 
 	//Graph<int, int> map(6); 
 	//map.AddNode(0, 0);
@@ -1080,11 +1252,6 @@ int main(int argc, char* argv[])
 	//printf("depth first: \n");
 	//map.DepthFirst(map.nodes[0], process);
 
-
-
-
-
-
 	// ImageData data("europe.png");
 	// ImageData showToPlayer("europedata.png");
 
@@ -1108,7 +1275,6 @@ int main(int argc, char* argv[])
 	//{
 	//	std::cout << itr.Item() << ", ";
 	//}
-	{}
 	//itr.Start();
 
 	//itr.Forth();
@@ -1134,13 +1300,7 @@ int main(int argc, char* argv[])
 	// iii++;
 	// *iii = 4;
 
-
-
-
-
-
 	// sivu 164
-
 
 // 	 init(mode_client);
 // 	 update();
@@ -1158,7 +1318,7 @@ int main(int argc, char* argv[])
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);  // instanced
 
 	Uint32 flags = SDL_WINDOW_OPENGL;
 	SDL_Window* window = SDL_CreateWindow("Age of Empires I Definitive Edition", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, flags);
@@ -1188,6 +1348,112 @@ int main(int argc, char* argv[])
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
+
+
+	//	unsigned int quadVAO = instanced();
+	int index = 0;
+	float offset = 0.1f;
+	for (int i = 0; i < 1500; i++)
+	{
+		for (int y = -10; y < 10; y += 2)
+		{
+			for (int x = -10; x < 10; x += 2)
+			{
+				glm::vec2 translation;
+				translation.x = (float)x / (rand() % 10) + offset;
+				translation.y = (float)y / (rand() % 10) + offset;
+				translations[index++] = translation;
+			}
+		}
+	}
+
+	unsigned int instanceVBO, kukaMuuMuka;
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glGenBuffers(1, &kukaMuuMuka);
+	glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// set up vertex data (and buffer(s)) and configure vetex attributes
+	float quadVertices[] = {
+		// positions     // colors
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
+	};
+
+	unsigned int quadVAO, quadVBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	// also set instance data
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO); // this attribute comes from a different vertex buffer
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
+
+	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
+
+
+	instancedShader.compileShaders("Shaders/Hulluttelu.vert", "Shaders/Hulluttelu.frag");
+	// instancedShader.addAttribute("vertexPosition");
+	// instancedShader.addAttribute("vertexColor");
+	// instancedShader.addAttribute("vertexUV");
+	instancedShader.linkShaders();
+	while (true)
+	{
+		START_TIMING()
+
+			SDL_Event ve;
+		while (SDL_PollEvent(&ve))
+		{
+		}
+
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+
+		// glBindVertexArray(quadVAO);
+		// glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+		// glBindVertexArray(quadVAO, 0);
+
+		// draw 100 instanced quads
+		instancedShader.use();
+		glBindVertexArray(quadVAO);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 200000); // 100 triangles of 6 vertices each
+		glBindVertexArray(0);
+
+		for (int i = 0; i < 10000; i++)
+		{
+			translations[i].x += 0.00001f;
+			translations[i].y += 0.00001f;
+		}
+
+		SDL_GL_SwapWindow(window);
+
+		END_TIMING()
+	}
 
 	initShaders(textureProgram);
 
@@ -1444,7 +1710,7 @@ int main(int argc, char* argv[])
 						printf("record");
 						startRecordInput(&inputManager, &inputState, 0);
 						inputState.recording = true;
-					}
+			}
 					else if (inputState.recording) // toka
 					{
 						printf("playe");
@@ -1458,7 +1724,7 @@ int main(int argc, char* argv[])
 						// start recording second slot?
 						// or change recording with shift + 1
 					}
-				}
+			}
 				else if (ev.key.keysym.scancode == SDL_SCANCODE_F2)
 				{
 #if 0
@@ -1477,8 +1743,8 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-					}
-				} break;
+				}
+		} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1494,13 +1760,14 @@ int main(int argc, char* argv[])
 
 
 			} break;
-			}
-			} // POLL EvENTS
+	}
+} // POLL EvENTS
 
-					// number |= 1 << x;   // setting bit 
-					// number &= ~(1 << x); // clear 
 
-					// nesInput.buttons = 0xFF;
+		// number |= 1 << x;   // setting bit 
+		// number &= ~(1 << x); // clear 
+
+		// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1557,13 +1824,9 @@ int main(int argc, char* argv[])
 			simpleRecorder.Reset(); // starts new record
 		}
 
-
 		if (!firstFrame)
 			//Sleep(1); // program runs too fast input bug
 			firstFrame = false;
-
-
-
 
 		simpleRecorder.Update();
 		ImguiTest(clear_color, &core);
@@ -1656,7 +1919,7 @@ int main(int argc, char* argv[])
 					if (inputState.recording)
 					{
 						recordInput(&inputManager, &inputState);
-					}
+				}
 					else if (inputState.playing)
 					{
 						playBackInput(&inputManager, &inputState);
@@ -1682,10 +1945,10 @@ int main(int argc, char* argv[])
 
 					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
 					inputManager.update(); // TODO: maybe poll for input
-		}
+			}
 				core.advanceNextFrame = false;
-	}
-}
+		}
+		}
 #else
 		// while (1) {
 		// int  gameOn = 1
@@ -1774,7 +2037,6 @@ int main(int argc, char* argv[])
 			if (inputManager.isKeyDown(SDL_SCANCODE_E))
 			{
 				camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
-
 				if (camera2D.getScale() < 0.01f)
 				{
 					camera2D.setScale(0.01f);
@@ -1801,10 +2063,10 @@ int main(int argc, char* argv[])
 			GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 			glUniform1i(textureLocation, 0);
 
+
+
 		https://www.latex-project.org/
 		// httpss://www.latex-project.org2/
-		// https://www.latex-project.org/
-
 
 
 			GLint plocation = textureProgram.getUniformLocation("P");
@@ -1812,17 +2074,12 @@ int main(int argc, char* argv[])
 			glUniformMatrix4fv(plocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
 
 			spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
-
 			spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
-
 
 			DrawPtr(&core);
 
-
-
 			//		map.BreadthFirst(map.nodes[0], )
 			//		map.ClearMarks();
-
 
 			spriteBatch.end();
 			spriteBatch.renderBatch();
@@ -1850,6 +2107,20 @@ int main(int argc, char* argv[])
 			SDL_GL_SwapWindow(window);
 
 		}
+
+		// Synccaa kaikki
+
+		// START_TIMING2()
+		// game_state *gameState = (game_state*)core.memory->permanentStorage;
+		// size_t monoid = (sizeof game_state - sizeof memory_arena);
+		// static void* memory = malloc(sizeof(game_state) - sizeof(memory_arena));
+		// static void* memory2 = malloc(sizeof(game_state) - sizeof(memory_arena));
+		// memcpy(memory, core.memory->permanentStorage, sizeof(game_state) - sizeof(memory_arena));
+		// memcpy(memory2, &gameState->entities, sizeof(game_state) - sizeof(memory_arena));
+		// free(memory);
+		// game_state *gameState2 = (game_state*)memory;
+		// END_TIMING2()
+
 		//if (ft != 0.f)
 		//{
 		//	auto fps(1.f / ftSeconds);

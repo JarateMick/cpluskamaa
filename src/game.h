@@ -66,6 +66,24 @@ struct game_state;
 // glm: 
 //   + mat4 voi olla ärsyttävä tehdä itse
 
+#define NAME(ending) (func_timing##ending)
+
+#define START_TIMING() \
+	auto NAME(1)(std::chrono::high_resolution_clock::now()); \
+
+#define END_TIMING() \
+	auto NAME(2)(std::chrono::high_resolution_clock::now());	\
+	auto elapsedTime(NAME(2) - NAME(1));						\
+	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count()  );
+
+#define START_TIMING2() \
+	auto NAME(3)(std::chrono::high_resolution_clock::now()); \
+
+#define END_TIMING2() \
+	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
+	auto elapsedTime2(NAME(4) - NAME(3));						\
+	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
+
 struct PhysicsBody
 {
 	float x, y;       // 16  ->  20  ->  24 | render id
@@ -127,6 +145,7 @@ public:
 		return ((unsigned int*)surface->pixels)[y*(surface->pitch / sizeof(unsigned int)) + x];
 	}
 };
+
 
 struct FileWatcher
 {
@@ -315,7 +334,8 @@ struct WorldMapEditor
 	float inputY;
 };
 
-const int mapSizeMultiplier = 10;
+const int mapSizeMultiplier = 15;
+constexpr float NODE_MULTIPLIER = 1.5f;
 struct WorldMap
 {
 	GLuint temptextureid;
@@ -439,22 +459,37 @@ struct BulletStart
 
 constexpr int maxiumBullets = 10000;
 
+// resolve collision -> damages -> bullets
+
+struct ThreadSharedData
+{
+	PhysicsBody*   thisFrame;
+	PhysicsBody*   lastFrame;
+};
+
+
 #define I
 introspect("game_state:") struct game_state
 {
-	memory_arena   arena;
-	Entity         entities[35000];
+
+	Entity         entities[40000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
+
 	int            selectedCount;
 	int            maxSelected;
 
 	PhysicsBody*   bodies;
-	Uint32         allSides[35000];
-
+	Uint32         allSides[40000];
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
 	vec2f          BulletAccelerations[maxiumBullets];
+
+	ThreadSharedData threadShared;
+
+
+	// kopioi:     !PhysicsBodyt eka frame!    
+
 	int            bulletCount;
 	int            currentEntityCount;
 
@@ -470,10 +505,13 @@ introspect("game_state:") struct game_state
 	ProvinceEditorData provinceEditor;
 	PathFindingUi      pathfindingUi;
 
+	memory_arena   arena;
+
 	// fuck
 	I Graph<MapNode, int>* MapNodes;
 	I std::vector<int>(*getAllProvinceNeighbours)(int);
 	I void(*newNode)(int index, int id, float x, float y);
+
 };
 
 inline int GetColorToId(game_state* state, Uint32 color)

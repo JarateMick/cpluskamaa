@@ -16,6 +16,7 @@
     <ClCompile Include="..\src\fileSystem.cpp" />
     <ClCompile Include="..\src\simple_preprocessor.cpp" />
     <ClCompile Include="..\src\meta.cpp" />
+    <ClCompile Include="Batch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\game.h" />
@@ -39,5 +40,6 @@
     <ClInclude Include="..\src\graph.h" />
     <ClInclude Include="..\src\array.h" />
     <ClInclude Include="..\src\stretchy_buffer.h" />
+    <ClInclude Include="Batch.h" />
   </ItemGroup>
 </Project>

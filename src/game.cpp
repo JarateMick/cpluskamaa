@@ -15,27 +15,11 @@
 
 #include <lua.hpp>
 #include <SDL2/SDL_image.h>
+#include <future>
 
 #undef max
 #undef min 
 
-#define NAME(ending) (func_timing##ending)
-
-#define START_TIMING() \
-	auto NAME(1)(std::chrono::high_resolution_clock::now()); \
-
-#define END_TIMING() \
-	auto NAME(2)(std::chrono::high_resolution_clock::now());	\
-	auto elapsedTime(NAME(2) - NAME(1));						\
-	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count()  );
-
-#define START_TIMING2() \
-	auto NAME(3)(std::chrono::high_resolution_clock::now()); \
-
-#define END_TIMING2() \
-	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
-	auto elapsedTime2(NAME(4) - NAME(3));						\
-	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
 
 
 // preprocessor
@@ -63,8 +47,8 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
 constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
-constexpr int CellsX = (5900) / cellSize + 1;
-constexpr int CellsY = (4800) / cellSize + 1;
+constexpr int CellsX = (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
+constexpr int CellsY = (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
 
 struct SpatialHash            // map width = textureW * 10, textureH * 10
 {
@@ -118,6 +102,7 @@ inline v2 HashPoint(v2 v)
 	return { v.x / cellSize, v.y / cellSize };
 }
 
+// sinä nilkki ole nopeampi
 void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 {
 	v2 min{ (int)body->x - (int)body->r, (int)body->y - (int)body->r };
@@ -131,7 +116,21 @@ void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 	hash->hashMap[point2.y][point2.x].push_back(body);
 	hash->hashMap[point3.y][point3.x].push_back(body);
 	hash->hashMap[point4.y][point4.x].push_back(body);
+
+	// 4 random accesia worst case kaksi cache miss
+	// 4 jako laskua 
+	// 2 + ja - miinus laskua
+
+	// ######## VS. ########
+
+	// v2 point1 = HashPoint(x, y);                     -3
+	// insert                                           -3 
+	//                                                  sourituskyky ^^^^^^^^
 }
+
+// sortista  eroon 
+// uniquesta eroon
+// erasesta  eroon
 
 int CheckCollisions(SpatialHash* hash)
 {
@@ -184,12 +183,15 @@ struct PhysicsOut
 };
 
 
-PhysicsBody physicsBodies[35000];
+PhysicsBody  physicsBodies2[40000];
+PhysicsBody  physicsBodies3[40000];
+PhysicsBody* physicsBodies = physicsBodies2;
+
 int currentCount = 0;
-void addBody(float x, float y, float r, int id)
-{
-	physicsBodies[currentCount++] = PhysicsBody{ x, y, r, id };
-}
+//void addBody(float x, float y, float r, int id)
+//{
+//	physicsBodies[currentCount++] = PhysicsBody{ x, y, r, id };
+//}
 
 
 // onko luoti Bodyn päällä
@@ -200,25 +202,39 @@ bool circleCollision(BulletBody* a, PhysicsBody* b)
 	glm::vec2 centerPosA = glm::vec2{ a->position.x, a->position.y } +glm::vec2(a->r);
 	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
 	glm::vec2 distVec = centerPosA - centerPosB;
+
 	const float distance = glm::length(distVec);
 	const float collisionDepth = MIN_DISTANCE - distance;
 
 	return (collisionDepth > 0);
 }
 
+
 void circleCollision(PhysicsBody* a, PhysicsBody* b)
 {
+#if 0
 	const float MIN_DISTANCE = a->r * 2.0f;
-
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
 	glm::vec2 distVec = centerPosA - centerPosB;
 
-	const float distance = glm::length(distVec);
-	const float collisionDepth = MIN_DISTANCE - distance;
 
-	if (collisionDepth > 0)
+	// const float distance = glm::length(distVec);
+	const float collisionDepth = MIN_DISTANCE - distance;
+#else
+	const float MIN_DISTANCE = a->r + b->r;  // molempiend dist
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
+	glm::vec2 distVec = centerPosA - centerPosB;
+
+	// const float distance = glm::length(distVec);
+	// const float collisionDepth = MIN_DISTANCE - distance;
+#endif
+	if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
 	{
+		//	iconst float collisionDepth = 6.f;
+		const float distance = 2.f;
+
 		if (distance == 0.f)
 		{
 			a->x += 30.f;
@@ -227,8 +243,8 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 			b->y -= 30.f;
 			return;
 		}
-
-		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * collisionDepth;
+		// const float collisionDepth =  MIN_DISTANCE - glm::length(distVec);
+		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 5.f; // test
 
 #if 0
 		if (std::max(distVec.x, 0.0f) < std::max(distVec.y, 0.0f))
@@ -606,7 +622,7 @@ void LoadNodes()
 		int a = GetNextInt(s, field, "a: ");
 
 		// int break2 = lastSaved * 2;
-		positions[id] = { x, y };
+		positions[id] = { int(x * NODE_MULTIPLIER), int(y * NODE_MULTIPLIER) };
 		Uint32 color = createRGBA(r, g, b, a);
 
 		colorToId[color] = id;
@@ -911,15 +927,14 @@ EXPORT void Loop(EngineCore* core)
 
 		gameState->worldmap.dimensions = glm::vec4{ 0.f, 0.f, surface->w * mapSizeMultiplier, surface->h * mapSizeMultiplier };
 
-
+		// addBody(20, 20, 10, 0);
+		// addBody(40, 40, 10, 1);
 
 		gameState->bodies = physicsBodies;
 
 
-		// addBody(20, 20, 10, 0);
-		// addBody(40, 40, 10, 1);
-
-
+		gameState->threadShared.thisFrame = physicsBodies2;
+		gameState->threadShared.lastFrame = physicsBodies3;
 
 
 		if (!Debug::restartLog())
@@ -1055,7 +1070,8 @@ EXPORT void Loop(EngineCore* core)
 
 
 
-
+	struct valueId { float v; int id; };
+	struct xyi { float x, y; int id; };
 
 	/**********************************************************************************************/
 	// ENTITY UPDATE
@@ -1078,9 +1094,45 @@ EXPORT void Loop(EngineCore* core)
 
 			--gameState->currentEntityCount;
 		}
+
+		if (gameState->entities[i].type == Entity_unit)
+		{
+
+		}
 	}
 
+	//[](int i) { return i; };
+	//\i -> i \i -> i \i -> i
+	//[](){};
+	//struct { int operator()(int i) { return i; } } lambda;
+	//int a = lambda(1);
 
+	//std::sort(xx, xx + xCount, [](valueId &a, valueId &b) { return a.v < b.v; });
+	//std::sort(yy, yy + yCount, [](valueId &a, valueId &b) { return a.v < b.v; });
+
+	//for (int i = 0; i < xCount - 15; i++)
+	//{
+	//	if (xx[i].id != 0)
+	//	{
+	//		PhysicsBody* a = xx[i].id + physicsBodies;
+	//		for (int j = i + 1; j < i + 15; j++)
+	//			circleCollision(a, xx[j].id + physicsBodies);
+	//	}
+	//}
+	//for (int i = 0; i < yCount - 15; i++)
+	//{
+	//	if (xx[i].id != 0)
+	//	{
+	//		PhysicsBody* a = yy[i].id + physicsBodies;
+	//		for (int j = i + 1; j < i + 15; j++)
+	//			circleCollision(a, yy[j].id + physicsBodies);
+	//	}
+	//}
+
+
+
+	// START_TIMING()
+#if 1
 	clearSpatial(&hash4r);
 
 	//START_TIMING()
@@ -1103,7 +1155,7 @@ EXPORT void Loop(EngineCore* core)
 	// END_TIMING2()
 
 
-    // Physics step:
+	// Physics step:
 	CheckCollisions(&hash4r);
 
 
@@ -1147,12 +1199,13 @@ EXPORT void Loop(EngineCore* core)
 			// dead
 			gameState->entities[id].alive = false;
 		}
-	}
+}
 
-	// luoti fysiikat
-	// END_TIMING()
+#endif
+		// luoti fysiikat
+		// END_TIMING()
 
-	float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
+		float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
 	if (input->isKeyDown(SDL_SCANCODE_W))
 	{
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
@@ -1196,7 +1249,6 @@ EXPORT void Loop(EngineCore* core)
 //temp = temp >> fmt->Ashift; /* Shift it down to 8-bit */
 //temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
 //alpha = (Uint8)temp;
-
 
 
 
@@ -1594,10 +1646,7 @@ EXPORT void Draw(EngineCore* core)
 	//SDL_GL_MakeCurrent(core->window, *core->glcontext);
 	// TODO: Free camera from main
 
-
 	// core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f , 480.f  }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
-
-
 	gameState->worldmap.Draw(core->spriteBatch);
 
 	//  DrawAllEntitys(core);
@@ -1654,5 +1703,16 @@ EXPORT void Draw(EngineCore* core)
 	// }
 }
 
+
+
+
+
+
+
+
+EXPORT void mtDraw(/*EngineCore* core*/)
+{
+
+}
 
 // TODO: Fontit resource managerille
