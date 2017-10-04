@@ -40,7 +40,7 @@ namespace UpiEngine {
 		glm::vec2 tl(-halfDims.x, halfDims.y);
 		glm::vec2 bl(-halfDims.x, -halfDims.y);
 		glm::vec2 br(halfDims.x, -halfDims.y);
-		glm::vec2 tr(halfDims.x, halfDims.y);
+		glm::vec2 tr(halfDims.x, halfDims.y); // 0, 0, 1, 1
 
 		//rotate the points
 		tl = rotatePoint(tl, angle) + halfDims;
@@ -142,6 +142,7 @@ namespace UpiEngine {
 			glBindTexture(GL_TEXTURE_2D, _renderBatches[i].texture);
 
 			glDrawArrays(GL_TRIANGLES, _renderBatches[i].offset, _renderBatches[i].numVertices);
+			// glDrawArraysInstanced()
 		}
 		glBindVertexArray(0);
 	}
@@ -265,18 +266,13 @@ namespace UpiEngine {
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position)); //kertoo sijainnin mist‰ alkaa ja kuinka piirtr‰‰ pointer juttu dataan vbo jotain
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));     // kertoo sijainnin mist‰ alkaa ja kuinka piirtr‰‰ pointer juttu dataan vbo jotain
 
 		glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, color)); // kertoo attribute pointerin v‰rin
 
-																												//uv atribute pointer
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));           // uv atribute pointer
 
 		glBindVertexArray(0);
-
-
-
-
 	}
 
 	void SpriteBatch::sortGlyphs()

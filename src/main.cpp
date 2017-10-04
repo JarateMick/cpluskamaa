@@ -4,7 +4,6 @@
 
 #include <chrono>
 
-
 // #include <IOManager.h>
 // #include <GLSLProgram.h>
 // #include <picoPNG.h>
@@ -13,7 +12,6 @@
 // #include <TextureCache.h>
 // #include <ResourceManager.h>
 // #include <picoPNG.h>
-
 
 #include <lua.hpp>
 // #include <Windows.h>
@@ -1146,9 +1144,10 @@ void AddPerInstancedAttribute(int vao, int vbo, int attribute, int dataSize,
 	glVertexAttribPointer(attribute, dataSize, GL_FLOAT, false, instancedDataLength * 4, (void*)fofset);
 }
 
-struct vertex2 { float x, y, u, v, r, g, b};
+struct vertex2 { float x, y, u, v, r, g, b; };
 unsigned int vaoo, vboo;
-void init() 
+
+void init()
 {
 	if (vaoo == 0)
 	{
@@ -1214,6 +1213,57 @@ void init()
 // create vbo (instance_data-_leng * max instances
 // guad.getVaoId(), vbo
 // // add insta
+
+unsigned int _instanceVao, _instanceVbo;
+void InitInstancedBatch()
+{
+	glGenVertexArrays(1, &_instanceVao);
+	glBindVertexArray(_instanceVao);
+
+	glGenBuffers(1, &_instanceVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, _instanceVbo);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, _instanceVbo); // this attribute comes from a different vertex buffer
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
+
+	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 int main(int argc, char* argv[])
@@ -1381,21 +1431,23 @@ int main(int argc, char* argv[])
 	// set up vertex data (and buffer(s)) and configure vetex attributes
 	float quadVertices[] = {
 		// positions     // colors
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f, 
+		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f, 
+		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f, 
 
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f, 
 		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
 		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
 	};
+	// kolmiot->
 
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
 	glBindVertexArray(quadVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
@@ -1417,11 +1469,22 @@ int main(int argc, char* argv[])
 	// instancedShader.addAttribute("vertexColor");
 	// instancedShader.addAttribute("vertexUV");
 	instancedShader.linkShaders();
+
+	UpiEngine::ResourceManager::init();
+	auto asdf = UpiEngine::ResourceManager::getTexture("test.png");
+
+
 	while (true)
 	{
 		START_TIMING()
 
-			SDL_Event ve;
+		glActiveTexture(GL_TEXTURE0);
+		GLint textureLocation = instancedShader.getUniformLocation("textureSampler");
+		glUniform1i(textureLocation, 0);
+
+		glBindTexture(GL_TEXTURE2, asdf.id);
+
+		SDL_Event ve;
 		while (SDL_PollEvent(&ve))
 		{
 		}
@@ -1441,13 +1504,13 @@ int main(int argc, char* argv[])
 		// draw 100 instanced quads
 		instancedShader.use();
 		glBindVertexArray(quadVAO);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 200000); // 100 triangles of 6 vertices each
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1000); // 100 triangles of 6 vertices each
 		glBindVertexArray(0);
 
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 1000; i++)
 		{
-			translations[i].x += 0.00001f;
-			translations[i].y += 0.00001f;
+			translations[i].x += 0.0001f;
+			translations[i].y += 0.0001f;
 		}
 
 		SDL_GL_SwapWindow(window);
@@ -1710,7 +1773,7 @@ int main(int argc, char* argv[])
 						printf("record");
 						startRecordInput(&inputManager, &inputState, 0);
 						inputState.recording = true;
-			}
+					}
 					else if (inputState.recording) // toka
 					{
 						printf("playe");
@@ -1724,7 +1787,7 @@ int main(int argc, char* argv[])
 						// start recording second slot?
 						// or change recording with shift + 1
 					}
-			}
+				}
 				else if (ev.key.keysym.scancode == SDL_SCANCODE_F2)
 				{
 #if 0
@@ -1743,8 +1806,8 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-				}
-		} break;
+					}
+				} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1760,14 +1823,14 @@ int main(int argc, char* argv[])
 
 
 			} break;
-	}
-} // POLL EvENTS
+			}
+			} // POLL EvENTS
 
 
-		// number |= 1 << x;   // setting bit 
-		// number &= ~(1 << x); // clear 
+					// number |= 1 << x;   // setting bit 
+					// number &= ~(1 << x); // clear 
 
-		// nesInput.buttons = 0xFF;
+					// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1919,7 +1982,7 @@ int main(int argc, char* argv[])
 					if (inputState.recording)
 					{
 						recordInput(&inputManager, &inputState);
-				}
+					}
 					else if (inputState.playing)
 					{
 						playBackInput(&inputManager, &inputState);
@@ -1940,14 +2003,14 @@ int main(int argc, char* argv[])
 						else
 						{
 							g_frameAdvanceCount = 50;  // laske max simulointi nopeus skipaten framet, jotenkinh smooth
-						}
-					}
+		}
+	}
 
 					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
 					inputManager.update(); // TODO: maybe poll for input
-			}
+}
 				core.advanceNextFrame = false;
-		}
+			}
 		}
 #else
 		// while (1) {

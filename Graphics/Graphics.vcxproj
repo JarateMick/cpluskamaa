@@ -140,22 +140,6 @@
     <ClCompile Include="SpriteFont.cpp" />
     <ClCompile Include="TextureCache.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Camera2D.h" />
-    <ClInclude Include="DebugRenderer.h" />
-    <ClInclude Include="GLSLProgram.h" />
-    <ClInclude Include="GLTexture.h" />
-    <ClInclude Include="ImageLoader.h" />
-    <ClInclude Include="IOManager.h" />
-    <ClInclude Include="picoPNG.h" />
-    <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="Sprite.h" />
-    <ClInclude Include="SpriteBatch.h" />
-    <ClInclude Include="SpriteFont.h" />
-    <ClInclude Include="TextureCache.h" />
-    <ClInclude Include="TileSheet.h" />
-    <ClInclude Include="Vertex.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
