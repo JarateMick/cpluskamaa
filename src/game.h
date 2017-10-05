@@ -472,7 +472,7 @@ struct ThreadSharedData
 introspect("game_state:") struct game_state
 {
 
-	Entity         entities[40000];
+	Entity         entities[50000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 
@@ -480,7 +480,7 @@ introspect("game_state:") struct game_state
 	int            maxSelected;
 
 	PhysicsBody*   bodies;
-	Uint32         allSides[40000];
+	Uint32         allSides[50000];
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
 	vec2f          BulletAccelerations[maxiumBullets];

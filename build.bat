@@ -9,8 +9,7 @@ if not defined DEV_ENV_DIR (
 set DEV_ENV_DIR= ???
 
 rem eHa -O2 -Oi 
-set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 
-rem -Oi -Ox -Ot
+set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -Oi -Ox -Ot
 set LFLAGS= -incremental:no opengl32.lib  
 set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib Graphics.lib
 REM set INCLUDE=
@@ -31,7 +30,7 @@ rem Box2D.lib  Box2D.lib
 
 REM game dll
 echo "WAITING FOR PDB ..." > lock.tmp
-REM cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
+cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop -EXPORT:mtDraw
 del lock.tmp
 
 SETLOCAL EnableExtensions
@@ -51,7 +50,8 @@ rem ..\src\Imgui\imgui*.cpp
 echo Running
 
 REM Imgui tools.dll 
-REM cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
+
+cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
 
 popd
 echo Done!

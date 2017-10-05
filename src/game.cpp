@@ -46,7 +46,7 @@
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
-constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
+constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
 constexpr int CellsX = (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
 constexpr int CellsY = (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
 
@@ -183,8 +183,8 @@ struct PhysicsOut
 };
 
 
-PhysicsBody  physicsBodies2[40000];
-PhysicsBody  physicsBodies3[40000];
+PhysicsBody  physicsBodies2[50000];
+PhysicsBody  physicsBodies3[50000];
 PhysicsBody* physicsBodies = physicsBodies2;
 
 int currentCount = 0;
@@ -889,8 +889,8 @@ EXPORT void Loop(EngineCore* core)
 		}
 
 		gameState->entities[2].type = Entity_unit;
-		physicsBodies[2].x = 300.f;
-		physicsBodies[2].y = 300.f;
+		physicsBodies[2].x = 2400.f;
+		physicsBodies[2].y = 2400.f;
 		physicsBodies[2].r = 15.f;
 		physicsBodies[2].owner = 2;
 
@@ -931,9 +931,7 @@ EXPORT void Loop(EngineCore* core)
 		// addBody(40, 40, 10, 1);
 
 		gameState->bodies = physicsBodies;
-
-
-		gameState->threadShared.thisFrame = physicsBodies2;
+		gameState->threadShared.thisFrame = physicsBodies2; // kakkonen ja nolla samoja
 		gameState->threadShared.lastFrame = physicsBodies3;
 
 
@@ -1703,16 +1701,16 @@ EXPORT void Draw(EngineCore* core)
 	// }
 }
 
-
-
-
-
-
-
-
-EXPORT void mtDraw(/*EngineCore* core*/)
+EXPORT void mtDraw(PhysicsBody* bodies, int count, UpiEngine::SpriteBatch* spriteBatch)
 {
-
+	//	Uint32 ucolor = unit->side;
+	// auto color = Uin32ToColor(ucolor);
+	static auto white = UpiEngine::ColorRGBA8(160, 170, 170, 255);
+	for (int i = 0; i < count; i++)
+	{
+		PhysicsBody* body = bodies + i;
+		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, white);
+	}
 }
 
 // TODO: Fontit resource managerille

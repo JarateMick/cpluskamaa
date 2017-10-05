@@ -3,6 +3,8 @@
 #define VC_EXTRALEAN 1
 
 #include <chrono>
+#include <mutex>
+std::mutex mutex;
 
 // #include <IOManager.h>
 // #include <GLSLProgram.h>
@@ -29,6 +31,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string>
+#include <thread>
+
+std::thread logicThread;
+static bool join = false;
 
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_draw.cpp"
@@ -1247,114 +1253,57 @@ void InitInstancedBatch()
 
 
 
+#include <mutex>
+#include <condition_variable>
+
+std::mutex logicMutex;
+std::condition_variable cond;
+
+void updateLogicThread(EngineCore* core)
+{
+	// lock
+	while (1)
+	{
+		std::unique_lock<std::mutex> locker(logicMutex);
+		cond.wait(locker); // hahahahahah
+
+		LoopPtr(core); // GAME LOOP    // tarvitsen sijainnit tai komennot renderointiin ?
+
+//		std::this_thread::sleep_for(std::chrono::milliseconds(64));
+
+//		printf(("tick\n"));
+		core->input->mouse = camera2D.convertScreenToWorld(core->input->rawMouse);
+		core->input->update(); // TODO: maybe poll for input
+
+		locker.unlock();
+	}
+}
 
 
 
+struct gameStateCopy
+{
+	PhysicsBody* bodiesCopy;
+	int          copiesCount;
+};
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+void mtDraw2(PhysicsBody* bodies, int count, UpiEngine::SpriteBatch* spriteBatch)
+{
+	//	Uint32 ucolor = unit->side;
+	// auto color = Uin32ToColor(ucolor);
+	static auto white = UpiEngine::ColorRGBA8(160, 170, 170, 255);
+	for (int i = 0; i < count; i++)
+	{
+		PhysicsBody* body = bodies + i;
+		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, white);
+	}
+}
 
 int main(int argc, char* argv[])
 {
-
-	// printf("%i", sizeof Entity);
-
-	//Graph<int, int> map(6); 
-	//map.AddNode(0, 0);
-	//map.AddNode(1, 1);
-	//map.AddNode(2, 2);
-	//map.AddNode(3, 3);
-	//map.AddNode(4, 4);
-	//map.AddNode(5, 5);
-
-	//map.AddArc(0, 1, 10);
-	//map.AddArc(1, 0, 10);
-
-	//map.AddArc(2, 0, 10);
-	//map.AddArc(0, 2, 10);
-
-	//map.AddArc(3, 2, 1);
-	//map.AddArc(2, 3, 1);
-
-	//map.AddArc(4, 3, 1);
-	//map.AddArc(3, 4, 1);
-	/**********************************************************************************************/
-
-	//map.AddArc(0, 5, 1);
-	//map.AddArc(5, 0, 1);
-
-
-	//printf("breadt first: \n");
-	//map.BreadthFirst(map.nodes[0], process);
-	//map.ClearMarks();
-	//printf("depth first: \n");
-	//map.DepthFirst(map.nodes[0], process);
-
-	// ImageData data("europe.png");
-	// ImageData showToPlayer("europedata.png");
-
-	//SLinkedList<int> lista;
-	//SListIterator<int> itr;
-	//lista.Append(10);
-	//lista.Append(30);
-	//lista.Append(40);
-
-	//itr = lista.GetIterator();
-	//for (itr.Start(); itr.valid(); itr.Forth())
-	//{
-	//	std::cout << itr.Item() << ", ";
-	//}
-	//itr.Start();
-
-	//lista.Insert(itr, 20);
-
-	//itr = lista.GetIterator();
-	//for (itr.Start(); itr.valid(); itr.Forth())
-	//{
-	//	std::cout << itr.Item() << ", ";
-	//}
-	//itr.Start();
-
-	//itr.Forth();
-	//itr.Forth();
-
-	//lista.Remove(itr);
-
-	//itr = lista.GetIterator();
-	//for (itr.Start(); itr.valid(); itr.Forth())
-	//{
-	//	std::cout << itr.Item() << ", ";
-	//}
-	//itr.Start();
-
-
-	//std::cout << "linked list contains: ";
-	// SListIterator<int> itr = lista.GetIterator();
-
-
-	// void* jotain = malloc(8);
-	// (*(int*)jotain) = 1;
-	// int* iii = ((int*)jotain);
-	// iii++;
-	// *iii = 4;
-
-	// sivu 164
-
-// 	 init(mode_client);
-// 	 update();
-// 	 cleanUp();
+	gameStateCopy copy{ 0 };
 
 	// update()
 	int windowWidth = 1280;
@@ -1399,124 +1348,6 @@ int main(int argc, char* argv[])
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(114.f / 255.0f, 144.f / 255.0f, 154.f / 255.0f, 1.0f);
 
-
-	//	unsigned int quadVAO = instanced();
-	int index = 0;
-	float offset = 0.1f;
-	for (int i = 0; i < 1500; i++)
-	{
-		for (int y = -10; y < 10; y += 2)
-		{
-			for (int x = -10; x < 10; x += 2)
-			{
-				glm::vec2 translation;
-				translation.x = (float)x / (rand() % 10) + offset;
-				translation.y = (float)y / (rand() % 10) + offset;
-				translations[index++] = translation;
-			}
-		}
-	}
-
-	unsigned int instanceVBO, kukaMuuMuka;
-	glGenBuffers(1, &instanceVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &kukaMuuMuka);
-	glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// set up vertex data (and buffer(s)) and configure vetex attributes
-	float quadVertices[] = {
-		// positions     // colors
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f, 
-		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f, 
-		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f, 
-
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f, 
-		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
-	};
-	// kolmiot->
-
-	unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	// also set instance data
-	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO); // this attribute comes from a different vertex buffer
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
-
-	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
-
-
-	instancedShader.compileShaders("Shaders/Hulluttelu.vert", "Shaders/Hulluttelu.frag");
-	// instancedShader.addAttribute("vertexPosition");
-	// instancedShader.addAttribute("vertexColor");
-	// instancedShader.addAttribute("vertexUV");
-	instancedShader.linkShaders();
-
-	UpiEngine::ResourceManager::init();
-	auto asdf = UpiEngine::ResourceManager::getTexture("test.png");
-
-
-	while (true)
-	{
-		START_TIMING()
-
-		glActiveTexture(GL_TEXTURE0);
-		GLint textureLocation = instancedShader.getUniformLocation("textureSampler");
-		glUniform1i(textureLocation, 0);
-
-		glBindTexture(GL_TEXTURE2, asdf.id);
-
-		SDL_Event ve;
-		while (SDL_PollEvent(&ve))
-		{
-		}
-
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 200000, &translations[0], GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-
-		// glBindVertexArray(quadVAO);
-		// glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-		// glBindVertexArray(quadVAO, 0);
-
-		// draw 100 instanced quads
-		instancedShader.use();
-		glBindVertexArray(quadVAO);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 1000); // 100 triangles of 6 vertices each
-		glBindVertexArray(0);
-
-		for (int i = 0; i < 1000; i++)
-		{
-			translations[i].x += 0.0001f;
-			translations[i].y += 0.0001f;
-		}
-
-		SDL_GL_SwapWindow(window);
-
-		END_TIMING()
-	}
 
 	initShaders(textureProgram);
 
@@ -1710,7 +1541,6 @@ int main(int argc, char* argv[])
 
 		auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png");
 	}
-
 	auto realTime(std::chrono::high_resolution_clock::now());
 	auto simulationTIMER(std::chrono::high_resolution_clock::now());
 
@@ -1806,8 +1636,8 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-					}
-				} break;
+				}
+			} break;
 			case SDL_KEYUP:
 			{
 				inputManager.releaseKey(ev.key.keysym.scancode);
@@ -1824,13 +1654,13 @@ int main(int argc, char* argv[])
 
 			} break;
 			}
-			} // POLL EvENTS
+		} // POLL EvENTS
 
 
-					// number |= 1 << x;   // setting bit 
-					// number &= ~(1 << x); // clear 
+				// number |= 1 << x;   // setting bit 
+				// number &= ~(1 << x); // clear 
 
-					// nesInput.buttons = 0xFF;
+				// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1866,6 +1696,7 @@ int main(int argc, char* argv[])
 
 			// TODO: toimii vain 10 kpl 
 			std::vector<std::string> filenames = get_all_files_names_within_folder(playbackFileDir);
+			LoopPtr(&core); // GAME LOOP    // tarvitsen sijainnit tai komennot renderointiin ?
 			int recordNum = 0;
 			std::string recordName = "";
 			while (1)
@@ -1915,6 +1746,7 @@ int main(int argc, char* argv[])
 		}
 
 		// FILEUPDATE*************************************************************
+#if 0
 		if (const char* updatedFile = core.filewatcher.update(Resource_script))
 		{
 			static char buffer[2048]; // mainin alkuun iso random buffer?
@@ -1948,6 +1780,7 @@ int main(int argc, char* argv[])
 				debugBreak();
 			}
 		}
+#endif
 		// fprintf(stderr, "%s\n", lua_tostring(L, -1));
 
 		int steps = 0;
@@ -1958,7 +1791,7 @@ int main(int argc, char* argv[])
 		core.timeMultiplier = g_gameSpeed;
 
 
-		// Wow that's a huge loop!
+		// Wow that's a huge loop!     main loop 0
 #if 0
 
 		int updates = 0;
@@ -2003,31 +1836,57 @@ int main(int argc, char* argv[])
 						else
 						{
 							g_frameAdvanceCount = 50;  // laske max simulointi nopeus skipaten framet, jotenkinh smooth
-		}
-	}
+						}
+					}
 
 					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
 					inputManager.update(); // TODO: maybe poll for input
-}
+				}
 				core.advanceNextFrame = false;
 			}
 		}
+
 #else
-		// while (1) {
-		// int  gameOn = 1
+// while (1) {
+// int  gameOn = 1
 		realTime = std::chrono::high_resolution_clock::now();
+
 		// int realTime = Gettime();
 		//using chrono::
 		// using namespace std::chrono_literals;
 		int updates = 0;
+
+		if (inputManager.isKeyDown(SDL_SCANCODE_E))
+		{
+			camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
+			if (camera2D.getScale() < 0.01f)
+			{
+				camera2D.setScale(0.01f);
+			}
+		}
+		if (inputManager.isKeyDown(SDL_SCANCODE_Q))
+		{
+			camera2D.setScale(camera2D.getScale() + 0.0005f);
+		}
+
+
+
 		while (simulationTIMER < realTime || core.beginSkipToFrame)
 		{
+			static bool threadInit = false;
 			simulationTIMER += std::chrono::milliseconds(16); //Timeslice is ALWAYS 16ms. 
+
+			if (threadInit)
+				cond.notify_all();
+
 			// LoopPtr(&core);
 			// printf("Update %i \n", updates);
 			bool allowBreak = false;
 			if (core.pause)
 				allowBreak = true;
+
+			if (updates > 1)
+				printf("probably not working!\n");
 
 
 			if (!core.pause || core.advanceNextFrame)
@@ -2049,28 +1908,36 @@ int main(int argc, char* argv[])
 						playBackInput(&inputManager, &inputState);
 					}
 
-					LoopPtr(&core); // GAME LOOP
-					g_currentFrame++;
 
-					if (core.beginSkipToFrame)
+					if (!threadInit) // aka ei montaa framea per renders
 					{
-						if (core.skipToFrame == g_currentFrame)
-						{
-							core.beginSkipToFrame = false;
-							core.pause = true;
-							g_frameAdvanceCount = 1;
-							break;
-						}
-						else
-						{
-							g_frameAdvanceCount = 100;  // laske max simulointi nopeus skipaten framet, jotenkinh smooth
-						}
+						logicThread = std::thread(updateLogicThread, &core); // calc next frame
+						join = true;
+						// LoopPtr(&core); // GAME LOOP    // tarvitsen sijainnit tai komennot renderointiin ?
+						threadInit = true;
 					}
 
-					inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
-					inputManager.update(); // TODO: maybe poll for input
+					g_currentFrame++;
+
+					//	if (core.beginSkipToFrame)
+					//	{
+					//		if (core.skipToFrame == g_currentFrame)
+					//		{
+					//			core.beginSkipToFrame = false;
+					//			core.pause = true;
+					//			g_frameAdvanceCount = 1;
+					//			break;
+					//		}
+					//		else
+					//		{
+					//			g_frameAdvanceCount = 100;  // laske max simulointi nopeus skipaten framet, jotenkinh smooth
+						//	}
+						//}
+
+			//			inputManager.mouse = camera2D.convertScreenToWorld(core.input->rawMouse);
+			//			inputManager.update(); // TODO: maybe poll for input
 				}
-				core.advanceNextFrame = false;
+				//	core.advanceNextFrame = false;
 			}
 
 			if (allowBreak)
@@ -2082,137 +1949,77 @@ int main(int argc, char* argv[])
 		//			RenderWorld();
 #endif
 
-		bool skippingDraw = false; // todo: korjaa 
-		if (core.skipToFrame)
-		{
-			static int counter = 0;
-			counter++;
-			if (counter < 50)
-			{
-				skippingDraw = true;
-				counter = 0;
-			}
-		}
-
-		if (true)
-		{
-
-			if (inputManager.isKeyDown(SDL_SCANCODE_E))
-			{
-				camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
-				if (camera2D.getScale() < 0.01f)
-				{
-					camera2D.setScale(0.01f);
-				}
-			}
-			if (inputManager.isKeyDown(SDL_SCANCODE_Q))
-			{
-				camera2D.setScale(camera2D.getScale() + 0.0005f);
-			}
-
-			// printf("%f\n", camera2D.getScale());
-			ImGui::Text("camera: %f", camera2D.getScale());
-
-			camera2D.update();
-			hudCamera.update();
-
-			// glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
-			glClearDepth(1.0);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			textureProgram.use();
-
-			glActiveTexture(GL_TEXTURE0);
-			GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
-			glUniform1i(textureLocation, 0);
 
 
 
-		https://www.latex-project.org/
-		// httpss://www.latex-project.org2/
+		// printf("%f\n", camera2D.getScale());
+		ImGui::Text("camera: %f", camera2D.getScale());
+
+		camera2D.update();
+		hudCamera.update();
+
+		// glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+		glClearDepth(1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		textureProgram.use();
+
+		glActiveTexture(GL_TEXTURE0);
+		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
+		glUniform1i(textureLocation, 0);
 
 
-			GLint plocation = textureProgram.getUniformLocation("P");
-			glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
-			glUniformMatrix4fv(plocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
 
-			spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
-			spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
-
-			DrawPtr(&core);
-
-			//		map.BreadthFirst(map.nodes[0], )
-			//		map.ClearMarks();
-
-			spriteBatch.end();
-			spriteBatch.renderBatch();
-
-			//*************************************debug*******************************
-
-			glm::mat4 hudCameraMatrix = hudCamera.getCameraMatrix();
-			glUniformMatrix4fv(plocation, 1, GL_FALSE, &(hudCameraMatrix[0][0]));
-
-			hudSpriteBatch.begin();
-			debugger._dDrawSlots(hudSpriteBatch);
-			hudSpriteBatch.end();
-
-			hudSpriteBatch.renderBatch();
-
-			glBindTexture(GL_TEXTURE_2D, 0);
-			textureProgram.unuse();
+	https://www.latex-project.org/
+	// httpss://www.latex-project.org2/
 
 
-			debugger.render(cameraMatrix, 2.0f);
-			debugger.end();
+		GLint plocation = textureProgram.getUniformLocation("P");
+		glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
+		glUniformMatrix4fv(plocation, 1, GL_FALSE, &(cameraMatrix[0][0]));
+
+		spriteBatch.begin(UpiEngine::GlyphSortType::BACK_TO_FRONT);
+		spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
+
+		// DrawPtr(&core);
+
+		// .dimensions = glm::vec4{ 0.f, 0.f, surface->w * mapSizeMultiplier, surface->h * mapSizeMultiplier };
+		static auto id = UpiEngine::ResourceManager::getTexture("europedata.png").id;
+		spriteBatch.draw(glm::vec4{ 0.f, 0.f, 590 * 15, 480 * 15 }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, id, 1.0f);
+
+		if (copy.bodiesCopy)
+			mtDraw2(copy.bodiesCopy, copy.copiesCount, &spriteBatch);
+
+		//		map.BreadthFirst(map.nodes[0], )
+		//		map.ClearMarks();
+
+		spriteBatch.end();
+		spriteBatch.renderBatch();
+
+		//*************************************debug*******************************
+#if 0  // debuggeriin voi olla hyvin vaikea koskea
+		glm::mat4 hudCameraMatrix = hudCamera.getCameraMatrix();
+		glUniformMatrix4fv(plocation, 1, GL_FALSE, &(hudCameraMatrix[0][0]));
+
+		hudSpriteBatch.begin();
+		// debugger._dDrawSlots(hudSpriteBatch);        // debuggeriin 
+		hudSpriteBatch.end();
+
+		hudSpriteBatch.renderBatch();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		textureProgram.unuse();
 
 
-			ImGui::Render();
-			SDL_GL_SwapWindow(window);
+		// debugger.render(cameraMatrix, 2.0f);
+		// debugger.end();
+#endif
 
-		}
+		ImGui::Render();
+		SDL_GL_SwapWindow(window);
 
-		// Synccaa kaikki
 
-		// START_TIMING2()
-		// game_state *gameState = (game_state*)core.memory->permanentStorage;
-		// size_t monoid = (sizeof game_state - sizeof memory_arena);
-		// static void* memory = malloc(sizeof(game_state) - sizeof(memory_arena));
-		// static void* memory2 = malloc(sizeof(game_state) - sizeof(memory_arena));
-		// memcpy(memory, core.memory->permanentStorage, sizeof(game_state) - sizeof(memory_arena));
-		// memcpy(memory2, &gameState->entities, sizeof(game_state) - sizeof(memory_arena));
-		// free(memory);
-		// game_state *gameState2 = (game_state*)memory;
-		// END_TIMING2()
 
-		//if (ft != 0.f)
-		//{
-		//	auto fps(1.f / ftSeconds);
-
-		//	static int counter = 0;
-		//	avgFT[counter] = ft;
-		//	avgFps[counter++] = fps;
-		//	if (counter == avgFTSize - 1)
-		//	{
-		//		char buffer[64];
-		//		float sum = 0;
-		//		float fpsSum = 0;
-
-		//		for (int i = 0; i < avgFTSize; i++)
-		//		{
-		//			sum += avgFT[i];
-		//		}
-		//		for (int i = 0; i < avgFpsSize; i++)
-		//		{
-		//			fpsSum += avgFps[i];
-		//		}
-		//		sum /= avgFTSize;
-		//		fpsSum /= avgFpsSize;
-
-		//		// sprintf_s(buffer, "Frametime: %f ms/frame, fps: %f\n", sum, fpsSum);
-		//		// printf("%s", buffer);
-		//		counter = 0;
-		//	}
-		//}
 
 		// al_flip_display();
 		// al_wait_for_vsync();
@@ -2223,8 +2030,33 @@ int main(int argc, char* argv[])
 		lastFT = ft;
 		ftSeconds = (ft / 1000.f);
 
+		// logicThread.
 
-		// printf("%f\n", ft);
+		// gameState->bodies = physicsBodies;
+		// gameState->threadShared.thisFrame = physicsBodies2; // kakkonen ja nolla samoja
+		// gameState->threadShared.lastFrame = physicsBodies3;
+
+
+		// wait for unlock ?????
+		std::unique_lock<std::mutex> locker(logicMutex); // voi swapata! / need swap
+		{
+			game_state *gameState = (game_state*)core.memory->permanentStorage;
+
+			memcpy(gameState->threadShared.lastFrame, gameState->bodies, sizeof(PhysicsBody) * gameState->currentEntityCount);
+			copy.copiesCount = gameState->currentEntityCount;
+			copy.bodiesCopy = gameState->threadShared.lastFrame;
+
+		}
+		locker.unlock();
+
+
+		// printf("fisnish him!\n");
+
+		if (join)  // wait for next frame to be done
+		{
+			// logicThread.join();
+			join = false;
+		}
 
 	}
 	ImGui_ImplSdlGL3_Shutdown();
