@@ -9,7 +9,7 @@
 #endif
 
 #include "game.h"
-#define internal static
+#define internal2 static
 
 struct ImGuiContext;
 #define IMGUIFUNC(name) void name(EngineCore* core, ImGuiContext* context, void* tmpData, AssetFileInfo* assetInfo)

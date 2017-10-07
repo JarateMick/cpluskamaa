@@ -16,6 +16,7 @@
 #include <lua.hpp>
 #include <SDL2/SDL_image.h>
 #include <future>
+#include <algorithm>
 
 #undef max
 #undef min 
@@ -47,8 +48,8 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
 constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
-constexpr int CellsX = (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
-constexpr int CellsY = (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
+constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
+constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
 
 struct SpatialHash            // map width = textureW * 10, textureH * 10
 {
@@ -135,8 +136,11 @@ void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 int CheckCollisions(SpatialHash* hash)
 {
 	int count = 0;
+
+#pragma omp parallel for schedule(dynamic, 3) num_threads(3)
 	for (int i = 0; i < CellsY; i++)
 	{
+		// #pragma omp paraller for schedule(dynamic)
 		for (int j = 0; j < CellsX; j++)
 		{
 			std::vector<PhysicsBody*>* v = &hash->hashMap[i][j];
@@ -148,6 +152,7 @@ int CheckCollisions(SpatialHash* hash)
 
 				for (int k = 0; k < v->size(); k++)
 				{
+// #pragma omp simd				hih
 					for (int kk = k + 1; kk < v->size(); kk++)
 					{
 						circleCollision(v->at(k), v->at(kk));
@@ -183,8 +188,8 @@ struct PhysicsOut
 };
 
 
-PhysicsBody  physicsBodies2[50000];
-PhysicsBody  physicsBodies3[50000];
+PhysicsBody  physicsBodies2[60000];
+PhysicsBody  physicsBodies3[60000];
 PhysicsBody* physicsBodies = physicsBodies2;
 
 int currentCount = 0;
@@ -195,7 +200,7 @@ int currentCount = 0;
 
 
 // onko luoti Bodyn päällä
-bool circleCollision(BulletBody* a, PhysicsBody* b)
+bool circleCollision(BulletBody* __restrict a, PhysicsBody* __restrict b)
 {
 	const float MIN_DISTANCE = a->r + b->r;
 
@@ -210,12 +215,12 @@ bool circleCollision(BulletBody* a, PhysicsBody* b)
 }
 
 
-void circleCollision(PhysicsBody* a, PhysicsBody* b)
+void circleCollision(PhysicsBody* __restrict a, PhysicsBody* __restrict b)
 {
 #if 0
 	const float MIN_DISTANCE = a->r * 2.0f;
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
 	glm::vec2 distVec = centerPosA - centerPosB;
 
 
@@ -223,8 +228,8 @@ void circleCollision(PhysicsBody* a, PhysicsBody* b)
 	const float collisionDepth = MIN_DISTANCE - distance;
 #else
 	const float MIN_DISTANCE = a->r + b->r;  // molempiend dist
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } + glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } + glm::vec2(b->r);
+	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
+	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
 	glm::vec2 distVec = centerPosA - centerPosB;
 
 	// const float distance = glm::length(distVec);
@@ -747,15 +752,6 @@ void newNode(int index, int id, float x, float y)
 	nodes.AddNode(newNode, index);
 }
 
-// float x = e->x - bullet->startX;
-// float y = e->y - bullet->startY;
-// if (abs(x * x + y * y) > bullet->rangeSquared)
-// {
-//		max range reached!
-//		e->alive = false;
-//		printf("olen donezo\n");
-// }
-
 
 int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* start, int count)
 {
@@ -907,6 +903,10 @@ EXPORT void Loop(EngineCore* core)
 		gameState->currentEntityCount = 4;
 
 
+		
+
+
+
 		gameState->getAllProvinceNeighbours = getAllProvinceNeighbours;
 		gameState->newNode = newNode;
 
@@ -1003,6 +1003,27 @@ EXPORT void Loop(EngineCore* core)
 	float my = mxy.y;
 	Debug::drawBox(mx, my, 3.f, 3.f);
 
+	if (input->isKeyDown(SDL_SCANCODE_2))
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			float x = core->input->mouse.x;
+			float y = core->input->mouse.y;
+			Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+			(physicsBodies + ee->guid)->r = 15.f;
+			(physicsBodies + ee->guid)->owner = ee->guid;
+			// printf("%f, %f", ee->x, ee->y);
+			ee->unit.attackRange = 250.f;
+			ee->unit.targetX = -1;
+			ee->unit.targetY = -1;
+			ee->unit.originalTargetX = -1;
+			ee->unit.originalTargetY = -1;
+			ee->unit.side = 0xFFFF00FF;
+			ee->unit.hp = UNIT_BASE_HP;
+			gameState->allSides[ee->guid] = 0xFF00FF00; // tarkka kenen guid fuck
+		}
+	}
+
 	if (input->isKeyDown(SDL_SCANCODE_4))
 	{
 		Uint32 color = gameState->worldmap.provinces.GetPixel(mx, my); // real size 
@@ -1066,78 +1087,79 @@ EXPORT void Loop(EngineCore* core)
 		SortAllEntitys(gameState->entities, gameState->currentEntityCount);
 	}
 
-
-
 	struct valueId { float v; int id; };
 	struct xyi { float x, y; int id; };
 
+	START_TIMING2()
+	clearSpatial(&hash4r);
+	currentCount = 0;
 	/**********************************************************************************************/
 	// ENTITY UPDATE
-	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
-	{
-		f(&gameState->entities[i], core, gameState->bodies);
-
-		if (!gameState->entities[i].alive)
+		for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 		{
-			// deletefunc
-			printf("delet\n");
-			memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
-				sizeof(Entity));
-			gameState->entities[i].guid = i;
+			f(&gameState->entities[i], core, gameState->bodies);
 
-			// swap all
-			physicsBodies[i] = gameState->bodies[gameState->currentEntityCount - 1];
-			gameState->allSides[i] = gameState->allSides[gameState->currentEntityCount - 1];
+			if (!gameState->entities[i].alive)
+			{
+				// deletefunc
+				printf("delet\n");
+				memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
+					sizeof(Entity));
+				gameState->entities[i].guid = i;
 
+				// swap all funcy
+				physicsBodies[i] = gameState->bodies[gameState->currentEntityCount - 1];
+				gameState->allSides[i]     = gameState->allSides[gameState->currentEntityCount - 1];
+				gameState->entityColors[i] = gameState->entityColors[gameState->currentEntityCount - 1];
 
-			--gameState->currentEntityCount;
+				--gameState->currentEntityCount;
+			}
+
+			if (gameState->entities[i].type == Entity_unit)
+			{
+				AddBodyToGrid(physicsBodies + i, &hash4r);
+				++currentCount;
+			}
 		}
+		END_TIMING2()
 
-		if (gameState->entities[i].type == Entity_unit)
-		{
+		//[](int i) { return i; };
+		//\i -> i \i -> i \i -> i
+		//[](){};
+		//struct { int operator()(int i) { return i; } } lambda;
+		//int a = lambda(1);
 
-		}
-	}
+		//std::sort(xx, xx + xCount, [](valueId &a, valueId &b) { return a.v < b.v; });
+		//std::sort(yy, yy + yCount, [](valueId &a, valueId &b) { return a.v < b.v; });
 
-	//[](int i) { return i; };
-	//\i -> i \i -> i \i -> i
-	//[](){};
-	//struct { int operator()(int i) { return i; } } lambda;
-	//int a = lambda(1);
-
-	//std::sort(xx, xx + xCount, [](valueId &a, valueId &b) { return a.v < b.v; });
-	//std::sort(yy, yy + yCount, [](valueId &a, valueId &b) { return a.v < b.v; });
-
-	//for (int i = 0; i < xCount - 15; i++)
-	//{
-	//	if (xx[i].id != 0)
-	//	{
-	//		PhysicsBody* a = xx[i].id + physicsBodies;
-	//		for (int j = i + 1; j < i + 15; j++)
-	//			circleCollision(a, xx[j].id + physicsBodies);
-	//	}
-	//}
-	//for (int i = 0; i < yCount - 15; i++)
-	//{
-	//	if (xx[i].id != 0)
-	//	{
-	//		PhysicsBody* a = yy[i].id + physicsBodies;
-	//		for (int j = i + 1; j < i + 15; j++)
-	//			circleCollision(a, yy[j].id + physicsBodies);
-	//	}
-	//}
+		//for (int i = 0; i < xCount - 15; i++)
+		//{
+		//	if (xx[i].id != 0)
+		//	{
+		//		PhysicsBody* a = xx[i].id + physicsBodies;
+		//		for (int j = i + 1; j < i + 15; j++)
+		//			circleCollision(a, xx[j].id + physicsBodies);
+		//	}
+		//}
+		//for (int i = 0; i < yCount - 15; i++)
+		//{
+		//	if (xx[i].id != 0)
+		//	{
+		//		PhysicsBody* a = yy[i].id + physicsBodies;
+		//		for (int j = i + 1; j < i + 15; j++)
+		//			circleCollision(a, yy[j].id + physicsBodies);
+		//	}
+		//}
 
 
 
-	// START_TIMING()
 #if 1
-	clearSpatial(&hash4r);
 
 	//START_TIMING()
 	// START_TIMING2()
 
-	currentCount = 0;
-
+#if 0
+		currentCount = 0;
 	// static Uint32 sides[25000]; // puolet =(
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
@@ -1148,12 +1170,13 @@ EXPORT void Loop(EngineCore* core)
 			++currentCount;
 			// *(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
 			// sides[e->guid] = e->unit.side; // fix theset
-		}
+}
 	}
 	// END_TIMING2()
 
-
+#endif
 	// Physics step:
+
 	CheckCollisions(&hash4r);
 
 
@@ -1197,13 +1220,13 @@ EXPORT void Loop(EngineCore* core)
 			// dead
 			gameState->entities[id].alive = false;
 		}
-}
+	}
 
 #endif
-		// luoti fysiikat
-		// END_TIMING()
+	// luoti fysiikat
+	// END_TIMING()
 
-		float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
+	float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
 	if (input->isKeyDown(SDL_SCANCODE_W))
 	{
 		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
@@ -1540,64 +1563,64 @@ EXPORT __declspec(dllexport) void testFuncy(int a, int b) //LUA_E_F
 	printf("hello world (%i,%i)\n", a, b);
 }
 
-
-void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structPtr, int intendLevel = 0)
-{
-	// char buffer[512];
-	for (u32 memberIndex = 0; memberIndex < memberCount; ++memberIndex)
-	{
-		char TextBufferBase[256];
-		char *textBuffer = TextBufferBase;
-		for (int intend = 0; intend < intendLevel; ++intend)
-		{
-			*textBuffer++ = ' ';
-			*textBuffer++ = ' ';
-			*textBuffer++ = ' ';
-			*textBuffer++ = ' ';
-		}
-		textBuffer[0] = 0;
-
-		member_definition* member = memberData + memberIndex;
-		void *memberPtr = (((Uint8 *)structPtr) + member->offset);
-
-		if (member->flags & MetaMemberFlag_IsPointer)
-		{
-			memberPtr = *(void **)memberPtr;
-		}
-
-		if (memberPtr)
-		{
-
-
-			int textBufferLeft = TextBufferBase + sizeof(TextBufferBase) - textBuffer;
-			switch (member->type)
-			{
-			case MetaType_bool32:
-				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %b ", member->name, *(Uint32 *)memberPtr);
-				break;
-			case MetaType_int:
-				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(int *)memberPtr);
-				break;
-			case MetaType_float:
-				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %f ", member->name, *(float *)memberPtr);
-				break;
-			case MetaType_uint32:
-				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(Uint32 *)memberPtr);
-				break;
-
-				META_HANDLE_TYPE_DUMD(memberPtr, intendLevel + 1)
-
-					/*case MetaType_v3:
-
-						DEbugdumpt suct ( Arraycount membersof v3,  membesfof ve3,
-							memberptr
-					} break;*/
-			}
-			printf("%s\n", textBuffer);
-		}
-	}
-}
-
+//
+//void dumpStruct(Uint32 memberCount, member_definition* memberData, void* structPtr, int intendLevel = 0)
+//{
+//	// char buffer[512];
+//	for (u32 memberIndex = 0; memberIndex < memberCount; ++memberIndex)
+//	{
+//		char TextBufferBase[256];
+//		char *textBuffer = TextBufferBase;
+//		for (int intend = 0; intend < intendLevel; ++intend)
+//		{
+//			*textBuffer++ = ' ';
+//			*textBuffer++ = ' ';
+//			*textBuffer++ = ' ';
+//			*textBuffer++ = ' ';
+//		}
+//		textBuffer[0] = 0;
+//
+//		member_definition* member = memberData + memberIndex;
+//		void *memberPtr = (((Uint8 *)structPtr) + member->offset);
+//
+//		if (member->flags & MetaMemberFlag_IsPointer)
+//		{
+//			memberPtr = *(void **)memberPtr;
+//		}
+//
+//		if (memberPtr)
+//		{
+//
+//
+//			int textBufferLeft = TextBufferBase + sizeof(TextBufferBase) - textBuffer;
+//			switch (member->type)
+//			{
+//			case MetaType_bool32:
+//				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %b ", member->name, *(Uint32 *)memberPtr);
+//				break;
+//			case MetaType_int:
+//				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(int *)memberPtr);
+//				break;
+//			case MetaType_float:
+//				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %f ", member->name, *(float *)memberPtr);
+//				break;
+//			case MetaType_uint32:
+//				_snprintf_s(textBuffer, textBufferLeft, textBufferLeft, "%s: %i ", member->name, *(Uint32 *)memberPtr);
+//				break;
+//
+//				META_HANDLE_TYPE_DUMD(memberPtr, intendLevel + 1)
+//
+//					/*case MetaType_v3:
+//
+//						DEbugdumpt suct ( Arraycount membersof v3,  membesfof ve3,
+//							memberptr
+//					} break;*/
+//			}
+//			printf("%s\n", textBuffer);
+//		}
+//	}
+//}
+//
 
 //void startTiming(int line)
 //{
@@ -1700,6 +1723,7 @@ EXPORT void Draw(EngineCore* core)
 		// Debug::drawCircle({ e->x, e->y }, white, r);
 	// }
 }
+
 
 EXPORT void mtDraw(PhysicsBody* bodies, int count, UpiEngine::SpriteBatch* spriteBatch)
 {

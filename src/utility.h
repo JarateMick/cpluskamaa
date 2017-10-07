@@ -1,15 +1,15 @@
 #pragma once
-#define internal static
+#define internal2 static
 #include <cstdio> // do smt...
 
-internal void writeEntireFile(char* buffer, int sizeOfBuffer, const char* filename) // length of the string
+internal2 void writeEntireFile(char* buffer, int sizeOfBuffer, const char* filename) // length of the string
 {
 	FILE *fp = fopen(filename, "w");
 	fwrite(buffer, sizeof(char), sizeOfBuffer, fp);
 	fclose(fp);
 }
 
-internal char* readEntireFile(const char* filename, int &bufferSize)
+internal2 char* readEntireFile(const char* filename, int &bufferSize)
 {
 	char *buffer = NULL;
 	FILE *fp = fopen(filename, "r");
@@ -48,7 +48,7 @@ internal char* readEntireFile(const char* filename, int &bufferSize)
 
 // TODO: TEE concatista päheen nopee kappa!
 // päheen nopee https://stackoverflow.com/questions/21880730/c-what-is-the-best-and-fastest-way-to-concatenate-strings
-internal char* mystrcat(char* dest, char* src)
+internal2 char* mystrcat(char* dest, char* src)
 {
 	while (*dest) dest++;
 	while (*dest++ = *src++);
@@ -56,7 +56,7 @@ internal char* mystrcat(char* dest, char* src)
 }
 char* enumss[] = { "Sword", "Shield" };
 char* pathss[] = { "\\path", "\\pathtosecond" };
-internal void insertSmt(char buffer[], char* array[])
+internal2 void insertSmt(char buffer[], char* array[])
 {
 	for (int i = 0; i < 2; ++i)
 	{
@@ -66,7 +66,7 @@ internal void insertSmt(char buffer[], char* array[])
 	}
 	strcat(buffer, "\n");
 }
-internal void insertText(char buffer[], char* array[])
+internal2 void insertText(char buffer[], char* array[])
 {
 	for (int i = 0; i < 2; ++i)
 	{
@@ -76,13 +76,13 @@ internal void insertText(char buffer[], char* array[])
 	}
 	strcat(buffer, "\n");
 }
-internal void insertSingleEnum(char buffer[], const char* str, const char* enumType)
+internal2 void insertSingleEnum(char buffer[], const char* str, const char* enumType)
 {
 	strcat(buffer, enumType);
 	strcat(buffer, str);
 	strcat(buffer, ",\n");
 }
-internal void insertSingleCharArrayElement(char buffer[], std::string str)
+internal2 void insertSingleCharArrayElement(char buffer[], std::string str)
 {
 	for (int i = 0; i < str.size(); ++i)
 	{
@@ -97,7 +97,7 @@ internal void insertSingleCharArrayElement(char buffer[], std::string str)
 }
 
 
-internal void createTextureEnums(TextureFile* files, int size, AssetFileInfo* info)
+internal2 void createTextureEnums(TextureFile* files, int size, AssetFileInfo* info)
 {
 	const char* enumStart = "enum Textures {\n";
 	const char* enumEnd = "\tTexture_Max\n\

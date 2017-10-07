@@ -1,5 +1,6 @@
 #include "IOManager.h"
 #include <fstream>
+#include <string>
 
 namespace UpiEngine{
 

@@ -75,7 +75,7 @@ void stbsp_set_separators( char comma, char period )
 
 FLOATS/DOUBLES:
 ===============
-This code uses a internal float->ascii conversion method that uses
+This code uses a internal2 float->ascii conversion method that uses
 doubles with error correction (double-doubles, for ~105 bits of
 precision).  This conversion is round-trip perfect - that is, an atof
 of the values output here will give you the bit-exact double back.
@@ -212,7 +212,7 @@ STBSP__PUBLICDEF void STB_SPRINTF_DECORATE( set_separators )( char comma, char p
 #endif
 
 #ifndef STB_SPRINTF_NOFLOAT
-// internal float utility functions
+// internal2 float utility functions
 static stbsp__int32 stbsp__real_to_str( char const * * start, stbsp__uint32 * len, char *out, stbsp__int32 * decimal_pos, double value, stbsp__uint32 frac_digits );
 static stbsp__int32 stbsp__real_to_parts( stbsp__int64 * bits, stbsp__int32 * expo, double value );
 #define STBSP__SPECIAL 0x7000

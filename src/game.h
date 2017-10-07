@@ -334,7 +334,7 @@ struct WorldMapEditor
 	float inputY;
 };
 
-const int mapSizeMultiplier = 15;
+const int mapSizeMultiplier = 30;
 constexpr float NODE_MULTIPLIER = 1.5f;
 struct WorldMap
 {
@@ -467,12 +467,10 @@ struct ThreadSharedData
 	PhysicsBody*   lastFrame;
 };
 
-
 #define I
 introspect("game_state:") struct game_state
 {
-
-	Entity         entities[50000];
+	Entity         entities[60000];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 
@@ -480,14 +478,14 @@ introspect("game_state:") struct game_state
 	int            maxSelected;
 
 	PhysicsBody*   bodies;
-	Uint32         allSides[50000];
+	Uint32         allSides[60000];
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
 	vec2f          BulletAccelerations[maxiumBullets];
 
 	ThreadSharedData threadShared;
 
-
+	UpiEngine::ColorRGBA8 entityColors[60000];
 	// kopioi:     !PhysicsBodyt eka frame!    
 
 	int            bulletCount;

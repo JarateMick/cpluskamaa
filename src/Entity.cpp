@@ -11,6 +11,14 @@
 //	return BreadthFirst(startId, gameState->MapNodes, goalId);
 //}
 
+UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
+{
+	GLubyte a = color >> 24 & 255;
+	GLubyte r = color >> 16 & 255;
+	GLubyte g = color >> 8 & 255;
+	GLubyte b = color >> 0 & 255;
+	return UpiEngine::ColorRGBA8(b, g, r, a); // uint32 on muodossa ABGR
+}
 
 const float UNIT_SPEED = 1.0f;   // ~ archer speed
 const int   UNIT_BASE_HP = 100;
@@ -341,6 +349,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #else
 				glm::vec2 direction = glm::normalize(targetVector);
 
+
 				BulletBody body;
 				body.position.x = x; // e->x
 				body.position.y = y; // e->y
@@ -451,7 +460,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #else
 				Entity *ee = newEntity(e->x, e->y - 15.f, Entity_unit, gameState);
 #endif
-				// printf("%f, %f", ee->x, ee->y);
 				ee->unit.attackRange = 250.f;
 				ee->unit.targetX = -1;
 				ee->unit.targetY = -1;
@@ -459,7 +467,16 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
 				ee->unit.hp = UNIT_BASE_HP;
+
 				gameState->allSides[ee->guid] = building->side; // tarkka kenen guid fuck
+
+
+				// setup color
+				Uint32 ucolor = ee->unit.side;
+				auto color = Uin32ToColor(ucolor);
+
+				gameState->entityColors[ee->guid] = color;
+
 
 			} break;
 			default:
@@ -494,14 +511,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 	//}
 }
 
-UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
-{
-	GLubyte a = color >> 24 & 255;
-	GLubyte r = color >> 16 & 255;
-	GLubyte g = color >> 8 & 255;
-	GLubyte b = color >> 0 & 255;
-	return UpiEngine::ColorRGBA8(b, g, r, a); // uint32 on muodossa ABGR
-}
 
 // tee kunnon spritesheet manager struct jotain jotain...
 glm::vec4 getUvFromUp(int index, glm::vec2 dims)
@@ -589,6 +598,7 @@ EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum typ
 
 	(state->bodies + result->guid)->x = x;
 	(state->bodies + result->guid)->y = y;
+	state->entityColors[result->guid] = UpiEngine::ColorRGBA8(255, 255, 255, 255);
 	// state->phy
 
 	result->type = type;
@@ -617,6 +627,8 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 	e->building.type = type;
 	e->building.side = side;
 	e->building.timer = 0.f;
+
+	
 
 	switch (type)
 	{

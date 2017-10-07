@@ -8,9 +8,12 @@
 #include "graph.h"
 #include <vector>
 #include "game.h"
+#include <cstdio>
+#include <algorithm>
 // #include "game.cpp"
 
 
+#define IM_ARRAYSIZE2(_ARR)      ((int)(sizeof(_ARR)/sizeof(*_ARR)))
 // #include "utility.h"
 // #include "imgui/imgui.h"
 
@@ -112,8 +115,8 @@ struct Console
 		char buf[1024];
 		va_list args;
 		va_start(args, fmt);
-		vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
-		buf[IM_ARRAYSIZE(buf) - 1] = 0;
+		vsnprintf(buf, IM_ARRAYSIZE2(buf), fmt, args);
+		buf[IM_ARRAYSIZE2(buf) - 1] = 0;
 		va_end(args);
 		Items.push_back(Strdup(buf));
 		ScrollToBottom = true;
@@ -186,7 +189,7 @@ struct Console
 		ImGui::Separator();
 
 		// Command-line
-		if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
+		if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE2(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
 		{
 			char* input_end = InputBuf + strlen(InputBuf);
 			while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;
@@ -250,7 +253,7 @@ struct Console
 
 	static int TextEditCallbackStub(ImGuiTextEditCallbackData* data) // In C++11 you are better off using lambdas for this sort of forwarding callbacks
 	{
-		ExampleAppConsole* console = (ExampleAppConsole*)data->UserData;
+		Console* console = (Console*)data->UserData;
 		return console->TextEditCallback(data);
 	}
 
@@ -345,7 +348,8 @@ struct Console
 			// A better implementation would preserve the data on the current input line along with cursor position.
 			if (prev_history_pos != HistoryPos)
 			{
-				data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = (int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
+				data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = 
+					(int)snprintf(data->Buf, (size_t)data->BufSize, "%s", (HistoryPos >= 0) ? History[HistoryPos] : "");
 				data->BufDirty = true;
 			}
 		}
@@ -704,6 +708,8 @@ EXPORT IMGUIFUNC(Imgui)
 			ImGui::Text("hello");
 		}*/
 
+
+	ImGui::Text("total count %i", gameState->currentEntityCount);
 
 	ImGui::Text("Spawn units");
 	static int SpawnCount = 1;

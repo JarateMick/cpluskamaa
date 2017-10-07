@@ -205,7 +205,7 @@ namespace UpiEngine {
 
 	void DebugRenderer::drawText(char* buffer, int slot)
 	{
-		int written = sprintf_s(m_textSlots[slot].buffer, bufferSize,"%s", buffer);
+		int written = sprintf(m_textSlots[slot].buffer, "%s", buffer);
 
 		if (slot < 0 || slot > 3 || written > bufferSize)
 		{

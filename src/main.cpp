@@ -6,24 +6,10 @@
 #include <mutex>
 std::mutex mutex;
 
-// #include <IOManager.h>
-// #include <GLSLProgram.h>
-// #include <picoPNG.h>
-// #include <ImageLoader.h>
-// #include <GLTexture.h>
-// #include <TextureCache.h>
-// #include <ResourceManager.h>
-// #include <picoPNG.h>
-
 #include <lua.hpp>
-// #include <Windows.h>
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-// #include <SDL2/SDL_ttf.h>
-// #include <SDL2/SDL_mixer.h>
 
-#include <atomic>
 #include <algorithm>
 #include <chrono>
 #include <cstdarg>
@@ -32,29 +18,25 @@ std::mutex mutex;
 #include <stdint.h>
 #include <string>
 #include <thread>
+#include <fstream>
 
-std::thread logicThread;
-static bool join = false;
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
 
 #include "imgui/imgui.cpp"
 #include "imgui/imgui_draw.cpp"
 #include "Imgui/imgui_impl_sdl_gl3.cpp"
 #include "Imgui/imgui_demo.cpp"
 
-// #include <process.h>
-
 #include "game.h" 
 #include "imguiTools.h"
 #include "TextureHolder.h"
 #include "fileSystem.cpp"      // aika hack
 #include "InputRecorder.cpp"
-#include <ResourceManager.h>
 
-// #include "imgui/imgui_internal.h"
-//typedef struct  
-//{
-//	unsigned char buttons;
-//} nesinput;
+#include <ResourceManager.h>
+#include "graph.h"
 
 struct TextureFile
 {
@@ -63,16 +45,14 @@ struct TextureFile
 	FILETIME lastFileTime;
 };
 
-
-#define internal static
+#define internal2 static
 std::vector<TextureFile> gAssetFileTimes;
 
 typedef void(*LoopType)(EngineCore*);
 typedef void(*DrawType)(EngineCore*);
 
-// typedef void(*ImguiType)(EngineCore*, ImGuiContext*, void*, AssetFileInfo*);
 Imgui_func* ImguiPtr;
-
+// typedef void(*ImguiType)(EngineCore*, ImGuiContext*, void*, AssetFileInfo*);
 // #define IMGUIFUNC(name) void name(EngineCore* core, ImGuiContext* context, void* tmpData, AssetFileInfo* assetInfo)
 
 LoopType LoopPtr;
@@ -84,7 +64,7 @@ FILETIME GameDLLWriteTime;
 int SCREEN_WIDTH = 1200;
 int SCREEN_HEIGHT = 1000;
 
-internal void UnloadGameDLL()
+internal2 void UnloadGameDLL()
 {
 	if (!FreeLibrary(GameDLL))
 	{
@@ -118,7 +98,7 @@ void* LoadAndCheckFunction(HMODULE* dll, const char* functionName)
 }
 
 // TODO: dll latauksesta kivempi k�ytt�� 
-internal void LoadGameDLL()
+internal2 void LoadGameDLL()
 {
 	WIN32_FILE_ATTRIBUTE_DATA unused;
 	if (!GetFileAttributesEx("lock.tmp", GetFileExInfoStandard, &unused))
@@ -147,7 +127,7 @@ internal void LoadGameDLL()
 }
 
 
-internal std::vector<std::string> get_all_files_names_within_folder(std::string folder)
+internal2 std::vector<std::string> get_all_files_names_within_folder(std::string folder)
 {
 	std::vector<std::string> names;
 	std::string search_path = folder + "/*.*";
@@ -181,46 +161,10 @@ inline float map(float value, float sourceMin, float sourceMax, float destMin, f
 {
 	return lerp(norm(value, sourceMin, sourceMax), destMin, destMax);
 }
-// MATH UTILS
 
-//internal void poll(SDL_Event &e, InputManager& inputManager)
-//{
-//	while (SDL_PollEvent(&e) != 0)
-//	{
-//		//User requests quit
-//		if (e.type == SDL_QUIT)
-//		{
-//			// quit = true;
-//		}
-//		if (e.type == SDL_MOUSEBUTTONDOWN)
-//		{
-//			inputManager.pressMouse(e.button.button);
-//		}
-//		if (e.type == SDL_MOUSEBUTTONUP)
-//		{
-//			inputManager.releaseMouse(e.button.button);
-//		}
-//		if (e.type == SDL_MOUSEMOTION)
-//		{
-//			inputManager.mouseX = e.motion.x;
-//			inputManager.mouseY = e.motion.y;
-//		}
-//		if (e.type == SDL_KEYDOWN)
-//		{
-//			inputManager.pressKey(e.key.keysym.scancode);
-//		}
-//		if (e.type == SDL_KEYUP)
-//		{
-//			inputManager.releaseKey(e.key.keysym.scancode);
-//		}
-//	}
-//}
-//
-
-// #include "game.h"
 static AssetFileInfo gAssetFileInfo;
 
-internal void pollTextureFiles()
+internal2 void pollTextureFiles()
 {
 	// compare write times
 	for (int i = 0; i < gAssetFileTimes.size(); ++i)
@@ -243,7 +187,7 @@ std::string gMusicPath = "..\\TEST_ENUMERATE\\Music";
 std::string gEffectPath = "..\\TEST_ENUMERATE\\Effects";
 
 static int lastFileWatchTextureCount;
-internal void pollForNewFiles()
+internal2 void pollForNewFiles()
 {
 	std::string AssetPath = gAssetPath;
 
@@ -258,7 +202,7 @@ internal void pollForNewFiles()
 	}
 }
 
-internal void initFileWatch(std::string AssetPath)
+internal2 void initFileWatch(std::string AssetPath)
 {
 	// TODO: Asset hotloading
 	// TODO: struct
@@ -279,7 +223,7 @@ internal void initFileWatch(std::string AssetPath)
 	lastFileWatchTextureCount = fileNames.size();
 }
 
-internal std::vector<std::string> GetAllFilePathsInFolder(std::string AssetPath)
+internal2 std::vector<std::string> GetAllFilePathsInFolder(std::string AssetPath)
 {
 	std::vector<std::string> fileNames = get_all_files_names_within_folder(AssetPath);
 
@@ -364,13 +308,13 @@ struct PlaybackState			// WINDOW handles + memory map
 	ReplayBuffer replayBuffer[4];
 };
 
-internal void
+internal2 void
 getInputRecordName(int index, char* filename, bool state)
 {
 	sprintf(filename, "input_%s_%i.input", state ? "state" : "stream", index);
 }
 
-internal void
+internal2 void
 startRecordInput(InputManager* manager, PlaybackState* state, int playbackSlotIndex)
 {
 	char inputRecordFile[STATE_FILENAME_COUNT];
@@ -384,19 +328,19 @@ startRecordInput(InputManager* manager, PlaybackState* state, int playbackSlotIn
 	memcpy(replayBuffer->memoryBlock, state->memory, state->totalMemorySize); // bencmark?
 }
 
-internal void
+internal2 void
 recordInput(InputManager* manager, PlaybackState* state)
 {
 	fwrite(manager, sizeof(InputManager), 1, state->recordingFile);
 }
 
-internal void
+internal2 void
 endRecording(PlaybackState* state)
 {
 	fclose(state->recordingFile);
 }
 
-internal void
+internal2 void
 startInputPlayback(InputManager* manager, PlaybackState* state, int playbackSlotIndex)
 {
 	// open file*
@@ -411,13 +355,13 @@ startInputPlayback(InputManager* manager, PlaybackState* state, int playbackSlot
 	// 	fread(state->memory, state->totalMemorySize, 1, state->playingFile);
 }
 
-internal void
+internal2 void
 endplayBack(PlaybackState* state)
 {
 	fclose(state->playingFile);
 }
 
-internal void
+internal2 void
 playBackInput(InputManager* manager, PlaybackState* state)
 {
 	int elementsRead = fread(manager, sizeof(InputManager), 1, state->playingFile);
@@ -581,8 +525,6 @@ static void load_thread(PlaybackState* data)
 	}
 }
 
-#include <thread>
-
 // number |= 1 << x;   // setting
 // number &= ~(1 << x); // clear
 
@@ -590,15 +532,6 @@ static void load_thread(PlaybackState* data)
 // bit = (number >> x) & 1; // checking
 // number ^= (-x ^ number) & (1 << n); // setting 1 or 0
 
-#include <bitset>
-#include <iostream>
-
-
- // #include <sol\sol.hpp>
- // #include "../sol/sol.hpp"
-
- // #include <lua.hpp>
- // #include <sol\sol.hpp>
 
 std::string GetLastErrorAsString()
 {
@@ -619,15 +552,6 @@ std::string GetLastErrorAsString()
 	return message;
 }
 
-// doublebuffer
-// glclearcolor
-// ikkunan luonnin aika koodit
-
-// spritebatch.init()
-// hudspritebatch.init();
-// camera init
-
-
 UpiEngine::GLSLProgram textureProgram;
 UpiEngine::Camera2D    camera2D;
 bool initShaders(UpiEngine::GLSLProgram& textureProgram)
@@ -638,10 +562,6 @@ bool initShaders(UpiEngine::GLSLProgram& textureProgram)
 	textureProgram.addAttribute("vertexUV");
 	return textureProgram.linkShaders();
 }
-
-// #include <Raknet.h>
-#include "Algo/SLinkedList.h"
-
 
 #define LUAFILESCOUNT 3
 const char* luaFiles[LUAFILESCOUNT] = {
@@ -654,342 +574,6 @@ const char* shaderFiles[SHADERFILECOUNT] = {
 	"Shaders/colorShading.frag", "Shaders/colorShading.vert",
 	"Shaders/province.frag", "Shaders/province.vert"
 };
-
-#include "graph.h"
-
-//#include <list>
-//#include <queue>
-//
-//// template<class T>
-//// class SLinkedList;
-//
-//template<class NodeType, class ArcType>
-//class GraphArc;
-//
-//template<class NodeType, class ArcType>
-//class GraphNode
-//{
-//public:
-//	typedef GraphArc<NodeType, ArcType> Arc;
-//	typedef GraphNode<NodeType, ArcType> Node;
-//
-//	NodeType data;
-//	std::list<Arc> archlist;
-//	bool marked;
-//
-//	void AddArc(Node* node, ArcType weight)
-//	{
-//		Arc a;
-//		a.node = node;
-//		a.weight = weight;
-//		archlist.push_back(a);
-//	}
-//
-//	Arc* GetArc(Node* node)
-//	{
-//		auto iter = archlist.begin();
-//
-//		for (iter; iter != archlist.end(); iter++)
-//		{
-//			if ((*iter).node == node)
-//				return &(*iter);
-//		}
-//		return 0;
-//
-//		//auto iter = std::find(archlist.begin(), archlist.end(), node);
-//		//if (iter != archlist.end())
-//		//{
-//		//	return &(*iter);
-//		//}
-//		//return nullptr;
-//	}
-//};
-//
-//
-//template<class NodeType, class ArcType>
-//class GraphArc
-//{
-//public:
-//	GraphNode<NodeType, ArcType>* node;
-//	ArcType weight;
-//};
-//
-//template<class NodeType, class ArcType>
-//class Graph
-//{
-//public:
-//	typedef GraphArc<NodeType, ArcType> Arc;
-//	typedef GraphNode<NodeType, ArcType> Node;
-//
-//	std::vector<Node*> nodes;
-//	int count;
-//
-//	Graph(int size) : nodes(size)
-//	{
-//		int i;
-//		for (i = 0; i < size; i++)
-//		{
-//			nodes[i] = 0;
-//		}
-//		count = 0;
-//	}
-//
-//	~Graph()
-//	{
-//		int index;
-//		for (index = 0; index < nodes.size(); index++)
-//		{
-//			if (nodes[index] != 0)
-//			{
-//				delete nodes[index];
-//			}
-//		}
-//	}
-//
-//	bool AddNode(NodeType data, int index)
-//	{
-//		if (nodes[index] != 0)
-//		{
-//			return false;
-//		}
-//
-//		nodes[index] = new Node;
-//		nodes[index]->data = data;
-//		nodes[index]->marked = false;
-//		count++;
-//
-//		return true;
-//	}
-//
-//	void RemoveNode(int index)
-//	{
-//		if (nodes[index] == 0)
-//		{
-//			return;
-//		}
-//
-//		int node;
-//		Arc* arc;
-//
-//		for (node = 0; node < nodes.size(); node++)
-//		{
-//			if (nodes[node] != 0)
-//			{
-//				arc = nodes[node]->GetArc(nodes[index]);
-//				if (arc != 0)
-//					RemoveArc(node, index);
-//			}
-//		}
-//
-//		delete node[index];
-//		nodes[index] = 0;
-//		count--;
-//	}
-//
-//	bool AddArc(int from, int to, ArcType weight)
-//	{
-//		if (nodes[from] == 0 || nodes[to] == 0)
-//		{
-//			return false;
-//		}
-//		if (nodes[from]->GetArc(nodes[to]) != 0)
-//		{
-//			return false;
-//		}
-//		nodes[from]->AddArc(nodes[to], weight);
-//		return true;
-//	}
-//
-//	void RemoveArc(int from, int to)
-//	{
-//		if (nodes[from] == 0 || nodes[to] == 0)
-//		{
-//			return;
-//		}
-//
-//		nodes[from]->RemoveArc(nodes[to]);
-//	}
-//
-//	Arc* GetArc(int from, int to)
-//	{
-//		if (nodes[from] == 0 || nodes[to] == 0)
-//		{
-//			return 0;
-//		}
-//
-//		return nodes[from]->GetArc(nodes[to]);
-//	}
-//
-//	void ClearMarks()
-//	{
-//		int index;
-//		for (index = 0; index < nodes.size(); index++)
-//		{
-//			if (nodes[index] != 0)
-//			{
-//				nodes[index]->marked = false;
-//			}
-//		}
-//	}
-//
-//	void DepthFirst(Node* node, void(*process)(Node*))
-//	{
-//		if (node == 0)
-//			return;
-//
-//		process(node);
-//		node->marked = true;
-//
-//		auto iter = node->archlist.begin();
-//		for (iter; iter != node->archlist.end(); iter++)
-//		{
-//			if (iter->node->marked == false)
-//			{
-//				DepthFirst((*iter).node, process);
-//			}
-//		}
-//	}
-//
-//	// breadth-first sivu 511
-//	void BreadthFirst(Node* node, void(*process)(Node*))
-//	{
-//		if (node == 0)
-//			return;
-//
-//		std::queue<Node*> queue;
-//
-//		// list itr
-//
-//		queue.push(node);
-//		node->marked = true;
-//
-//		while (queue.size() != 0)
-//		{
-//			process(queue.front());
-//			auto itr = queue.front()->archlist.begin();
-//			for (itr; itr != queue.front()->archlist.end(); itr++)
-//			{
-//				if (itr->node->marked == false)
-//				{
-//					itr->node->marked = true;
-//					queue.push(itr->node);
-//				}
-//			}
-//			queue.pop();
-//		}
-//	}
-//};
-
-//template<class NodeType, class ArcType>
-//void GraphNode::AddArc(Node* node, ArcType weight)
-//{
-//	
-//}
-
-void renderGraph(GraphNode<int, int>* node, UpiEngine::SpriteBatch* spriteBatch)
-{
-	spriteBatch->draw(glm::vec4{  }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, 1, 1.0f);
-}
-
-void process(GraphNode<int, int>* node)
-{
-	printf("%i\n", node->data);
-}
-
-
-// 
-#include <fstream>
-
-//void SaveNodes(Graph<MapNode, float>* graph)
-//{
-//	FILE* file = fopen("GraphSave.dat", "w");
-//
-//	char buffer[64];
-//
-//	for (int i = 0; i < graph->count; i++)
-//	{
-//		auto* currentNode = graph->nodes[i];
-//		fprintf(file, "%i;%f;%f", currentNode->data.id, currentNode->data.x, currentNode->data.y);
-//
-//		for (auto iter = currentNode->archlist.begin(); iter != currentNode->archlist.end(); iter++)
-//		{
-//			fwrite(iter-)
-//		}
-//	}
-//
-//	fwrite(graph->nodes.data, sizeof(char), sizeof(buffer), file);
-//	fprintf(file, "")
-//}
-
-#include <string>
-#include <sstream>
-
-//struct MapNode
-//{
-//	int   id;
-//	float x, y; // for rendering and debugging
-//};
-
-//void FloodFillImage(ImageData* imageData, ImageData* replacement  ,int startX, int startY, Uint32 targetColor, Uint32 replacementColor)
-//{
-//	if (targetColor == imageData->GetPixel(startX, startY) && replacement->GetPixel(startX, startY) != replacementColor)
-//	{
-//		replacement->set_pixel(startX, startY, replacementColor);
-//		FloodFillImage(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
-//		FloodFillImage(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
-
-//		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
-//		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
-//	}
-//	else
-//	{
-//		return;
-//	}
-//}
-//
-
-//void GetAllAvaiblePixels(ImageData* imageData, int startX, int startY, Uint32 targetColor, int* buffer, int index = 0)
-//{
-//	if (targetColor == imageData->GetPixel(startX, startY))
-//	{
-//		GetAllAvaiblePixels(imageData, replacement, startX + 1, startY, targetColor, replacementColor);
-//		GetAllAvaiblePixels(imageData, replacement, startX - 1, startY, targetColor, replacementColor);
-//		GetAllAvaiblePixels(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
-//		GetAllAvaiblePixels(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
-//	}
-//	else
-//	{
-//		return;
-//	}
-//}
-
-
-//GLuint TurnSurfaceIntoGlTexture(SDL_Surface* surface)
-//{
-//	GLuint textureID;
-//	glGenTextures(1, &textureID);
-//	glBindTexture(GL_TEXTURE_2D, textureID);
-//
-//	int Mode = GL_RGB;
-//
-//	if (surface->format->BytesPerPixel == 4) {
-//		Mode = GL_RGBA;
-//	}
-//
-//	glTexImage2D(GL_TEXTURE_2D, 0, Mode, surface->w, surface->h, 0, Mode, GL_UNSIGNED_BYTE, surface->pixels);
-//
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//
-//	return textureID;
-//}
-//
-//void FreeTexture(GLuint* texture)
-//{
-//	glDeleteTextures(1, texture);
-//}
-
-/* Get Red component */
 
 
 // temp = pixel & fmt->Rmask;  /* Isolate red component */
@@ -1016,7 +600,7 @@ void process(GraphNode<int, int>* node)
 //alpha = (Uint8)temp;
 
 
-
+// Proper thread safe resource manager
 SDL_Surface* LoadSurface(const char* image)
 {
 	SDL_Surface* surface = IMG_Load(image);
@@ -1052,226 +636,23 @@ void FreeTexture(GLuint* texture)
 
 
 
-// std::thread<>
+// Logic Thread
+std::thread logicThread;
+static bool join = false;
 std::thread LogicThread;
-
-
-// HULLUTTELUA!!!
-
-glm::vec2 translations[200000]{};
-
-static UpiEngine::GLSLProgram instancedShader;
-unsigned int instanced()
-{
-	int index = 0;
-	float offset = 0.1f;
-	for (int y = -10; y < 10; y += 2)
-	{
-		for (int x = -10; x < 10; x += 2)
-		{
-			glm::vec2 translation;
-			translation.x = (float)x / 10.0f + offset;
-			translation.y = (float)y / 10.0f + offset;
-			translations[index++] = translation;
-		}
-	}
-
-	unsigned int instanceVBO;
-	glGenBuffers(1, &instanceVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100 * 100, &translations[0], GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// set up vertex data (and buffer(s)) and configure vetex attributes
-	float quadVertices[] = {
-		// positions     // colors
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-		-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
-
-		-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-		 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-		 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
-	};
-
-	unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	// also set instance data
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO); // this attribute comes from a different vertex buffer
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
-
-
-	instancedShader.compileShaders("Shaders/Hulluttelu.vert", "Shaders/Hulluttelu.frag");
-	// instancedShader.addAttribute("vertexPosition");
-	// instancedShader.addAttribute("vertexColor");
-	// instancedShader.addAttribute("vertexUV");
-	instancedShader.linkShaders();
-
-	return quadVAO;
-}
-
-float quadVertices2[] = {
-	// positions     // colors
-	-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-	 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-	-0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
-
-	-0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-	 0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-	 0.05f,  0.05f,  0.0f, 1.0f, 1.0f
-};
-
-void createEmptyVBO(int floatCount)
-{
-	unsigned int vbo;
-	glGenBuffers(1, &vbo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices2), quadVertices2, GL_STREAM_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void AddPerInstancedAttribute(int vao, int vbo, int attribute, int dataSize,
-	int instancedDataLength, int fofset)
-{
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindVertexArray(vao);
-	glVertexAttribPointer(attribute, dataSize, GL_FLOAT, false, instancedDataLength * 4, (void*)fofset);
-}
-
-struct vertex2 { float x, y, u, v, r, g, b; };
-unsigned int vaoo, vboo;
-
-void init()
-{
-	if (vaoo == 0)
-	{
-		glGenVertexArrays(1, &vaoo);
-	}
-	glBindVertexArray(vaoo);
-
-	if (vboo == 0)
-	{
-		glGenBuffers(1, &vboo);
-	}
-	glBindBuffer(GL_ARRAY_BUFFER, vboo);
-
-	glEnableVertexAttribArray(0); // kertoo opengl mitä haluamme käyttää eka attribute arrrayta tarvitsee vain yhden koska käytämme vain sijaintia
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-
-	// glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position)); //kertoo sijainnin mistä alkaa ja kuinka piirträä pointer juttu dataan vbo jotain
-	// glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, color)); // kertoo attribute pointerin värin
-	// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-
-	glBindVertexArray(0);
-}
-
-
-
-// SAME VBO
-
-// glVertexAttribPointer( attr, size, FLAOT, false, strid, offset);
-
-// vec2 Pos, vec3 Color, vec2 UV, 
-
-// bindTexture();
-
-// big emtpy vbo
-
-// int -> int
-// int = vbo
-// int vbo = gen buffert
-// bind guffer array buffer vbo
-// buffer data = gl array buffer float count * 4 , gl15 STREAM DRAW
-// glbindbuffer(0);
-
-
-// add per isntacded
-
-// int vao 
-// int vbo, int attribut int dataSize, int instaced data length, int offset
-
-
-// bingbuffer array_buffer, vbo
-// binfvertexarray (vao)
-// gl vertex attribpointer(attrivute, dataSize, FLOAT, false, instandedtatLEng, offset * 4);
-// gl.vertexattribdivisior(attribute, 1);
-// gl. bingbuffer(0)
-//  unbind vao
-
-
-// max_instanced
-// max_DATA_LENGTH = 21; -> number of float per particle aka  x, y, u v , r g b -> 7
-// int vbo 
-
-// create vbo (instance_data-_leng * max instances
-// guad.getVaoId(), vbo
-// // add insta
-
-unsigned int _instanceVao, _instanceVbo;
-void InitInstancedBatch()
-{
-	glGenVertexArrays(1, &_instanceVao);
-	glBindVertexArray(_instanceVao);
-
-	glGenBuffers(1, &_instanceVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, _instanceVbo);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, _instanceVbo); // this attribute comes from a different vertex buffer
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// glBindBuffer(GL_ARRAY_BUFFER, kukaMuuMuka);
-
-	glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute.
-}
-
-
-
-
-
-
-
-#include <mutex>
-#include <condition_variable>
-
 std::mutex logicMutex;
 std::condition_variable cond;
+volatile bool logicThreadRunning = true;
 
-void updateLogicThread(EngineCore* core)
+void LogicThreadUpdate(EngineCore* core)
 {
-	// lock
-	while (1)
+	while (logicThreadRunning)
 	{
 		std::unique_lock<std::mutex> locker(logicMutex);
-		cond.wait(locker); // hahahahahah
+		cond.wait(locker); 
 
-		LoopPtr(core); // GAME LOOP    // tarvitsen sijainnit tai komennot renderointiin ?
+		LoopPtr(core); 
 
-//		std::this_thread::sleep_for(std::chrono::milliseconds(64));
-
-//		printf(("tick\n"));
 		core->input->mouse = camera2D.convertScreenToWorld(core->input->rawMouse);
 		core->input->update(); // TODO: maybe poll for input
 
@@ -1279,31 +660,27 @@ void updateLogicThread(EngineCore* core)
 	}
 }
 
-
-
 struct gameStateCopy
 {
 	PhysicsBody* bodiesCopy;
+	UpiEngine::ColorRGBA8* colors;
 	int          copiesCount;
 };
 
-
-
-void mtDraw2(PhysicsBody* bodies, int count, UpiEngine::SpriteBatch* spriteBatch)
+static UpiEngine::ColorRGBA8 colorCopies[60000]{};
+void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch)
 {
-	//	Uint32 ucolor = unit->side;
-	// auto color = Uin32ToColor(ucolor);
-	static auto white = UpiEngine::ColorRGBA8(160, 170, 170, 255);
 	for (int i = 0; i < count; i++)
 	{
 		PhysicsBody* body = bodies + i;
-		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, white);
+		UpiEngine::ColorRGBA8* color = colors + i;
+		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, *color);
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	gameStateCopy copy{ 0 };
+	gameStateCopy copy{ 0 }; // ? ? ?
 
 	// update()
 	int windowWidth = 1280;
@@ -1353,10 +730,8 @@ int main(int argc, char* argv[])
 
 	UpiEngine::SpriteBatch spriteBatch;
 	spriteBatch.init();
-	// spriteBatch.init();
 	camera2D.init(windowWidth, windowHeight);
 	camera2D.setPosition(glm::vec2(windowWidth / 2, windowHeight / 2));
-
 
 	UpiEngine::Camera2D hudCamera;
 	hudCamera.init(windowWidth, windowHeight);
@@ -1366,7 +741,6 @@ int main(int argc, char* argv[])
 
 	ImGui_ImplSdlGL3_Init(window);
 
-
 	// TODO: asdlkf color
 	ImVec4 clear_color = ImColor(114, 144, 154);
 
@@ -1374,7 +748,7 @@ int main(int argc, char* argv[])
 	GetCurrentDirectory(256, buf);
 	LoadGameDLL();
 
-
+	
 	LPVOID baseAddress = (LPVOID)teraBytes(2);
 	PlaybackState inputState{};
 
@@ -1391,6 +765,7 @@ int main(int argc, char* argv[])
 	inputState.memory = gameMemory.permanentStorage;
 	inputState.totalMemorySize = megaBytes(128); // + gigaBytes(1);
 
+
 	// TODO: Terminate thread
 	std::atomic<bool> fileLoadingThreadDone(false);
 	std::thread thread([&fileLoadingThreadDone, &inputState] {
@@ -1400,19 +775,13 @@ int main(int argc, char* argv[])
 		fileLoadingThreadDone = true;
 	});
 
+
 	InputManager inputManager = {};
+
 	//////////////////////////////////////////////
 	float currentSlice{ 1.1f };
 	float lastFT{ 0.f };
-	float FT_SLICE{ 1.0f };
 	float  FT_STEP{ 1.0f };
-	float ft = 0.f;
-	float ftSeconds = 0.f;
-#define avgFTSize 100
-#define avgFpsSize 100
-	float avgFT[avgFTSize];
-	float avgFps[avgFpsSize];
-	bool devConsole = false;
 
 	// WHAT THE FUCK!
 	initFileWatch(gAssetPath);
@@ -1428,8 +797,6 @@ int main(int argc, char* argv[])
 	core.spriteBatch = &spriteBatch;
 	core.input = &inputManager;
 	core.memory = &gameMemory;
-	// core.resources = &textureHolder; TODO: port to allegro5
-	// core.window = gWindow; -> backBuffer
 	core.deltaTime = FT_STEP;
 	core.screenHeight = SCREEN_WIDTH;
 	core.screenWidth = SCREEN_HEIGHT;
@@ -1445,7 +812,6 @@ int main(int argc, char* argv[])
 	core.camera2D = &camera2D;
 	UpiEngine::ResourceManager::init();
 	core.ctx.textureCacheCtx = UpiEngine::ResourceManager::GetContext();
-
 
 
 	// TODO: korjaa resurssit
@@ -1465,7 +831,6 @@ int main(int argc, char* argv[])
 	core.filewatcher.init(luaFiles, LUAFILESCOUNT, Resource_script);
 	// "lua/main3.lua", "lua/main2.lua"
 
-	// al_start_timer(timer);
 	bool quit = false;
 
 	std::chrono::nanoseconds simulationTime(0);
@@ -1512,21 +877,21 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	lua_getglobal(L, "main_function");
-	char buffer[512];
-	int succ = lua_pcall(L, 0, 0, 0);
+	// lua_getglobal(L, "main_function");
+	// char buffer[512];
+	// int succ = lua_pcall(L, 0, 0, 0);
 
-	if (succ != 0)
-	{
-		sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
-		printf("%s", buffer);
-		core.AddToConsole(buffer);
-		//	debugBreak();
-	}
-	else
-	{
-		lua_settop(L, 0);
-	}
+	//if (succ != 0)
+	//{
+	//	sprintf(buffer, "[error]: %s\n", lua_tostring(L, -1));
+	//	printf("%s", buffer);
+	//	core.AddToConsole(buffer);
+	//	//	debugBreak();
+	//}
+	//else
+	//{
+	//	lua_settop(L, 0);
+	//}
 
 	// lua_getglobal(L, "testiPrinter");
 	// lua_pcall(L, 0, 0, 0);
@@ -1645,17 +1010,10 @@ int main(int argc, char* argv[])
 				if (ev.key.keysym.scancode > 0 && ev.key.keysym.scancode < SDL_SCANCODE_3)
 				{
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
-				}		auto timePoint2(std::chrono::high_resolution_clock::now());
-				auto elapsedTime(timePoint2 - timePoint1);
-				ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
-				lastFT = ft;
-				ftSeconds = (ft / 1000.f);
-
-
+				}		
 			} break;
 			}
 		} // POLL EvENTS
-
 
 				// number |= 1 << x;   // setting bit 
 				// number &= ~(1 << x); // clear 
@@ -1727,9 +1085,6 @@ int main(int argc, char* argv[])
 
 		auto context = ImGui::GetCurrentContext();
 		ImguiPtr(&core, context, (void*)(&gAssetFileTimes), &gAssetFileInfo);
-
-		// static char buffer[64];
-		// ImGui::InputText("input2 ", buffer, 64);
 
 
 
@@ -1847,16 +1202,11 @@ int main(int argc, char* argv[])
 		}
 
 #else
-// while (1) {
-// int  gameOn = 1
-		realTime = std::chrono::high_resolution_clock::now();
 
-		// int realTime = Gettime();
-		//using chrono::
-		// using namespace std::chrono_literals;
+		realTime = std::chrono::high_resolution_clock::now();
 		int updates = 0;
 
-		if (inputManager.isKeyDown(SDL_SCANCODE_E))
+		if (inputManager.isKeyDown(SDL_SCANCODE_E)) // input
 		{
 			camera2D.setScale(camera2D.getScale() - 0.0005f); // TODO: delta broken
 			if (camera2D.getScale() < 0.01f)
@@ -1868,8 +1218,6 @@ int main(int argc, char* argv[])
 		{
 			camera2D.setScale(camera2D.getScale() + 0.0005f);
 		}
-
-
 
 		while (simulationTIMER < realTime || core.beginSkipToFrame)
 		{
@@ -1911,7 +1259,7 @@ int main(int argc, char* argv[])
 
 					if (!threadInit) // aka ei montaa framea per renders
 					{
-						logicThread = std::thread(updateLogicThread, &core); // calc next frame
+						logicThread = std::thread(LogicThreadUpdate, &core); // calc next frame
 						join = true;
 						// LoopPtr(&core); // GAME LOOP    // tarvitsen sijainnit tai komennot renderointiin ?
 						threadInit = true;
@@ -1951,7 +1299,6 @@ int main(int argc, char* argv[])
 
 
 
-
 		// printf("%f\n", camera2D.getScale());
 		ImGui::Text("camera: %f", camera2D.getScale());
 
@@ -1988,7 +1335,7 @@ int main(int argc, char* argv[])
 		spriteBatch.draw(glm::vec4{ 0.f, 0.f, 590 * 15, 480 * 15 }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, id, 1.0f);
 
 		if (copy.bodiesCopy)
-			mtDraw2(copy.bodiesCopy, copy.copiesCount, &spriteBatch);
+			mtDraw2(copy.bodiesCopy, colorCopies, copy.copiesCount, &spriteBatch);
 
 		//		map.BreadthFirst(map.nodes[0], )
 		//		map.ClearMarks();
@@ -2014,53 +1361,39 @@ int main(int argc, char* argv[])
 		// debugger.render(cameraMatrix, 2.0f);
 		// debugger.end();
 #endif
-
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);
 
 
-
-
-		// al_flip_display();
-		// al_wait_for_vsync();
-
 		auto timePoint2(std::chrono::high_resolution_clock::now());
 		auto elapsedTime(timePoint2 - timePoint1);
-		ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
+		float ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).count() };
 		lastFT = ft;
-		ftSeconds = (ft / 1000.f);
-
-		// logicThread.
-
-		// gameState->bodies = physicsBodies;
-		// gameState->threadShared.thisFrame = physicsBodies2; // kakkonen ja nolla samoja
-		// gameState->threadShared.lastFrame = physicsBodies3;
+		float ftSeconds = (ft / 1000.f);
 
 
-		// wait for unlock ?????
-		std::unique_lock<std::mutex> locker(logicMutex); // voi swapata! / need swap
+		// SYNC
+		std::unique_lock<std::mutex> locker(logicMutex); 
+
 		{
 			game_state *gameState = (game_state*)core.memory->permanentStorage;
 
 			memcpy(gameState->threadShared.lastFrame, gameState->bodies, sizeof(PhysicsBody) * gameState->currentEntityCount);
+
+			memcpy(colorCopies, gameState->entityColors, sizeof(UpiEngine::ColorRGBA8) * gameState->currentEntityCount);
 			copy.copiesCount = gameState->currentEntityCount;
 			copy.bodiesCopy = gameState->threadShared.lastFrame;
-
 		}
+
 		locker.unlock();
-
-
-		// printf("fisnish him!\n");
-
-		if (join)  // wait for next frame to be done
-		{
-			// logicThread.join();
-			join = false;
-		}
-
 	}
+
+	logicThreadRunning = false;
+	cond.notify_all();
+	logicThread.join();
+
 	ImGui_ImplSdlGL3_Shutdown();
-	// SDL_GL_DeleteCOntext(glcontext);s	
+	SDL_GL_DeleteContext(&core.ctx);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 

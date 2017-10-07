@@ -158,6 +158,7 @@ namespace UpiEngine {
 
 	}
 
+	/*
 	void nulll()
 	{
 		// vertex Buffer Object
@@ -194,7 +195,7 @@ namespace UpiEngine {
 		}
 	}
 
-
+	*/
 
 	void SpriteBatch::createRenderBatches()
 	{

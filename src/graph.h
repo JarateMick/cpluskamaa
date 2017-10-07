@@ -76,8 +76,8 @@ public:
 
 	~Graph()
 	{
-		int index;
-		for (index = 0; index < nodes.size(); index++)
+		// int index;
+		for (int index = 0; index < nodes.size(); index++)
 		{
 			if (nodes[index] != 0)
 			{
@@ -121,7 +121,7 @@ public:
 			}
 		}
 
-		delete node[index];
+		delete nodes[index];
 		nodes[index] = 0;
 		count--;
 	}

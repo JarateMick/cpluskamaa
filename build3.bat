@@ -2,18 +2,18 @@
 ctime -begin engine.ctm
 
 if not defined DEV_ENV_DIR (
-	call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-    rem  call "H:\Visual Studio\VC\vcvarsall.bat" x64 
+	rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+    call "H:\Visual Studio\VC\vcvarsall.bat" x64 
 	rem call "I:\VisualStudio\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 set DEV_ENV_DIR= ???
 
 rem eHa -O2
-set CFLAGS= -Zi -nologo -EHs -Gm- -Oi -GR-  -fp:fast -wd4311 -wd4312 
+set CFLAGS= -Zi -nologo -EHs -Gm- -Oi -GR-  -fp:fast -wd4311 -wd4312 -Ofast -fopenmp
 set LFLAGS= -incremental:no opengl32.lib  
-set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib
+set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib Graphics.lib
 REM set INCLUDE=
-set ADDITIONAL= /I"../include" /I"../src/Imgui" /I"../sln/Raknet/Include"
+set ADDITIONAL= /I"../include" /I"../src/Imgui" /I"../sln/Raknet/Include" /I"../Graphics/include"
 
 rem kernel32.lib user32.lib  Shell32.lib
 if not exist bin mkdir bin
@@ -24,13 +24,13 @@ del *.pdb > NUL 2> NUL
 
 
 rem simple preprocessor
-I:\Dev\LLVM\msbuild-bin\cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
+rem I:\Dev\LLVM\msbuild-bin\cl %CFLAGS% -D_CRT_SECURE_NO_WARNINGS ..\src\simple_preprocessor.cpp /link %LFLAGS%
 
 rem Box2D.lib  Box2D.lib
 
 REM game dll
 echo "WAITING FOR PDB ..." > lock.tmp
-REM cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
+I:\Dev\LLVM\msbuild-bin\cl %CFLAGS% -DMAIN_BUG=1 -DALLEGRO_STATIC_LINK=1 %ADDITIONAL%  ..\src\game.cpp /MD -LD %LIBS%   /link -incremental:no -opt:ref -PDB:game_%random%.pdb  /LIBPATH:"../deps/lib" -EXPORT:Draw -EXPORT:Loop
 del lock.tmp
 
 SETLOCAL EnableExtensions
