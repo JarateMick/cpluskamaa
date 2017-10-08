@@ -190,6 +190,7 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 
 EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState);
 
+void setEntityColor(Uint32 color, game_state* gameState, int guid);
 
 
 //std::vector<int> findPath(int startId, int goalId, game_state* gameState);

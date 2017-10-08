@@ -649,9 +649,9 @@ void LogicThreadUpdate(EngineCore* core)
 	while (logicThreadRunning)
 	{
 		std::unique_lock<std::mutex> locker(logicMutex);
-		cond.wait(locker); 
+		cond.wait(locker);
 
-		LoopPtr(core); 
+		LoopPtr(core);
 
 		core->input->mouse = camera2D.convertScreenToWorld(core->input->rawMouse);
 		core->input->update(); // TODO: maybe poll for input
@@ -660,27 +660,60 @@ void LogicThreadUpdate(EngineCore* core)
 	}
 }
 
-struct gameStateCopy
+
+struct Bullets
 {
-	PhysicsBody* bodiesCopy;
-	UpiEngine::ColorRGBA8* colors;
-	int          copiesCount;
+	int count;
+
+	// Uint32         allSides[60000];
+	BulletBody     bulletBodies[maxiumBullets];
 };
 
+struct gameStateCopy
+{
+	PhysicsBody*  bodiesCopy;
+	UpiEngine::ColorRGBA8* colors;
+	int           copiesCount;
+	unsigned int  mapCopy;
+	glm::ivec4    dimensions{};
+
+	Bullets       bullets;
+
+	glm::vec4     uvs[60000];
+};
+
+void SyncBullets(Bullets* bullets, game_state* state)
+{
+	memcpy(bullets->bulletBodies, state->bulletBodies, state->bulletCount * sizeof(BulletBody));
+	bullets->count = state->bulletCount;
+}
+
 static UpiEngine::ColorRGBA8 colorCopies[60000]{};
-void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch)
+void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch, gameStateCopy* copy)
 {
 	for (int i = 0; i < count; i++)
 	{
 		PhysicsBody* body = bodies + i;
 		UpiEngine::ColorRGBA8* color = colors + i;
-		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, 3, 1.0f, *color);
+		static auto ART = UpiEngine::ResourceManager::getTexture("Archer.png").id;
+		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, copy->uvs[i], ART, 1.0f, *color);
+	}
+
+	Bullets* bullets = &copy->bullets;
+	for (int i = 0; i < bullets->count; i++)
+	{
+		const auto& pos = (bullets->bulletBodies + i)->position;
+		static auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png").id;
+		static auto yellow = UpiEngine::ColorRGBA8(255, 255, 0, 255);
+		spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
+			notWorking, 1.0f, yellow); // depth !
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	gameStateCopy copy{ 0 }; // ? ? ?
+	gameStateCopy* copy = new gameStateCopy; // ? ? ?
+	copy->bodiesCopy = 0;
 
 	// update()
 	int windowWidth = 1280;
@@ -748,7 +781,7 @@ int main(int argc, char* argv[])
 	GetCurrentDirectory(256, buf);
 	LoadGameDLL();
 
-	
+
 	LPVOID baseAddress = (LPVOID)teraBytes(2);
 	PlaybackState inputState{};
 
@@ -905,6 +938,7 @@ int main(int argc, char* argv[])
 		auto b = UpiEngine::ResourceManager::getTexture("building.png");
 
 		auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png");
+		auto notWorking2 = UpiEngine::ResourceManager::getTexture("Archer.png");
 	}
 	auto realTime(std::chrono::high_resolution_clock::now());
 	auto simulationTIMER(std::chrono::high_resolution_clock::now());
@@ -917,7 +951,6 @@ int main(int argc, char* argv[])
 		auto delta_time = std::chrono::high_resolution_clock::now() - currentTime;
 		currentTime = std::chrono::high_resolution_clock::now();
 		simulationTime += std::chrono::duration_cast<std::chrono::nanoseconds>(delta_time);
-
 
 		// TODO: thread pool
 		if (fileLoadingThreadDone)
@@ -1010,7 +1043,7 @@ int main(int argc, char* argv[])
 				if (ev.key.keysym.scancode > 0 && ev.key.keysym.scancode < SDL_SCANCODE_3)
 				{
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
-				}		
+				}
 			} break;
 			}
 		} // POLL EvENTS
@@ -1315,11 +1348,8 @@ int main(int argc, char* argv[])
 		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 		glUniform1i(textureLocation, 0);
 
-
-
 	https://www.latex-project.org/
 	// httpss://www.latex-project.org2/
-
 
 		GLint plocation = textureProgram.getUniformLocation("P");
 		glm::mat4 cameraMatrix = camera2D.getCameraMatrix();
@@ -1329,16 +1359,11 @@ int main(int argc, char* argv[])
 		spriteBatch.draw(glm::vec4{ 200.f, 100.f, 40.f, 40.f }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, randomTexture, 1.0f);
 
 		// DrawPtr(&core);
-
-		// .dimensions = glm::vec4{ 0.f, 0.f, surface->w * mapSizeMultiplier, surface->h * mapSizeMultiplier };
-		static auto id = UpiEngine::ResourceManager::getTexture("europedata.png").id;
-		spriteBatch.draw(glm::vec4{ 0.f, 0.f, 590 * 15, 480 * 15 }, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, id, 1.0f);
-
-		if (copy.bodiesCopy)
-			mtDraw2(copy.bodiesCopy, colorCopies, copy.copiesCount, &spriteBatch);
-
-		//		map.BreadthFirst(map.nodes[0], )
-		//		map.ClearMarks();
+		if (copy->bodiesCopy)
+		{
+			spriteBatch.draw(copy->dimensions, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, copy->mapCopy, 1.0f); // map draw
+			mtDraw2(copy->bodiesCopy, colorCopies, copy->copiesCount, &spriteBatch, copy);
+		}
 
 		spriteBatch.end();
 		spriteBatch.renderBatch();
@@ -1373,7 +1398,7 @@ int main(int argc, char* argv[])
 
 
 		// SYNC
-		std::unique_lock<std::mutex> locker(logicMutex); 
+		std::unique_lock<std::mutex> locker(logicMutex);
 
 		{
 			game_state *gameState = (game_state*)core.memory->permanentStorage;
@@ -1381,8 +1406,24 @@ int main(int argc, char* argv[])
 			memcpy(gameState->threadShared.lastFrame, gameState->bodies, sizeof(PhysicsBody) * gameState->currentEntityCount);
 
 			memcpy(colorCopies, gameState->entityColors, sizeof(UpiEngine::ColorRGBA8) * gameState->currentEntityCount);
-			copy.copiesCount = gameState->currentEntityCount;
-			copy.bodiesCopy = gameState->threadShared.lastFrame;
+			copy->copiesCount = gameState->currentEntityCount;
+			copy->bodiesCopy = gameState->threadShared.lastFrame;
+
+			SyncBullets(&copy->bullets, gameState);
+
+			memcpy(copy->uvs, gameState->unitAnimations.uvs, sizeof(glm::vec4) * gameState->currentEntityCount);
+
+
+			if (gameState->worldmap.visual.surface)
+			{
+				FreeTexture(&copy->mapCopy);
+				copy->mapCopy = TurnSurfaceIntoGlTexture(gameState->worldmap.visual.surface);
+				copy->dimensions = gameState->worldmap.dimensions;
+			}
+
+			
+			if (gameState->player && gameState->player->player.selectingTroops)
+				gameState->player->player.selectionRect.DrawRect();
 		}
 
 		locker.unlock();

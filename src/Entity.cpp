@@ -11,6 +11,7 @@
 //	return BreadthFirst(startId, gameState->MapNodes, goalId);
 //}
 
+
 UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
 {
 	GLubyte a = color >> 24 & 255;
@@ -18,6 +19,12 @@ UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
 	GLubyte g = color >> 8 & 255;
 	GLubyte b = color >> 0 & 255;
 	return UpiEngine::ColorRGBA8(b, g, r, a); // uint32 on muodossa ABGR
+}
+
+void setEntityColor(Uint32 color, game_state* gameState, int guid)
+{
+	auto colr = Uin32ToColor(color);
+	gameState->entityColors[guid] = colr; // drawing color
 }
 
 const float UNIT_SPEED = 1.0f;   // ~ archer speed
@@ -173,7 +180,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				float x = gameState->selectedEntitys[i]->x;
 				float y = gameState->selectedEntitys[i]->y;
 #else
-				float x = (body + gameState->selectedEntitys[i]->guid)->x;
+				float x = (body + gameState->selectedEntitys[i]->guid)->x; // used later!!!!
 				float y = (body + gameState->selectedEntitys[i]->guid)->y;
 #endif
 
@@ -200,7 +207,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 						printf("matka\n"); // seuraa reittiä
 					}
-					else  // mee viereiseen
+					else  // mee viereiseen // @cleanup
 					{
 						int targetId = path[0];
 						auto v2 = gameState->provinceData.positions[targetId];
@@ -211,6 +218,12 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 						gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
 						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
 						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
+
+						int guid = gameState->selectedEntitys[i]->guid;
+
+						Anim_enum animation = (input->mouse.x < x) ? Anim_Archer_Run_Left : Anim_Archer_Run_Right;
+						SetAnimation(gameState, guid, animation);
+
 						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 					}
 
@@ -223,11 +236,51 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				}
 			}
 
-			if (input->isMouseClicked(2))
+
+		}
+
+		// CONTROLSSSS
+		if (input->isMouseClicked(2))
+		{
+			Entity* targetEntity = 0;
+			Rect rect{ input->mouse.x, input->mouse.y, 60.f, 60.f };
+
+			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
-				// set targettoroo!
+				Entity* e = &gameState->entities[i];
+				if (e->type == Entity_unit)
+				{
+					PhysicsBody* body = (gameState->bodies + i);
+					if (rect.Contains(body->x, body->y))
+					{
+						targetEntity = e;
+						break;
+					}
+				}
 			}
 
+			if (targetEntity)
+			{
+				for (int i = 0; i < gameState->selectedCount; i++)
+				{
+					// nullaa jos kuollut target
+					gameState->selectedEntitys[i]->unit.attackTarget = targetEntity;
+				}
+				printf("target set\n");
+			}
+		}
+
+		if (input->isKeyPressed(SDL_SCANCODE_C))
+		{
+			for(int i = 0; i < gameState->currentEntityCount; i++)
+			{
+				Entity* entity = &gameState->entities[i];
+				entity->unit.targetX = -1;
+				entity->unit.originalTargetX = -1;
+				entity->unit.targetY = -1;
+				entity->unit.originalTargetY = -1;
+				entity->unit.attackTarget = nullptr;
+			}
 		}
 
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
@@ -239,26 +292,47 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			// TODO: choose troops
 			player->selectionRect.UseLeftBottomAsStart();
 
+			float leftX  = player->selectionRect.x;
+			float rigthX = leftX + player->selectionRect.w;
+
+			float topY    = player->selectionRect.y;
+			float bottomY = topY + player->selectionRect.h;
+
+			auto TopLeft     = HashPoint(leftX, topY);
+			auto BottomRigth = HashPoint(rigthX, bottomY);
+
 			for (int i = 0; i < 1000; i++)
 			{
 				gameState->selectedEntitys[i] = nullptr;
 			}
 
-			int selectedCount = 0;
-			for (int i = 0; i < gameState->currentEntityCount; i++)
-			{
-				Entity* ee = &gameState->entities[i];
-				printf("Entitys: %i\n", gameState->currentEntityCount);
 
-				if (ee->type == Entity_unit)
-				{
-					if (player->selectionRect.Contains((body + ee->guid)->x, (body + ee->guid)->y))
-					{
-						if (selectedCount < gameState->maxSelected)
-							gameState->selectedEntitys[selectedCount++] = ee;
-					}
-				}
+
+			PhysicsBody* selectedBodies[1000]{}; // TODO: tarkista max selected
+			allUniques(TopLeft.y, BottomRigth.y, TopLeft.x, BottomRigth.x, gameState->spatialGrid, selectedBodies, 1000);
+
+			int selectedCount = 0;
+			for(int i = 0; i < 1000 && selectedBodies[i]; i++)
+			{
+				Entity* ee = &gameState->entities[selectedBodies[i]->owner];
+				gameState->selectedEntitys[selectedCount++] = ee;
 			}
+
+			//int selectedCount = 0;
+			//for (int i = 0; i < gameState->currentEntityCount && selectedCount < 1000; i++)
+			//{
+			//	Entity* ee = &gameState->entities[i];
+			//	printf("Entitys: %i\n", gameState->currentEntityCount);
+
+			//	if (ee->type == Entity_unit)
+			//	{
+			//		if (player->selectionRect.Contains((body + ee->guid)->x, (body + ee->guid)->y))
+			//		{
+			//			if (selectedCount < gameState->maxSelected)
+			//				gameState->selectedEntitys[selectedCount++] = ee;
+			//		}
+			//	}
+			//}
 
 			gameState->selectedCount = selectedCount;
 			printf("selected %i entitys ", selectedCount);
@@ -366,7 +440,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 				++gameState->bulletCount;
 
-
+				Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
+				SetAnimation(gameState, e->guid, animation);
 				// printf("bullet at start fo shoting %i \n", gameState->bulletCount);
 
 #endif
@@ -403,7 +478,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					unit->path.pop_back();
 				}
 			}
-			else
+			else 
 			{
 				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
 #if 0
@@ -473,10 +548,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 				// setup color
 				Uint32 ucolor = ee->unit.side;
-				auto color = Uin32ToColor(ucolor);
+				setEntityColor(ucolor, gameState, ee->guid);
 
-				gameState->entityColors[ee->guid] = color;
-
+				InitAnimation(gameState, ee->guid);
 
 			} break;
 			default:
@@ -569,6 +643,7 @@ void r(Entity *e, EngineCore* core, PhysicsBody* body)
 		DefineInput(core);
 
 		char buffer[64];
+
 		sprintf(buffer, "money: %i", player->cash);
 		Debug::drawText(buffer, 2);
 

@@ -727,40 +727,6 @@ EXPORT IMGUIFUNC(Imgui)
 		}
 	}
 
-	static bool selectTarget = false;
-	ImGui::Checkbox("select target (g)", &selectTarget); // GAMEPLAY KOODIA
-	if (selectTarget)
-	{
-		if (input->isKeyPressed(SDL_SCANCODE_G))
-		{
-			Entity* targetEntity = 0;
-			Rect rect{ input->mouse.x, input->mouse.y, 60.f, 60.f };
-
-			for (int i = 0; i < gameState->currentEntityCount; i++)
-			{
-				Entity* e = &gameState->entities[i];
-				if (e->type == Entity_unit)
-				{
-					PhysicsBody* body = (gameState->bodies + i);
-					if (rect.Contains(body->x, body->y))
-					{
-						targetEntity = e;
-						break;
-					}
-				}
-			}
-
-			if (targetEntity)
-			{
-				for (int i = 0; i < gameState->selectedCount; i++)
-				{
-					// nullaa jos kuollut target
-					gameState->selectedEntitys[i]->unit.attackTarget = targetEntity;
-				}
-				printf("target set\n");
-			}
-		}
-	}
 
 
 	// Province editings

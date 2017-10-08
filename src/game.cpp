@@ -21,8 +21,6 @@
 #undef max
 #undef min 
 
-
-
 // preprocessor
 // oma lispy> 
 // ota paikkasi auringon alta
@@ -47,16 +45,7 @@
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
-constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
-constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
-constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
 
-struct SpatialHash            // map width = textureW * 10, textureH * 10
-{
-	// hash map :(
-
-	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
-} hash4r;
 
 void debugDraw(SpatialHash* hash)
 {
@@ -133,6 +122,30 @@ void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 // uniquesta eroon
 // erasesta  eroon
 
+void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, PhysicsBody* bodiesOut[], int outSize)
+{
+	int count = 0;
+	for (int i = startY; i < endY && count != outSize; i++)
+	{
+		for (int j = startX; j < endX; j++)
+		{
+			std::vector<PhysicsBody*>* v = &hash->hashMap[i][j];
+			std::sort(v->begin(), v->end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7 
+			const auto last = std::unique(v->begin(), v->end());
+			v->erase(last, v->end()); // vain samoja
+
+			for (PhysicsBody* value : *v)
+			{
+				if (count < outSize)
+				{
+					bodiesOut[count] = value;
+					count++;
+				}
+			}
+		}
+	}
+}
+
 int CheckCollisions(SpatialHash* hash)
 {
 	int count = 0;
@@ -152,7 +165,7 @@ int CheckCollisions(SpatialHash* hash)
 
 				for (int k = 0; k < v->size(); k++)
 				{
-// #pragma omp simd				hih
+					// #pragma omp simd				hih
 					for (int kk = k + 1; kk < v->size(); kk++)
 					{
 						circleCollision(v->at(k), v->at(kk));
@@ -356,8 +369,6 @@ void renderPhysicsBodies(PhysicsBody* bodies, int count)
 
 //                    2  5  6  3  1  4
 //                    8  8  8  4  4  2
-
-
 //  entity[0]  =  entity[2]
 //  entity[1]  =  entity[5] 
 
@@ -752,7 +763,6 @@ void newNode(int index, int id, float x, float y)
 	nodes.AddNode(newNode, index);
 }
 
-
 int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* start, int count)
 {
 	for (int i = count - 1; i > -1; i--)
@@ -903,12 +913,11 @@ EXPORT void Loop(EngineCore* core)
 		gameState->currentEntityCount = 4;
 
 
-		
-
-
-
 		gameState->getAllProvinceNeighbours = getAllProvinceNeighbours;
 		gameState->newNode = newNode;
+
+		gameState->worldmap.editor.editorColor = 0;
+		gameState->spatialGrid = &hash4r;
 
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
@@ -933,7 +942,6 @@ EXPORT void Loop(EngineCore* core)
 		gameState->bodies = physicsBodies;
 		gameState->threadShared.thisFrame = physicsBodies2; // kakkonen ja nolla samoja
 		gameState->threadShared.lastFrame = physicsBodies3;
-
 
 		if (!Debug::restartLog())
 		{
@@ -961,6 +969,16 @@ EXPORT void Loop(EngineCore* core)
 	if (input->isKeyPressed(SDL_SCANCODE_4))
 	{
 		SaveAllGameState(gameState);
+	}
+
+
+	if (input->isKeyPressed(SDL_SCANCODE_5))
+	{
+		//for (int i = 0; i < gameState->currentEntityCount; i++)
+		//{
+		//	if ()
+		//	gameState->entities[i].guid
+		//}
 	}
 
 	// static char *saveFile = "testailu.data";
@@ -1018,9 +1036,24 @@ EXPORT void Loop(EngineCore* core)
 			ee->unit.targetY = -1;
 			ee->unit.originalTargetX = -1;
 			ee->unit.originalTargetY = -1;
-			ee->unit.side = 0xFFFF00FF;
 			ee->unit.hp = UNIT_BASE_HP;
-			gameState->allSides[ee->guid] = 0xFF00FF00; // tarkka kenen guid fuck
+			
+			Uint32 side = gameState->worldmap.editor.editorColor;
+			if (side == 0)
+			{
+				ee->unit.side = 0xFFFF00FF;
+				gameState->allSides[ee->guid] = 0xFFFF00FF; // tarkka kenen guid fuck
+				setEntityColor(0xFFFF00FF, gameState, ee->guid);
+			}
+			else
+			{
+				ee->unit.side = side;
+				gameState->allSides[ee->guid] = side;
+				setEntityColor(side, gameState, ee->guid);
+			}
+
+
+			InitAnimation(gameState, ee->guid);
 		}
 	}
 
@@ -1087,79 +1120,84 @@ EXPORT void Loop(EngineCore* core)
 		SortAllEntitys(gameState->entities, gameState->currentEntityCount);
 	}
 
-	struct valueId { float v; int id; };
-	struct xyi { float x, y; int id; };
 
 	START_TIMING2()
-	clearSpatial(&hash4r);
 	currentCount = 0;
 	/**********************************************************************************************/
 	// ENTITY UPDATE
-		for (int i = gameState->currentEntityCount - 1; i > -1; i--)
+	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
+	{
+		f(&gameState->entities[i], core, gameState->bodies);
+
+		if (!gameState->entities[i].alive)
 		{
-			f(&gameState->entities[i], core, gameState->bodies);
+			// deletefunc
+			const int lastEntityGuid = gameState->currentEntityCount - 1;
 
-			if (!gameState->entities[i].alive)
-			{
-				// deletefunc
-				printf("delet\n");
-				memcpy(&gameState->entities[i], &gameState->entities[gameState->currentEntityCount - 1],
-					sizeof(Entity));
-				gameState->entities[i].guid = i;
+			printf("delet\n");
 
-				// swap all funcy
-				physicsBodies[i] = gameState->bodies[gameState->currentEntityCount - 1];
-				gameState->allSides[i]     = gameState->allSides[gameState->currentEntityCount - 1];
-				gameState->entityColors[i] = gameState->entityColors[gameState->currentEntityCount - 1];
+			memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
+				sizeof(Entity));
+			gameState->entities[i].guid = i;
 
-				--gameState->currentEntityCount;
-			}
+			// swap all funcy
+			physicsBodies[i] = gameState->bodies[lastEntityGuid];
+			physicsBodies[i].owner = i;
 
-			if (gameState->entities[i].type == Entity_unit)
-			{
-				AddBodyToGrid(physicsBodies + i, &hash4r);
-				++currentCount;
-			}
+			// remove !
+
+			gameState->allSides[i] = gameState->allSides[lastEntityGuid];
+			gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
+
+			SwapAnims(gameState, i, lastEntityGuid);
+
+			--gameState->currentEntityCount;
 		}
-		END_TIMING2()
 
-		//[](int i) { return i; };
-		//\i -> i \i -> i \i -> i
-		//[](){};
-		//struct { int operator()(int i) { return i; } } lambda;
-		//int a = lambda(1);
-
-		//std::sort(xx, xx + xCount, [](valueId &a, valueId &b) { return a.v < b.v; });
-		//std::sort(yy, yy + yCount, [](valueId &a, valueId &b) { return a.v < b.v; });
-
-		//for (int i = 0; i < xCount - 15; i++)
+		//if (gameState->entities[i].type == Entity_unit)
 		//{
-		//	if (xx[i].id != 0)
-		//	{
-		//		PhysicsBody* a = xx[i].id + physicsBodies;
-		//		for (int j = i + 1; j < i + 15; j++)
-		//			circleCollision(a, xx[j].id + physicsBodies);
-		//	}
+		//	AddBodyToGrid(physicsBodies + i, &hash4r);
+		//	++currentCount;
 		//}
-		//for (int i = 0; i < yCount - 15; i++)
-		//{
-		//	if (xx[i].id != 0)
-		//	{
-		//		PhysicsBody* a = yy[i].id + physicsBodies;
-		//		for (int j = i + 1; j < i + 15; j++)
-		//			circleCollision(a, yy[j].id + physicsBodies);
-		//	}
-		//}
+	}
+	END_TIMING2()
 
+	// Huom atm clear spatial ei voi olla ennen f();
+	clearSpatial(&hash4r);
 
+	UpdateAnimations(&gameState->unitAnimations, gameState->currentEntityCount);
+
+	//[](int i) { return i; };
+	//\i -> i \i -> i \i -> i
+	//[](){};
+	//struct { int operator()(int i) { return i; } } lambda;
+	//int a = lambda(1);
+
+	//std::sort(xx, xx + xCount, [](valueId &a, valueId &b) { return a.v < b.v; });
+	//std::sort(yy, yy + yCount, [](valueId &a, valueId &b) { return a.v < b.v; });
+
+	//for (int i = 0; i < xCount - 15; i++)
+	//{
+	//	if (xx[i].id != 0)
+	//	{
+	//		PhysicsBody* a = xx[i].id + physicsBodies;
+	//		for (int j = i + 1; j < i + 15; j++)
+	//			circleCollision(a, xx[j].id + physicsBodies);
+	//	}
+	//}
+	//for (int i = 0; i < yCount - 15; i++)
+	//{
+	//	if (xx[i].id != 0)
+	//	{
+	//		PhysicsBody* a = yy[i].id + physicsBodies;
+	//		for (int j = i + 1; j < i + 15; j++)
+	//			circleCollision(a, yy[j].id + physicsBodies);
+	//	}
+	//}
 
 #if 1
-
-	//START_TIMING()
-	// START_TIMING2()
-
-#if 0
-		currentCount = 0;
+#if 1
+	currentCount = 0;
 	// static Uint32 sides[25000]; // puolet =(
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
@@ -1168,9 +1206,7 @@ EXPORT void Loop(EngineCore* core)
 		{
 			AddBodyToGrid(physicsBodies + i, &hash4r);
 			++currentCount;
-			// *(physicsBodies + currentCount) = { e->x, e->y, 15.f, (int)e->guid };
-			// sides[e->guid] = e->unit.side; // fix theset
-}
+		}
 	}
 	// END_TIMING2()
 
@@ -1178,7 +1214,6 @@ EXPORT void Loop(EngineCore* core)
 	// Physics step:
 
 	CheckCollisions(&hash4r);
-
 
 	// START_TIMING()
 
@@ -1194,6 +1229,7 @@ EXPORT void Loop(EngineCore* core)
 
 
 	// luoti fysiikat
+
 	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
 		gameState->bulletStart, gameState->bulletCount);
 
@@ -1221,7 +1257,6 @@ EXPORT void Loop(EngineCore* core)
 			gameState->entities[id].alive = false;
 		}
 	}
-
 #endif
 	// luoti fysiikat
 	// END_TIMING()
@@ -1271,9 +1306,6 @@ EXPORT void Loop(EngineCore* core)
 //temp = temp << fmt->Aloss;  /* Expand to a full 8-bit number */
 //alpha = (Uint8)temp;
 
-
-
-
 // hex sizes --- world in meters
 static const float hexWidth = 30.f;
 static const float hexHeight = 35.f;
@@ -1286,38 +1318,6 @@ static const float HexHeightInMeter = hexHeight / hexWidth;
 
 // #define hexWidth 30.f
 // #define hexheigth 35.f
-
-struct Entity2
-{
-	void Update(int a)
-
-	{
-		this->x = a;
-		this->y = a;
-	}
-	void Printf(int message)
-	{
-		printf("hello from lua %d", message);
-	}
-
-	float x;
-	float y;
-
-	void Draw()
-	{
-		// static ALLEGRO_BITMAP* bmp = al_load_bitmap("test.png");
-		// al_draw_bitmap(bmp, x, y, 0);
-	}
-
-
-	void SetPos(float x, float y)
-	{
-		this->x = x;
-		this->y = y;
-	}
-};
-
-
 
 void VisualizePath(std::vector<int>* path, game_state* state)
 {
@@ -1352,107 +1352,6 @@ std::vector<int> getAllProvinceNeighbours(int id)
 	}
 
 	return returnValue;
-}
-
-
-// return {};
-
-// poistossa synccaa molemmat swap and win !
-// serialisoi     
-// id -> entity formaattiin luan sisällä
-
-
-//void SetAllEntitys()
-//{
-//	sol::table entity = (*luaP)["ents"]; // func
-//	for (int i = 0; i < ID; i++)
-//	{
-//		Entity& e = state->entities[i];
-//		e.x = entity[i]["x"] = e.x + e.velX;
-//		e.y = entity[i]["y"] = e.y + e.velY;
-//	}
-//}
-
-//void SetAllEntitys2(int size, const char* table)
-//
-//{
-//	sol::table entity = (*luaP)[table]; // func
-//	for (int i = 1; i < size; i++)
-//	{
-//		Entity& e = state->entities[i];
-//		e.x = entity[i]["x"] = e.x + e.velX;
-//		e.y = entity[i]["y"] = e.y + e.velY;
-//	}
-//}
-
-// EXPORT __declspec(dllexport) typedef struct
-// {
-	// float x;
-	// float y;
-// } v2;
-
-EXPORT __declspec(dllexport) void SetTile(int x, int y, int id)
-{
-}
-
-const char* entitySetFunctionName = "foo2";
-
-
-EXPORT __declspec(dllexport) void SyncData(v2* data, int count)
-{
-	for (int i = 0; i < count; i++)
-	{
-		v2* d = &data[i];
-		d->x = 10000;
-		d->y = 10000;
-	}
-}
-
-EXPORT __declspec(dllexport) void Hello2(v2* data, int count)
-{
-	for (int i = 0; i < count; i++)
-	{
-		v2* d = &data[i];
-		d->x = i;
-		d->y = i;
-	}
-}
-
-EXPORT __declspec(dllexport) void Dangerous(v2* data, int count)
-{
-}
-
-EXPORT __declspec(dllexport) void EmptyFunc(double x, double y)
-{
-
-}
-
-EXPORT __declspec(dllexport) int GetX(int id)
-{
-	return 1;
-}
-EXPORT __declspec(dllexport) int GetY(int id)
-{
-	return 2;
-}
-
-EXPORT __declspec(dllexport) void Swapper(float &x, float &y, int id)
-{
-	x = 10;
-	y = 10;
-}
-
-EXPORT __declspec(dllexport) void Drawer(float x, float y) //LUA_E_F
-{
-	// static ALLEGRO_BITMAP* texture = al_load_bitmap("test.png");
-	// al_draw_bitmap(texture, x, y, 0);
-}
-
-void Hello(void* vecs)
-{
-	// printf("tanne tuli %i!", vecs[0].x);
-	// v2* v = (v2*)vecs;
-	// printf("hei %i", v[1].x);
 }
 
 void LuaErrorWrapper(game_state* state, EngineCore* core)
@@ -1551,7 +1450,6 @@ void LuaErrorWrapper(game_state* state, EngineCore* core)
 	//al_hold_bitmap_drawing(false);
 }
 
-
 struct exportMe { //LUA_E_S
 	int a;
 	float b;
@@ -1622,15 +1520,6 @@ EXPORT __declspec(dllexport) void testFuncy(int a, int b) //LUA_E_F
 //}
 //
 
-//void startTiming(int line)
-//{
-//}
-////    int a = __LINE__;
-//
-//void endTiming()
-//{
-//}
-
 //auto timePoint1(std::chrono::high_resolution_clock::now());
 //auto delta_time = std::chrono::high_resolution_clock::now() - currentTime;
 //currentTime = std::chrono::high_resolution_clock::now();
@@ -1641,8 +1530,6 @@ EXPORT __declspec(dllexport) void testFuncy(int a, int b) //LUA_E_F
 //ft = { std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime).size() };
 //lastFT = ft;
 //ftSeconds = (ft / 1000.f);
-
-
 
 //void DumpAllData(Bullets* bullets, int count)
 //{
@@ -1675,7 +1562,7 @@ EXPORT void Draw(EngineCore* core)
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
 		Entity* e = &gameState->entities[i];
-		r(e, core, gameState->bodies + i);
+		(e, core, gameState->bodies + i);
 	}
 
 	if (gameState->pathfindingUi.drawPath)
@@ -1704,8 +1591,6 @@ EXPORT void Draw(EngineCore* core)
 		core->spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
 			notWorking, 1.0f, yellow); // depth !
 	}
-
-
 
 	static bool diebugDraw = false;
 	if (diebugDraw)

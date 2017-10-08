@@ -37,11 +37,17 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
+
 struct v2 { int x, y; };
 
 
 #include <lua.hpp>
 // #include <SDL2\SDL_image.h>
+struct SpatialHash;
+struct PhysicsBody;
+
+inline v2 HashPoint(int x, int y);
+void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, PhysicsBody* bodiesOut[], int outSize);
 
 #include <cstdint>
 #include <vector>
@@ -56,7 +62,7 @@ struct v2 { int x, y; };
 #define Internal static
 
 typedef glm::vec2 vec2f;
-struct game_state; 
+struct game_state;
 
 // TODO: Vec2  -> typedeffaa vec jne....
 // oma vs Glmstruct
@@ -467,10 +473,255 @@ struct ThreadSharedData
 	PhysicsBody*   lastFrame;
 };
 
+enum Anim_enum
+{
+	Anim_Unit,
+
+	Anim_Archer_Shooting_Rigth,
+	Anim_Archer_Run_Right,     // hahahahaha hassu tapa
+	Anim_Archer_Shooting_Left,
+	Anim_Archer_Run_Left,     // hahahahaha hassu tapa
+
+	Anim_Archer_default,
+	Anim_Archer_looping,
+};
+
+enum Anim_types
+{
+	Anim_type_looping,
+	Anim_type_to_next,
+	// Anim_type_to_idle, // ?????????
+};
+
+// animaatiot olisi hash map array entityihin ja se päättäisi      1 1 1 1 1 1 1, 2 22 2 2, 3 33 
+// tyyliin animaatiot / cd:t
+
+constexpr int MAX_ENTITY_COUNT = 60000;
+struct Animations
+{
+	glm::vec4  uvs[MAX_ENTITY_COUNT];
+	int        frameTimes[MAX_ENTITY_COUNT];
+	int        currentAnimationFrame[MAX_ENTITY_COUNT]; // vaihtuu joka frametime 0:ssa
+
+	Anim_enum  animations[MAX_ENTITY_COUNT];     // pakkohan sen on olla tyyppi kun muuten ei tied' miten kasavateta
+	Anim_types animationTypes[MAX_ENTITY_COUNT];
+};
+
+// framecount
+inline int GetAnimationTime(Anim_enum anim)
+{
+	switch (anim)
+	{
+	case Anim_Unit: return 5;  break;
+	case Anim_Archer_default: return 1337; break;
+	case Anim_Archer_looping: return 8; break;
+	case Anim_Archer_Run_Right:  return 5; break;
+	case Anim_Archer_Shooting_Rigth:  return 5; break;
+	case Anim_Archer_Shooting_Left:  return 5; break;
+	default: return 1000000;
+	}
+}
+
+// frame -> uv 
+
+// framen UV
+// framen vaihto aika seuraavaan
+// tamanhetkinen frame
+
+// haluaisin sano uv rectin + ajan
+
+					   //              0.08f
+//  1.0f  /  count    = local uv.x 
+//  1.0f  /  count    = local uv.y
+
+
+constexpr float COUNTW = 12.f;
+constexpr float COUNTH = 1.f;
+constexpr float frameW = 1.0f / COUNTW;
+constexpr float frameH = 1.0f / COUNTH;
+
+
+
+//constexpr f4 getFrameUvss(int index, glm::vec2 dims)
+//{
+//	int xTile = index % (int)dims.x;
+//	int yTile = index / dims.x;
+//
+//	glm::vec4 uvs;
+//
+//	uvs.x = xTile / (float)dims.x;
+//	uvs.y = 1.0f - ((yTile + 1) / (float)dims.y);
+//	uvs.z = 1.0f / dims.x;
+//	uvs.w = 1.0f / dims.y;
+//
+//	return { 1, 2, 3, 4 };
+//}
+
+constexpr float SIZE_X = 12;
+constexpr float SIZE_Y = 4;
+
+#define TileX(index) (int)((index) % (int)SIZE_X)
+#define TileY(index) (int)((index) / SIZE_X)
+
+#define getFrameUvsm(index) { TileX(index) / SIZE_X, 1.0f - ((TileY(index) + 1) / (float)SIZE_Y), 1.0f / SIZE_X, 1.0f / SIZE_Y }
+
+
+
+
+//static glm::vec4 archerRunLeft[12] = { 
+//	 {  frameW * 0, 0.f, frameW, 1.0f }, { frameW * 1, 0.f, frameW , 1.0f },
+//	 {  frameW * 2,  0.f, frameW , 1.0f }, { frameW * 3, 0.f, frameW , 1.0f },
+//	 {  frameW * 4, 0.f, frameW , 1.0f }, { frameW * 5, 0.f, frameW , 1.0f },
+//	 {  frameW * 6, 0.f, frameW , 1.0f }, { frameW * 7, 0.f, frameW , 1.0f },
+//	 {  frameW * 8, 0.f, frameW , 1.0f }, { frameW * 9, 0.f, frameW , 1.0f },
+//	 {  frameW * 10, 0.f, frameW , 1.0f }, { frameW * 11, 0.f, frameW , 1.0f } };
+// 
+
+//static glm::vec4 archerRunLeft[11] = {
+//	getFrameUvsm(23),
+//	getFrameUvsm(24),
+//	getFrameUvsm(25),
+//	getFrameUvsm(26),
+//	getFrameUvsm(27),
+//	getFrameUvsm(28),
+//	getFrameUvsm(29),
+//	getFrameUvsm(30),
+//	getFrameUvsm(31),
+//	getFrameUvsm(32),
+//	getFrameUvsm(33),
+//	// getFrameUvsm(11),
+//};
+
+// 
+
+static glm::vec4 archerRunLeft[11] = {
+	getFrameUvsm(35),
+	getFrameUvsm(36),
+	getFrameUvsm(37),
+	getFrameUvsm(38),
+	getFrameUvsm(39),
+	getFrameUvsm(40),
+	getFrameUvsm(41),
+	getFrameUvsm(42),
+	getFrameUvsm(43),
+	getFrameUvsm(44),
+	getFrameUvsm(45),
+	// getFrameUvsm(11),
+};
+
+static glm::vec4 archerRunRight[12] = {
+	getFrameUvsm(23),
+	getFrameUvsm(24),
+	getFrameUvsm(25),
+	getFrameUvsm(26),
+	getFrameUvsm(27),
+	getFrameUvsm(28),
+	getFrameUvsm(29),
+	getFrameUvsm(30),
+	getFrameUvsm(31),
+	getFrameUvsm(32),
+	getFrameUvsm(33),
+	getFrameUvsm(34),
+};
+
+static glm::vec4 archerShootingLeft[2] =
+{
+	getFrameUvsm(5), getFrameUvsm(10),
+};
+
+static glm::vec4 archerShootingRigth[2] =
+{
+	getFrameUvsm(6), getFrameUvsm(8),
+};
+
+glm::vec4 GetNextAnim(Anim_enum* type, int* AnimationFrame) // muuttaa jos tarvii seuraavaan ei looppaaaavaan animaation
+{
+	if (*type == Anim_Archer_Run_Right)
+	{
+		if (*AnimationFrame == ArrayCount(archerRunRight))
+		{
+			(*AnimationFrame) = 0;
+		}
+		return archerRunRight[*AnimationFrame];
+	}
+	else if (*type == Anim_Archer_Run_Left)
+	{
+		if (*AnimationFrame == ArrayCount(archerRunLeft))
+		{
+			(*AnimationFrame) = 0;
+		}
+		return archerRunLeft[*AnimationFrame];
+	}
+	else if (*type == Anim_Archer_Shooting_Rigth)
+	{
+		if (*AnimationFrame == ArrayCount(archerShootingRigth))
+		{
+			*type = Anim_Archer_Run_Right;
+			(*AnimationFrame) = 0;
+		}
+		return archerShootingRigth[*AnimationFrame];
+	}
+	else if (*type == Anim_Archer_Shooting_Left)
+	{
+		if (*AnimationFrame == ArrayCount(archerShootingLeft))
+		{
+			*type = Anim_Archer_Run_Left;
+			(*AnimationFrame) = 0;
+		}
+		return archerShootingLeft[*AnimationFrame];
+	}
+
+	*AnimationFrame = 0;
+	return archerRunLeft[*AnimationFrame]; // who is default animation;
+}
+
+
+void UpdateAnimations(Animations* anims, const int count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		anims->frameTimes[i] -= 1;
+
+		if (anims->frameTimes[i] < 0)
+		{
+			anims->currentAnimationFrame[i] += 1;
+			anims->frameTimes[i] = 7;
+			anims->uvs[i] = GetNextAnim(&anims->animations[i], &anims->currentAnimationFrame[i]);
+
+			// set next animation (if animation is attack or smt....)
+			// or reset animTime
+			//switch (anims->animationTypes[i])
+			//{
+			//case Anim_type_looping:
+			//{
+			//	anims->frameTimes[i] = GetAnimationTime(anims->animations[i]);
+			//} break;
+			//case Anim_type_to_next:
+			//{
+			//	anims->animations[i] = (Anim_enum)(anims->animationTypes[i] + 1);
+			//	anims->frameTimes[i] = GetAnimationTime(anims->animations[i]);
+			//} break;
+			//case Anim_type_to_idle:
+			//{
+
+			//} break;
+		}
+	}
+}
+
+constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
+constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
+constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
+struct SpatialHash            // map width = textureW * 10, textureH * 10
+{
+	// hash map :(
+	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
+} hash4r;
+
 #define I
 introspect("game_state:") struct game_state
 {
-	Entity         entities[60000];
+	Entity         entities[MAX_ENTITY_COUNT];
 	Entity*        player;
 	Entity**       selectedEntitys;  // oma ^^ areenaan allokoiva array
 
@@ -478,20 +729,23 @@ introspect("game_state:") struct game_state
 	int            maxSelected;
 
 	PhysicsBody*   bodies;
-	Uint32         allSides[60000];
+	Uint32         allSides[MAX_ENTITY_COUNT];
 	BulletBody     bulletBodies[maxiumBullets];
 	BulletStart    bulletStart[maxiumBullets];
 	vec2f          BulletAccelerations[maxiumBullets];
 
 	ThreadSharedData threadShared;
+	Animations       unitAnimations;
 
-	UpiEngine::ColorRGBA8 entityColors[60000];
-	// kopioi:     !PhysicsBodyt eka frame!    
+	UpiEngine::ColorRGBA8 entityColors[MAX_ENTITY_COUNT];
+
+	SpatialHash*   spatialGrid;
 
 	int            bulletCount;
 	int            currentEntityCount;
 
-	ProvinceData   provinceData; 
+	ProvinceData   provinceData;
+
 
 	// TileMap tilemap;
 	// TilemapEditor editor;
@@ -509,8 +763,35 @@ introspect("game_state:") struct game_state
 	I Graph<MapNode, int>* MapNodes;
 	I std::vector<int>(*getAllProvinceNeighbours)(int);
 	I void(*newNode)(int index, int id, float x, float y);
-
 };
+
+void SetAnimation(game_state* gameState, int guid, Anim_enum animType);
+void InitAnimation(game_state* gameState, int guid)
+{
+	SetAnimation(gameState, guid, Anim_Archer_Run_Right);
+}
+
+void SetAnimation(game_state* gameState, int guid, Anim_enum animation)
+{
+	gameState->unitAnimations.animationTypes[guid] = Anim_type_looping;
+	gameState->unitAnimations.animations[guid] = animation;
+	gameState->unitAnimations.currentAnimationFrame[guid] = 0;
+	gameState->unitAnimations.frameTimes[guid] = 1;
+
+	// TODO: korjaa
+	gameState->unitAnimations.uvs[guid] = { 0.f, 0.f, 0.08f, 1.0f }; // default
+}
+
+void SwapAnims(game_state* gameState, int toGuid, int fromGuid)
+{
+	Animations* anims = &gameState->unitAnimations;
+
+	anims->frameTimes[toGuid]            = anims->frameTimes[fromGuid];
+	anims->animationTypes[toGuid]        = anims->animationTypes[fromGuid];
+	anims->animations[toGuid]            = anims->animations[fromGuid];
+	anims->currentAnimationFrame[toGuid] = anims->currentAnimationFrame[fromGuid];
+	anims->uvs[toGuid]                   = anims->uvs[fromGuid];
+}
 
 inline int GetColorToId(game_state* state, Uint32 color)
 {
