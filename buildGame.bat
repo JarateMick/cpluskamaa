@@ -9,7 +9,8 @@ if not defined DEV_ENV_DIR (
 set DEV_ENV_DIR= ???
 
 rem eHa -O2 -Oi 
-set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -openmp
+set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -openmp 
+REM -Oi -O2 -Ot 
 set LFLAGS= -incremental:no opengl32.lib  
 set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib Graphics.lib
 REM set INCLUDE=
@@ -42,7 +43,7 @@ goto FIN
 
 REM W:\hotload\C-Hotloading-master\libs\gl3w\GL
 REM platform exe
-cl %CFLAGS% /MD /I..\libs\gl3w %ADDITIONAL% ..\src\main.cpp   %LIBS%  /link %LFLAGS% opengl32.lib /LIBPATH:"../deps/lib" /SUBSYSTEM:CONSOLE
+REM cl %CFLAGS% /MD /I..\libs\gl3w %ADDITIONAL% ..\src\main.cpp   %LIBS%  /link %LFLAGS% opengl32.lib /LIBPATH:"../deps/lib" /SUBSYSTEM:CONSOLE
 rem ..\libs\gl3w\GL\gl3w.c 
 rem -Od
 rem ..\src\Imgui\imgui*.cpp 
@@ -51,7 +52,7 @@ echo Running
 
 REM Imgui tools.dll 
 
-cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
+REM cl %CFLAGS% -DDLLCOMPILE=1 %ADDITIONAL% ..\src\imguiTools.cpp /MD  -LD %LIBS% /link -incremental:no -PDB:imguiTools_%random%.pdb /LIBPATH:"../deps/lib" -EXPORT:Imgui
 
 popd
 echo Done!

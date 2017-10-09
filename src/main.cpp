@@ -660,7 +660,6 @@ void LogicThreadUpdate(EngineCore* core)
 	}
 }
 
-
 struct Bullets
 {
 	int count;
@@ -712,7 +711,7 @@ void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiE
 	}
 
 	copy->player.player.selectionRect.DrawRect();
-	printf("%f\n", copy->player.player.selectionRect.x);
+	// printf("%f\n", copy->player.player.selectionRect.x);
 }
 
 int main(int argc, char* argv[])

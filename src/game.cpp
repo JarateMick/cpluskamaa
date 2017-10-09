@@ -45,6 +45,15 @@
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
+static inline Entity* getEntity(int id, game_state* gameState)
+{
+	return &gameState->entities[id];
+}
+
+static inline PhysicsBody* getBody(int id, PhysicsBody* bodies)
+{
+	return (bodies + id);
+}
 
 
 void debugDraw(SpatialHash* hash)
@@ -84,12 +93,12 @@ void clearSpatial(SpatialHash* hash)
 
 inline v2 HashPoint(int x, int y)
 {
-	return { x / cellSize, y / cellSize };
+	return{ x / cellSize, y / cellSize };
 }
 
 inline v2 HashPoint(v2 v)
 {
-	return { v.x / cellSize, v.y / cellSize };
+	return{ v.x / cellSize, v.y / cellSize };
 }
 
 // sinä nilkki ole nopeampi
@@ -734,6 +743,7 @@ std::vector<int> BreadthFirst(int startID, Graph<MapNode, int>* graph, int goalI
 			returnPath.push_back(current->data.id);
 		}
 	}
+
 	printf("the path between %i and %i is\n", startID, goalId);
 	for (int i = 0; i < path.size(); i++)
 	{
@@ -780,8 +790,6 @@ int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* 
 			bodies[i] = bodies[count - 1];
 			start[i] = start[count - 1];
 			bulletAcceceration[i] = bulletAcceceration[count - 1];
-
-			printf("kuoli");
 			--count;
 		}
 	}
@@ -807,6 +815,7 @@ void swapAll(int i, int count, Bullets* bullets)
 }
 
 
+// struct BulletDmgOut { int targetId, attackerId; };
 int collideBullets(SpatialHash* hash, BulletBody* bulletBodies, Uint32* sides, int size, Bullets* bullets, std::vector<int>* damageOut)
 {
 	for (int i = size - 1; i > -1; i--)
@@ -843,8 +852,6 @@ lua_State* L;
 EXPORT void Loop(EngineCore* core)
 {
 	game_state *gameState = (game_state*)core->memory->permanentStorage;
-	// core->cameraX = gameState->cameraX;
-	// core->cameraY = gameState->cameraY;
 	if (!core->memory->isInitialized)
 	{
 		gameState->arena.InitalizeArena(core->memory->permanentStorageSize - sizeof(game_state),
@@ -879,7 +886,7 @@ EXPORT void Loop(EngineCore* core)
 		gameState->maxSelected = 1000;
 
 		// TODO: defaults some neat fileloading facilities would be cool
-		gameState->cameraSpeed = 50.0f;
+		gameState->cameraSpeed = 600.0f;
 
 		gameState->entities[0].type = Entity_ninja;
 		gameState->entities[1].type = Entity_npc;
@@ -901,8 +908,10 @@ EXPORT void Loop(EngineCore* core)
 		physicsBodies[2].owner = 2;
 
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
-		gameState->entities[2].unit.attackRange = 250.f;
-		gameState->entities[2].unit.hp = 100.f;
+		setEntityColor(0xFFFF0000, gameState, 2);
+		gameState->entities[2].unit.attackRange = 50.f;
+		gameState->entities[2].unit.attackType = attack_melee;
+
 		// gameState->entities[2].unit.mainAttackCD = 
 
 		gameState->entities[3].type = Entity_player;
@@ -1023,7 +1032,7 @@ EXPORT void Loop(EngineCore* core)
 
 	if (input->isKeyDown(SDL_SCANCODE_2))
 	{
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 20; i++)
 		{
 			float x = core->input->mouse.x;
 			float y = core->input->mouse.y;
@@ -1037,7 +1046,7 @@ EXPORT void Loop(EngineCore* core)
 			ee->unit.originalTargetX = -1;
 			ee->unit.originalTargetY = -1;
 			ee->unit.hp = UNIT_BASE_HP;
-			
+
 			Uint32 side = gameState->worldmap.editor.editorColor;
 			if (side == 0)
 			{
@@ -1051,7 +1060,6 @@ EXPORT void Loop(EngineCore* core)
 				gameState->allSides[ee->guid] = side;
 				setEntityColor(side, gameState, ee->guid);
 			}
-
 
 			InitAnimation(gameState, ee->guid);
 		}
@@ -1121,7 +1129,7 @@ EXPORT void Loop(EngineCore* core)
 	}
 
 
-	START_TIMING2()
+	// START_TIMING2()
 	currentCount = 0;
 	/**********************************************************************************************/
 	// ENTITY UPDATE
@@ -1160,7 +1168,7 @@ EXPORT void Loop(EngineCore* core)
 		//	++currentCount;
 		//}
 	}
-	END_TIMING2()
+	// END_TIMING2()
 
 	// Huom atm clear spatial ei voi olla ennen f();
 	clearSpatial(&hash4r);
@@ -1248,13 +1256,33 @@ EXPORT void Loop(EngineCore* core)
 
 	for (auto id : damageOut)
 	{
-		auto* unit = &gameState->entities[id].unit;
-		unit->hp -= 10; // hyvää lääppäää
+		auto* unit = &gameState->entities[id];
+		dealDamage(unit, 10);
 
-		if (unit->hp < 0)
+
+		// Ammu takisin randomia lähellä olevaa
+		Entity** target = &gameState->entities[id].unit.attackTarget;
+		if (!(*target))
 		{
-			// dead
-			gameState->entities[id].alive = false;
+			PhysicsBody* body = getBody(id, physicsBodies);
+			auto hashPoint = HashPoint(body->x, body->y);
+
+			for (int y = hashPoint.y - 1; y < hashPoint.y + 1; y++)
+			{
+				for (int x = hashPoint.x - 1; x < hashPoint.x + 1; x++)
+				{
+					auto* vector = &hash4r.hashMap[y][x];
+					for (int i = 0; i < vector->size(); i++)
+					{
+						Entity* shooter = getEntity(vector->at(i)->owner, gameState);
+						if (shooter->unit.side != unit->unit.side)
+						{
+							(*target) = shooter;
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 #endif

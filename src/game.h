@@ -48,6 +48,7 @@ struct PhysicsBody;
 
 inline v2 HashPoint(int x, int y);
 void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, PhysicsBody* bodiesOut[], int outSize);
+static inline PhysicsBody* getBody(int id, PhysicsBody* bodies);
 
 #include <cstdint>
 #include <vector>
@@ -717,6 +718,7 @@ struct SpatialHash            // map width = textureW * 10, textureH * 10
 	// hash map :(
 	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
 } hash4r;
+
 
 #define I
 introspect("game_state:") struct game_state

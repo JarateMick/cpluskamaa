@@ -88,6 +88,13 @@ enum building_type
 	building_max,
 };
 
+enum attack_type
+{
+	attack_ranged,
+	attack_melee,
+	// attack_
+};
+
 // hello
 
 
@@ -140,6 +147,8 @@ struct Entity
 
 			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht     12_52
 
+			attack_type      attackType;
+
 			// attack speed jne...
 			// (instant attacks melee) <-> (type?)
 			// if in range attack jne...
@@ -187,6 +196,7 @@ void r(Entity *e, EngineCore* core, PhysicsBody* body);
 Entity* GetFirstAvaibleEntity(game_state* state);
 EXPORT __declspec(dllexport) Entity* newEntity(float x, float y, Entity_Enum type, game_state* state); //LUA_E_F
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side);
+void dealDamage(Entity* target, int damage);
 
 EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState);
 

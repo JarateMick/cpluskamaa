@@ -33,6 +33,15 @@ const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
 
 // one-to-many      many-to-one
 
+
+void dealDamage(Entity* target, int damage)
+{
+	target->unit.hp -= damage;
+	if (target->unit.hp < 0)
+		target->alive = false;
+}
+
+
 inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData* prov)
 {
 	int targetId = path[id]; // eka on maali
@@ -67,70 +76,62 @@ bool FollowPath(Entity* entityUnit, game_state* gameState)
 	// printf("lyhy\n");
 }
 
+
+void AddBullet(game_state* gameState, const glm::vec2 direction, float x, float y, Uint32 side, float range)
+{
+	BulletBody body;
+	body.position.x = x; // e->x
+	body.position.y = y; // e->y
+	body.r = BULLET_BASE_SIZE;
+	body.side = side;
+
+	BulletStart start;
+	start.position = body.position;
+	start.rangeSqrt = range * range;
+
+	gameState->bulletBodies[gameState->bulletCount] = body;
+	gameState->BulletAccelerations[gameState->bulletCount] = direction;
+	gameState->bulletStart[gameState->bulletCount] = start;
+	++gameState->bulletCount;
+}
+
+
+constexpr float playerControlledSpeed = 1.f;
+void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
+{
+	GetGameState(core);
+	DefineInput(core);
+
+	glm::vec2 dirVector{};
+	if (input->isKeyDown(SDL_SCANCODE_W))
+	{
+		dirVector.y = 1.f;
+	}
+	else if(input->isKeyDown(SDL_SCANCODE_S))
+	{
+		dirVector.y = -1.f;
+	}
+	else if(input->isKeyDown(SDL_SCANCODE_A))
+	{
+		dirVector.x = -1.f;
+	}
+	else if(input->isKeyDown(SDL_SCANCODE_D))
+	{
+		dirVector.x = 1.f;
+	}	
+
+	// getBody(playerControlled->guid, body);
+	body->x += dirVector.x;
+	body->y += dirVector.y;
+}
+
 void f(Entity *e, EngineCore* core, PhysicsBody* body)
 {
 
-	//if (auto ninja = GET_ENTITY(e, ninja))
-	//{
-	//	int x{ 0 };
-	//	int y{ 0 };
-	//	if (core->input->isKeyDown(SDL_SCANCODE_UP))
-	//		--y;
-	//	if (core->input->isKeyDown(SDL_SCANCODE_DOWN))
-	//		++y;
-	//	if (core->input->isKeyDown(SDL_SCANCODE_LEFT))
-	//		--x;
-	//	if (core->input->isKeyDown(SDL_SCANCODE_RIGHT))
-	//		++x;
-
-	//	if (x != 0 || y != 0)
-	//	{
-	//		// glm::vec2 normal = glm::normalize(glm::vec2{x, y});
-	//		// e->pos.x += (normal.x * core->deltaTime * 0.5f);
-	//		// e->pos.y += (normal.y * core->deltaTime * 0.5f);
-	//		e->x += (float)x * core->deltaTime * 25.f;
-	//		e->y += (float)y * core->deltaTime * 25.f;
-	//		//printf("%f", y * core->deltaTime * 0.5f);
-	//	}
-	//	//e->y += sinf(e->x) * 5;
-	//}
-	//else if (auto npc = GET_ENTITY(e, npc))
-	//{
-	//	if (core->input->isKeyPressed(SDL_SCANCODE_SPACE))
-	//	{
-	//		// printf("ninjas are gays!\n");
-	//	}
-	//}
-	//if (auto entity = GET_ENTITY(e, script))
-	//{
-	//	GetGameState(core);
-	//	DefineInput(core);
-
-	//	// nuista clikattavista voisi laittaa jonnekin mukavammin saataville core->clicables
-	//	// tai sitten tekisi entity updatesta systeemi maisen
-
-	//	//if (core->input->isMouseClicked(1))
-	//	//{
-	//	//	for (int i = 0; i < gameState->currentEntityCount; i++) {
-
-	//	//		Entity& e = gameState->entities[i];
-	//	//		if (e.type == Entity_script)
-	//	//		{
-	//	//			auto script = GET_ENTITY(&e, script);
-	//	//			//if (script->hitbox.Contains(input->mouse.x, input->mouse.y))
-	//	//			{
-	//	//				// hitbox clicked! show message
-	//	//			}
-	//	//		}
-	//	//	}
-	//	//}
-	//}
 	if (auto player = GET_ENTITY(e, player))
 	{
 		GetGameState(core);
 		DefineInput(core);
-
-
 
 		// lista controlloiduista entitytyista id / pointerit
 		// tehdaan valintoja sen perusteella rectilla -> vetaa nelion
@@ -215,6 +216,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 						gameState->selectedEntitys[i]->unit.targetY = v2.y;
 
 						gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
+
 						gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
 						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
 						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
@@ -234,10 +236,10 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					printf("can't set target");
 					// ASSERT(false); // why you can pathfind here
 				}
-			}
-
-
 		}
+
+
+	}
 
 		// CONTROLSSSS
 		if (input->isMouseClicked(2))
@@ -272,7 +274,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 		if (input->isKeyPressed(SDL_SCANCODE_C))
 		{
-			for(int i = 0; i < gameState->currentEntityCount; i++)
+			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
 				Entity* entity = &gameState->entities[i];
 				entity->unit.targetX = -1;
@@ -291,13 +293,13 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			// TODO: choose troops
 			player->selectionRect.UseLeftBottomAsStart();
 
-			float leftX  = player->selectionRect.x;
+			float leftX = player->selectionRect.x;
 			float rigthX = leftX + player->selectionRect.w;
 
-			float topY    = player->selectionRect.y;
+			float topY = player->selectionRect.y;
 			float bottomY = topY + player->selectionRect.h;
 
-			auto TopLeft     = HashPoint(leftX, topY);
+			auto TopLeft = HashPoint(leftX, topY);
 			auto BottomRigth = HashPoint(rigthX, bottomY);
 
 			for (int i = 0; i < 1000; i++)
@@ -311,7 +313,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			allUniques(TopLeft.y, BottomRigth.y, TopLeft.x, BottomRigth.x, gameState->spatialGrid, selectedBodies, 1000);
 
 			int selectedCount = 0;
-			for(int i = 0; i < 1000 && selectedBodies[i]; i++)
+			for (int i = 0; i < 1000 && selectedBodies[i]; i++)
 			{
 				Entity* ee = &gameState->entities[selectedBodies[i]->owner];
 				gameState->selectedEntitys[selectedCount++] = ee;
@@ -338,7 +340,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			player->selectionRect = {};
 		}
-	}
+}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		GetGameState(core);
@@ -387,7 +389,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				unit->targetY = unit->originalTargetY;
 			}
 			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
-		}
+	}
 		unit->lastFrameProv = mapId;
 
 		// attack logic
@@ -405,50 +407,37 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			// laske suunta targettiin
 			glm::vec2 targetVector{ (body + attackTarget->guid)->x - x, (body + attackTarget->guid)->y - y };
-
 			float lengthSquared = targetVector.x * targetVector.x + targetVector.y * targetVector.y;
 
-			if (lengthSquared < unit->attackRange * unit->attackRange)
+			if (lengthSquared < unit->attackRange * unit->attackRange) // Attack
 			{
 				// TODO: tuohon direction/koko offset niin tulee piipusta
-#if 0 
-				Entity* bulletEntity = newEntity(e->x, e->y, Entity_bullet, gameState);
-
-				glm::vec2 direction = glm::normalize(targetVector);
-				bulletEntity->velX = direction.x;
-				bulletEntity->velY = direction.y;
-				bulletEntity->bullet.rangeSquared = unit->attackRange * unit->attackRange;
-				bulletEntity->bullet.speed = 2.f;
-				bulletEntity->bullet.startX = e->x;
-				bulletEntity->bullet.startY = e->y;
-#else
 				glm::vec2 direction = glm::normalize(targetVector);
 
+				if (unit->attackType == attack_ranged)
+				{
+					AddBullet(gameState, direction, x, y, unit->side, unit->attackRange);
 
-				BulletBody body;
-				body.position.x = x; // e->x
-				body.position.y = y; // e->y
-				body.r = BULLET_BASE_SIZE;
-				body.side = unit->side;
+					Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
 
-				BulletStart start;
-				start.position = body.position;
-				start.rangeSqrt = unit->attackRange * unit->attackRange;
+					SetAnimation(gameState, e->guid, animation);
+				}
+				else if (unit->attackType == attack_melee && attackTarget->unit.side != unit->side)
+				{
+					// melee ?						
+					dealDamage(attackTarget, 10);
 
-				gameState->bulletBodies[gameState->bulletCount] = body;
-				gameState->BulletAccelerations[gameState->bulletCount] = direction;
-				gameState->bulletStart[gameState->bulletCount] = start;
+					//attackTarget->unit.hp -= 10;					// TODO: DAMAGES
+					//if (attackTarget->unit.hp < 0)
+					//	attackTarget->alive = false;
 
-				++gameState->bulletCount;
+					Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
+					SetAnimation(gameState, e->guid, animation);
 
-				Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
-				SetAnimation(gameState, e->guid, animation);
-				// printf("bullet at start fo shoting %i \n", gameState->bulletCount);
+					printf("melee! \n");
+				}
 
-#endif
-
-				// bulletit checkkaa collisionit ite 
-				unit->mainAttackCD = 1.5f;  // lista odottajistaa ?
+				unit->mainAttackCD = 1.5f;  // lista odottajistaa ?   TODO: CDCDCD!
 			}
 		}
 
@@ -479,7 +468,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					unit->path.pop_back();
 				}
 			}
-			else 
+			else
 			{
 				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
 #if 0
@@ -502,8 +491,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					(body + e->guid)->x -= moveVec.x;
 					(body + e->guid)->y -= moveVec.y;
 #endif
-				}
 			}
+		}
 		}
 
 	}
@@ -543,6 +532,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				ee->unit.originalTargetY = -1;
 				ee->unit.side = building->side;
 				ee->unit.hp = UNIT_BASE_HP;
+				ee->unit.attackType = attack_ranged;
 
 				gameState->allSides[ee->guid] = building->side; // tarkka kenen guid fuck
 
@@ -555,37 +545,14 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			} break;
 			default:
-			ASSERT(false); // , "building type not found!");
+				ASSERT(false); // , "building type not found!");
 				break;
 			}
 
 			building->timer = 0.f;
 		}
 	}
-
-	// depricated:
-	//else if (auto bullet = GET_ENTITY(e, bullet))
-	//{
-	//	GetGameState(core);
-	//	// DefineInput(core);
-
-	//	// jos pelista saisi 100% determistisen niin matkan voisi 
-	//	// varmaan kalkuloida suoraan alussa frammeina
-
-	//	e->x += e->velX * core->deltaTime * bullet->speed; // speedx
-	//	e->y += e->velY * core->deltaTime * bullet->speed; // speedx
-
-	//	float x = e->x - bullet->startX;
-	//	float y = e->y - bullet->startY;
-	//	if (abs(x * x + y * y) > bullet->rangeSquared)
-	//	{
-	//		// max range reached!
-	//		e->alive = false;
-	//		printf("olen donezo\n");
-	//	}
-	//}
 }
-
 
 // tee kunnon spritesheet manager struct jotain jotain...
 glm::vec4 getUvFromUp(int index, glm::vec2 dims)
@@ -619,13 +586,13 @@ glm::vec4 getUVs(int index, glm::vec2 dims)
 	return uvs;
 }
 
-
 void r(Entity *e, EngineCore* core, PhysicsBody* body)
 {
 	if (auto building = GET_ENTITY(e, building))
 	{
 		// TODO: korjaa tekstuuri manager
 		static GLuint textureId = UpiEngine::ResourceManager::getTexture("building.png").id;
+
 		core->spriteBatch->draw(glm::vec4{ body->x, body->y, 40, 40 }, building->textureUv, textureId, 1.0f);
 	}
 	else if (auto unit = GET_ENTITY(e, unit))
@@ -704,7 +671,6 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 	e->building.side = side;
 	e->building.timer = 0.f;
 
-	
 
 	switch (type)
 	{
