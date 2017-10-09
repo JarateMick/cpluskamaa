@@ -94,7 +94,7 @@ enum building_type
 struct Entity
 {
 	Entity() {} // = default;
-	~Entity() = default;
+	~Entity() {}
 
 	Entity_Enum type;                 // 4
 	uint32_t	guid;                 // 4

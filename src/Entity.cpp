@@ -286,7 +286,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		bool stoppedSelectingRect = player->selectingTroops && !input->isMouseDown(1);
 		if (stoppedSelectingRect)
 		{
-			printf("SELECTION END\n");
 			player->selectingTroops = false;
 
 			// TODO: choose troops
@@ -336,6 +335,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			gameState->selectedCount = selectedCount;
 			printf("selected %i entitys ", selectedCount);
+
+			player->selectionRect = {};
 		}
 	}
 	else if (auto unit = GET_ENTITY(e, unit))
@@ -554,7 +555,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			} break;
 			default:
-				ASSERT(false); // , "building type not found!");
+			ASSERT(false); // , "building type not found!");
 				break;
 			}
 

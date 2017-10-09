@@ -680,6 +680,8 @@ struct gameStateCopy
 	Bullets       bullets;
 
 	glm::vec4     uvs[60000];
+
+	Entity        player;
 };
 
 void SyncBullets(Bullets* bullets, game_state* state)
@@ -708,6 +710,9 @@ void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiE
 		spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
 			notWorking, 1.0f, yellow); // depth !
 	}
+
+	copy->player.player.selectionRect.DrawRect();
+	printf("%f\n", copy->player.player.selectionRect.x);
 }
 
 int main(int argc, char* argv[])
@@ -1369,7 +1374,7 @@ int main(int argc, char* argv[])
 		spriteBatch.renderBatch();
 
 		//*************************************debug*******************************
-#if 0  // debuggeriin voi olla hyvin vaikea koskea
+#if 1  // debuggeriin voi olla hyvin vaikea koskea
 		glm::mat4 hudCameraMatrix = hudCamera.getCameraMatrix();
 		glUniformMatrix4fv(plocation, 1, GL_FALSE, &(hudCameraMatrix[0][0]));
 
@@ -1383,8 +1388,8 @@ int main(int argc, char* argv[])
 		textureProgram.unuse();
 
 
-		// debugger.render(cameraMatrix, 2.0f);
-		// debugger.end();
+		 debugger.render(cameraMatrix, 2.0f);
+		debugger.end();
 #endif
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);
@@ -1419,6 +1424,7 @@ int main(int argc, char* argv[])
 				FreeTexture(&copy->mapCopy);
 				copy->mapCopy = TurnSurfaceIntoGlTexture(gameState->worldmap.visual.surface);
 				copy->dimensions = gameState->worldmap.dimensions;
+				memcpy(&copy->player, gameState->player, sizeof(Entity));
 			}
 
 			

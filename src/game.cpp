@@ -1551,26 +1551,28 @@ EXPORT void Draw(EngineCore* core)
 	game_state *gameState = (game_state*)core->memory->permanentStorage;
 	DefineInput(core);
 
+	// gameState->player->player.selectionRect.DrawRect();
+
 	//SDL_GL_MakeCurrent(core->window, *core->glcontext);
 	// TODO: Free camera from main
 
 	// core->spriteBatch->draw(glm::vec4{ 200.f, 0.f, 590.f , 480.f  }, glm::vec4{ 0.f, 0.f, 1.0f, 1.0f }, gameState->worldmap.temptextureid, 1.0f);
-	gameState->worldmap.Draw(core->spriteBatch);
+	// gameState->worldmap.Draw(core->spriteBatch);
 
 	//  DrawAllEntitys(core);
 
-	for (int i = 0; i < gameState->currentEntityCount; i++)
-	{
-		Entity* e = &gameState->entities[i];
-		(e, core, gameState->bodies + i);
-	}
+	//for (int i = 0; i < gameState->currentEntityCount; i++)
+	//{
+	//	Entity* e = &gameState->entities[i];
+	//	r(e, core, gameState->bodies + i);
+	//}
 
-	if (gameState->pathfindingUi.drawPath)
-	{
-		auto* ui = &gameState->pathfindingUi;
-		auto path = BreadthFirst(ui->startId, &nodes, ui->endId);
-		VisualizePath(&path, gameState);
-	}
+	//if (gameState->pathfindingUi.drawPath)
+	//{
+	//	auto* ui = &gameState->pathfindingUi;
+	//	auto path = BreadthFirst(ui->startId, &nodes, ui->endId);
+	//	VisualizePath(&path, gameState);
+	//}
 
 	// fysiikka	       --::testi::--
 
@@ -1583,21 +1585,21 @@ EXPORT void Draw(EngineCore* core)
 	// updateCollision()
 	//	Entity* e =gameState->entities[i];
 
-	for (int i = 0; i < gameState->bulletCount; i++)
-	{
-		const auto& pos = gameState->bulletBodies[i].position;
-		static auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png").id;
-		static auto yellow = UpiEngine::ColorRGBA8(255, 255, 0, 255);
-		core->spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
-			notWorking, 1.0f, yellow); // depth !
-	}
+	//for (int i = 0; i < gameState->bulletCount; i++)
+	//{
+	//	const auto& pos = gameState->bulletBodies[i].position;
+	//	static auto notWorking = UpiEngine::ResourceManager::getTexture("pixel.png").id;
+	//	static auto yellow = UpiEngine::ColorRGBA8(255, 255, 0, 255);
+	//	core->spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
+	//		notWorking, 1.0f, yellow); // depth !
+	//}
 
-	static bool diebugDraw = false;
-	if (diebugDraw)
-	{
-		// drawm
-		debugDraw(&hash4r);
-	}
+	//static bool diebugDraw = false;
+	// if (diebugDraw)
+	// {
+		// // drawm
+		// debugDraw(&hash4r);
+	// }
 
 	// dumpStruct(ArrayCount(membersOf_test2), membersOf_test2, &test2);
 
