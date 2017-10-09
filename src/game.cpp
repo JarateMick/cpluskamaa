@@ -74,7 +74,7 @@ void initSpatial(SpatialHash* hash)
 	{
 		for (int j = 0; j < CellsX; j++)
 		{
-			hash->hashMap[i][j].reserve(256);
+			hash->hashMap[i][j].reserve(128);
 			// hash->hashMap[i][j].clear();
 		}
 	}
@@ -127,6 +127,49 @@ void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 	//                                                  sourituskyky ^^^^^^^^
 }
 
+void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* positions)
+{
+	auto v2 = HashPoint(body->x, body->y);
+	hash->hashMap[v2.y][v2.x].push_back(body);
+	positions->x = v2.x;
+	positions->y = v2.y;
+}
+
+
+void RemoveBodyFromGrid(int gridX, int gridY, PhysicsBody* bodyToRemove, SpatialHash* hash)
+{
+	auto* vector = &hash->hashMap[gridY][gridX];
+	vector->erase(std::remove(vector->begin(), vector->end(), bodyToRemove));
+}
+
+void SwapBody(int gridX, int gridY, int newGridX, int newGridY, PhysicsBody* bodyToSwap, SpatialHash* hash)
+{
+	auto* vector = &hash->hashMap[gridY][gridX];
+	vector->erase(std::remove(vector->begin(), vector->end(), bodyToSwap), vector->end());
+	hash->hashMap[newGridY][newGridX].push_back(bodyToSwap);
+}
+
+//void InsertEntityToGrid()
+//{
+//}
+//void RemoveEntityFromGrid(SpatialHash)
+//{
+//}
+
+void UpdateAllGridPosition(GridPosition* positions, PhysicsBody* bodies, SpatialHash* hasher, const int count)
+{
+	for (int i = 5; i < count; i++)
+	{
+		auto v2 = HashPoint((bodies + i)->x, (bodies + i)->y);
+		if (v2.x != positions[i].x || v2.y != positions[i].y)
+		{
+			SwapBody(positions[i].x, positions[i].y, v2.x, v2.y, bodies + i, hasher);
+			positions[i].x = v2.x;
+			positions[i].y = v2.y;
+		}
+	}
+}
+
 // sortista  eroon 
 // uniquesta eroon
 // erasesta  eroon
@@ -155,6 +198,7 @@ void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, P
 	}
 }
 
+#if 0
 int CheckCollisions(SpatialHash* hash)
 {
 	int count = 0;
@@ -186,6 +230,85 @@ int CheckCollisions(SpatialHash* hash)
 	}
 	return count;
 }
+#else
+
+
+void CheckCollision(int start, std::vector<PhysicsBody*>* bodies, PhysicsBody* __restrict body)
+{
+
+	glm::vec2 centerPosA = glm::vec2{ body->x, body->y } + glm::vec2(body->r);
+
+	for (int i = start; i < bodies->size(); i++)
+	{
+		PhysicsBody* body2 = bodies->at(i);
+
+		const float MIN_DISTANCE = body->r + body2->r;  // molempiend dist
+		glm::vec2 centerPosB = glm::vec2{ body2->x, body2->y } + glm::vec2(body2->r);
+		glm::vec2 distVec = centerPosA - centerPosB;
+
+		if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
+		{
+			const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 7.5f; // test
+			const glm::vec2 aResolution = collisionDepthVec / 2.f; // +=
+			body->x += aResolution.x;
+			body->y += aResolution.y;
+
+			const glm::vec2 bResolution = collisionDepthVec / 2.0f;  // -=
+			body2->x -= bResolution.x;
+			body2->y -= bResolution.y;
+		}
+	}
+}
+
+// passaa bodyt arrayna
+// tee koko arraylle tarkastelut
+
+static inline bool isLeft(int x, float positionX)
+{
+	return (positionX - (x * cellSize) < 7.5f);
+}
+
+int CheckCollisions(SpatialHash* hash)
+{
+	int count = 0;
+
+#pragma omp parallel for schedule(dynamic, 2) num_threads(3)
+	for (int i = 0; i < CellsY; i++) // y
+	{
+		// #pragma omp paraller for schedule(dynamic)
+		for (int j = 0; j < CellsX; j++) // x
+		{
+			std::vector<PhysicsBody*>* bodies = &hash->hashMap[i][j];
+			for (int k = 0; k < bodies->size(); k++)
+			{
+				auto* body = hash->hashMap[i][j].at(k);
+				CheckCollision(k + 1, &hash->hashMap[i][j], body);
+
+				if (j > 0)
+				{
+					//if (isLeft(j, body->x))
+					CheckCollision(0, &hash->hashMap[i][j - 1], body);
+
+					if (i > 0)
+					{
+						CheckCollision(0, &hash->hashMap[i - 1][j - 1], body);
+					}
+
+					if (i < CellsY - 1)
+					{
+						CheckCollision(0, &hash->hashMap[i + 1][j - 1], body);
+					}
+				}
+				if (i > 0)
+				{
+					CheckCollision(0, &hash->hashMap[i - 1][j], body);
+				}
+			}
+		}
+	}
+	return count;
+}
+#endif
 
 void AddToBucket(v2 pos, float w)
 {
@@ -210,8 +333,8 @@ struct PhysicsOut
 };
 
 
-PhysicsBody  physicsBodies2[60000];
-PhysicsBody  physicsBodies3[60000];
+PhysicsBody  physicsBodies2[MAX_ENTITY_COUNT];
+PhysicsBody  physicsBodies3[MAX_ENTITY_COUNT];
 PhysicsBody* physicsBodies = physicsBodies2;
 
 int currentCount = 0;
@@ -260,18 +383,17 @@ void circleCollision(PhysicsBody* __restrict a, PhysicsBody* __restrict b)
 	if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
 	{
 		//	iconst float collisionDepth = 6.f;
-		const float distance = 2.f;
-
-		if (distance == 0.f)
+		// const float distance = 2.f;
+		/*if (distance == 0.f)
 		{
 			a->x += 30.f;
 			a->y += 30.f;
 			b->x -= 30.f;
 			b->y -= 30.f;
 			return;
-		}
+		}*/
 		// const float collisionDepth =  MIN_DISTANCE - glm::length(distVec);
-		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 5.f; // test
+		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 7.5f; // test
 
 #if 0
 		if (std::max(distVec.x, 0.0f) < std::max(distVec.y, 0.0f))
@@ -906,11 +1028,14 @@ EXPORT void Loop(EngineCore* core)
 		physicsBodies[2].y = 2400.f;
 		physicsBodies[2].r = 15.f;
 		physicsBodies[2].owner = 2;
+		AddBodyToGrid2(physicsBodies + 2, &hash4r, gridPositions);
+
 
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
 		setEntityColor(0xFFFF0000, gameState, 2);
 		gameState->entities[2].unit.attackRange = 50.f;
 		gameState->entities[2].unit.attackType = attack_melee;
+
 
 		// gameState->entities[2].unit.mainAttackCD = 
 
@@ -1032,7 +1157,7 @@ EXPORT void Loop(EngineCore* core)
 
 	if (input->isKeyDown(SDL_SCANCODE_2))
 	{
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 35; i++)
 		{
 			float x = core->input->mouse.x;
 			float y = core->input->mouse.y;
@@ -1061,6 +1186,8 @@ EXPORT void Loop(EngineCore* core)
 				setEntityColor(side, gameState, ee->guid);
 			}
 
+			// olisi varmaan kivempi etta kaikki ottas guiding naaa 
+			AddBodyToGrid2(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
 			InitAnimation(gameState, ee->guid);
 		}
 	}
@@ -1129,49 +1256,58 @@ EXPORT void Loop(EngineCore* core)
 	}
 
 
-	// START_TIMING2()
 	currentCount = 0;
 	/**********************************************************************************************/
 	// ENTITY UPDATE
-	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
-	{
-		f(&gameState->entities[i], core, gameState->bodies);
 
-		if (!gameState->entities[i].alive)
+	START_TIMING2()
+		for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 		{
-			// deletefunc
-			const int lastEntityGuid = gameState->currentEntityCount - 1;
+			f(&gameState->entities[i], core, gameState->bodies);
 
-			printf("delet\n");
+			if (!gameState->entities[i].alive)
+			{
+				// deletefunc
+				const int lastEntityGuid = gameState->currentEntityCount - 1;
 
-			memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
-				sizeof(Entity));
-			gameState->entities[i].guid = i;
+				printf("delet\n");
 
-			// swap all funcy
-			physicsBodies[i] = gameState->bodies[lastEntityGuid];
-			physicsBodies[i].owner = i;
 
-			// remove !
+				// Todo: cleanup koodia alkaa olla jo monimutkainen
+				RemoveBodyFromGrid(gridPositions[i].x, gridPositions[i].y, physicsBodies + i, &hash4r);
+				gridPositions[i] = gridPositions[lastEntityGuid];
 
-			gameState->allSides[i] = gameState->allSides[lastEntityGuid];
-			gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
+				memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
+					sizeof(Entity));
+				gameState->entities[i].guid = i;
 
-			SwapAnims(gameState, i, lastEntityGuid);
+				// swap all funcy
+				physicsBodies[i] = gameState->bodies[lastEntityGuid];
+				physicsBodies[i].owner = i;
 
-			--gameState->currentEntityCount;
+				// remove !
+
+				gameState->allSides[i] = gameState->allSides[lastEntityGuid];
+				gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
+
+				SwapAnims(gameState, i, lastEntityGuid);
+
+				--gameState->currentEntityCount;
+			}
+
+			//if (gameState->entities[i].type == Entity_unit)
+			//{
+			//	AddBodyToGrid(physicsBodies + i, &hash4r);
+			//	++currentCount;
+			//}
 		}
+	END_TIMING2()
 
-		//if (gameState->entities[i].type == Entity_unit)
-		//{
-		//	AddBodyToGrid(physicsBodies + i, &hash4r);
-		//	++currentCount;
-		//}
-	}
-	// END_TIMING2()
-
-	// Huom atm clear spatial ei voi olla ennen f();
-	clearSpatial(&hash4r);
+		// Huom atm clear spatial ei voi olla ennen f();
+	// #define HYPER_OPTIMIZATION 1
+#ifdef HYPER_OPTIMIZATION
+		clearSpatial(&hash4r);
+#endif
 
 	UpdateAnimations(&gameState->unitAnimations, gameState->currentEntityCount);
 
@@ -1203,9 +1339,20 @@ EXPORT void Loop(EngineCore* core)
 	//	}
 	//}
 
+
+
+	// luonti:   insert
+	// Swap  :   cellX, cellY     !=        lastFrameX, lastFrameY
+	// desert:   delete
+
+	// updatessa looppaa eritavalla
+	// ei clearia
+
 #if 1
 #if 1
-	currentCount = 0;
+#ifdef HYPER_OPTIMIZATION
+	START_TIMING2()
+		currentCount = 0;
 	// static Uint32 sides[25000]; // puolet =(
 	for (int i = 0; i < gameState->currentEntityCount; i++)
 	{
@@ -1216,30 +1363,37 @@ EXPORT void Loop(EngineCore* core)
 			++currentCount;
 		}
 	}
-	// END_TIMING2()
+	END_TIMING2()
+#endif
+
+		// END_TIMING2()
 
 #endif
 	// Physics step:
+		UpdateAllGridPosition(gridPositions, physicsBodies, &hash4r, gameState->currentEntityCount);
 
+
+
+	START_TIMING()
 	CheckCollisions(&hash4r);
+	END_TIMING()
+		// START_TIMING()
 
-	// START_TIMING()
+		//for (int i = 0; i < currentCount; i++)
+		//{
+		//	PhysicsBody* body = physicsBodies + i;
+		//	Entity* e = &gameState->entities[body->owner];
+		//	e->x = body->x;
+		//	e->y = body->y;
+		//}
 
-	//for (int i = 0; i < currentCount; i++)
-	//{
-	//	PhysicsBody* body = physicsBodies + i;
-	//	Entity* e = &gameState->entities[body->owner];
-	//	e->x = body->x;
-	//	e->y = body->y;
-	//}
-
-	// END_TIMING()
+		// END_TIMING()
 
 
-	// luoti fysiikat
+		// luoti fysiikat
 
-	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
-		gameState->bulletStart, gameState->bulletCount);
+		gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
+			gameState->bulletStart, gameState->bulletCount);
 
 
 
@@ -1289,23 +1443,6 @@ EXPORT void Loop(EngineCore* core)
 	// luoti fysiikat
 	// END_TIMING()
 
-	float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
-	if (input->isKeyDown(SDL_SCANCODE_W))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_S))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, -cameraSpeed });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_A))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ -cameraSpeed, 0 });
-	}
-	if (input->isKeyDown(SDL_SCANCODE_D))
-	{
-		core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
-	}
 
 	// LOOPEND
 }

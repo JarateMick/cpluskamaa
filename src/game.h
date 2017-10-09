@@ -497,7 +497,7 @@ enum Anim_types
 // animaatiot olisi hash map array entityihin ja se päättäisi      1 1 1 1 1 1 1, 2 22 2 2, 3 33 
 // tyyliin animaatiot / cd:t
 
-constexpr int MAX_ENTITY_COUNT = 60000;
+constexpr int MAX_ENTITY_COUNT = 80000;
 struct Animations
 {
 	glm::vec4  uvs[MAX_ENTITY_COUNT];
@@ -710,15 +710,19 @@ void UpdateAnimations(Animations* anims, const int count)
 	}
 }
 
-constexpr int cellSize = 32;      // 590 x 480        5900        x        4800
-constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1;
-constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1;
+constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
+constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1 + 3;
+constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1 + 3;
 struct SpatialHash            // map width = textureW * 10, textureH * 10
 {
 	// hash map :(
 	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
 } hash4r;
 
+struct GridPosition { int x, y; };
+static GridPosition gridPositions[MAX_ENTITY_COUNT];
+// BODY
+void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* positions);
 
 #define I
 introspect("game_state:") struct game_state

@@ -678,7 +678,7 @@ struct gameStateCopy
 
 	Bullets       bullets;
 
-	glm::vec4     uvs[60000];
+	glm::vec4     uvs[MAX_ENTITY_COUNT];
 
 	Entity        player;
 };
@@ -689,7 +689,7 @@ void SyncBullets(Bullets* bullets, game_state* state)
 	bullets->count = state->bulletCount;
 }
 
-static UpiEngine::ColorRGBA8 colorCopies[60000]{};
+static UpiEngine::ColorRGBA8 colorCopies[MAX_ENTITY_COUNT]{};
 void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch, gameStateCopy* copy)
 {
 	for (int i = 0; i < count; i++)

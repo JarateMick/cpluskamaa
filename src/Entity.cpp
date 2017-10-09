@@ -30,9 +30,7 @@ void setEntityColor(Uint32 color, game_state* gameState, int guid)
 const float UNIT_SPEED = 1.0f;   // ~ archer speed
 const int   UNIT_BASE_HP = 100;
 const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
-
 // one-to-many      many-to-one
-
 
 void dealDamage(Entity* target, int damage)
 {
@@ -40,7 +38,6 @@ void dealDamage(Entity* target, int damage)
 	if (target->unit.hp < 0)
 		target->alive = false;
 }
-
 
 inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData* prov)
 {
@@ -102,27 +99,47 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 	GetGameState(core);
 	DefineInput(core);
 
-	glm::vec2 dirVector{};
+	glm::vec2 dirVector = {};
 	if (input->isKeyDown(SDL_SCANCODE_W))
 	{
 		dirVector.y = 1.f;
 	}
-	else if(input->isKeyDown(SDL_SCANCODE_S))
+	else if (input->isKeyDown(SDL_SCANCODE_S))
 	{
 		dirVector.y = -1.f;
 	}
-	else if(input->isKeyDown(SDL_SCANCODE_A))
+
+	if (input->isKeyDown(SDL_SCANCODE_A))
 	{
 		dirVector.x = -1.f;
 	}
-	else if(input->isKeyDown(SDL_SCANCODE_D))
+	else if (input->isKeyDown(SDL_SCANCODE_D))
 	{
 		dirVector.x = 1.f;
-	}	
+	}
 
 	// getBody(playerControlled->guid, body);
 	body->x += dirVector.x;
 	body->y += dirVector.y;
+
+	static float lastFrameX = 0;
+
+	if (lastFrameX != dirVector.x)
+	{
+		Anim_enum runAnimation = dirVector.x < 0 ? Anim_Archer_Run_Left : Anim_Archer_Run_Right;
+		SetAnimation(gameState, playerControlled->guid, runAnimation);
+	}
+
+	if (input->isMouseClicked())
+	{
+		glm::vec2 direction = glm::normalize(input->mouse - glm::vec2{ body->x, body->y });
+		// shoot funcy ???
+		AddBullet(gameState, direction, body->x, body->y, playerControlled->unit.side, playerControlled->unit.attackRange);
+		Anim_enum animation = (body->x > body->x + direction.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
+		SetAnimation(gameState, playerControlled->guid, animation);
+	}
+
+	lastFrameX = dirVector.x;
 }
 
 void f(Entity *e, EngineCore* core, PhysicsBody* body)
@@ -137,6 +154,44 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		// tehdaan valintoja sen perusteella rectilla -> vetaa nelion
 		// sitten voi kotrolloida uniitteja 
 
+		static bool controllingUnit = false;
+		static Entity* controlledEntity = 0;
+		if (input->isKeyPressed(SDL_SCANCODE_SPACE))
+		{
+			if (gameState->selectedCount > 0)
+			{
+				controllingUnit = !controllingUnit;
+				controlledEntity = gameState->selectedEntitys[0];
+			}
+		}
+
+		if (controllingUnit)
+		{
+			auto* body = getBody(controlledEntity->guid, gameState->bodies);
+			controlUnit(controlledEntity, core, body);
+			core->camera2D->setPosition({ body->x, body->y });
+			return;
+		}
+
+		{
+			float cameraSpeed = gameState->cameraSpeed * core->deltaTime; // ei toimi samalla tavalla kuin updaten mov
+			if (input->isKeyDown(SDL_SCANCODE_W))
+			{
+				core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, cameraSpeed });
+			}
+			if (input->isKeyDown(SDL_SCANCODE_S))
+			{
+				core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ 0, -cameraSpeed });
+			}
+			if (input->isKeyDown(SDL_SCANCODE_A))
+			{
+				core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ -cameraSpeed, 0 });
+			}
+			if (input->isKeyDown(SDL_SCANCODE_D))
+			{
+				core->camera2D->setPosition(core->camera2D->getPosition() + glm::vec2{ cameraSpeed, 0 });
+			}
+		}
 		// jos clickkaa / painaa pikanappainta voi rakentaa rakennuksia
 		bool dragSelection = input->isMouseDown(1) && player->selectingTroops;
 		if (dragSelection)
@@ -236,10 +291,10 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					printf("can't set target");
 					// ASSERT(false); // why you can pathfind here
 				}
+			}
+
+
 		}
-
-
-	}
 
 		// CONTROLSSSS
 		if (input->isMouseClicked(2))
@@ -308,7 +363,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			}
 
 
-
 			PhysicsBody* selectedBodies[1000]{}; // TODO: tarkista max selected
 			allUniques(TopLeft.y, BottomRigth.y, TopLeft.x, BottomRigth.x, gameState->spatialGrid, selectedBodies, 1000);
 
@@ -340,7 +394,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			player->selectionRect = {};
 		}
-}
+	}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		GetGameState(core);
@@ -389,7 +443,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				unit->targetY = unit->originalTargetY;
 			}
 			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
-	}
+		}
 		unit->lastFrameProv = mapId;
 
 		// attack logic
@@ -467,7 +521,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					unit->targetY = unit->originalTargetY;
 					unit->path.pop_back();
 				}
-			}
+				}
 			else
 			{
 				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
@@ -491,11 +545,11 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					(body + e->guid)->x -= moveVec.x;
 					(body + e->guid)->y -= moveVec.y;
 #endif
+				}
 			}
-		}
-		}
+			}
 
-	}
+		}
 	else if (auto building = GET_ENTITY(e, building))
 	{
 		GetGameState(core);
@@ -536,6 +590,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 				gameState->allSides[ee->guid] = building->side; // tarkka kenen guid fuck
 
+				AddBodyToGrid2((body + ee->guid), gameState->spatialGrid, gridPositions + ee->guid);
 
 				// setup color
 				Uint32 ucolor = ee->unit.side;
@@ -552,7 +607,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			building->timer = 0.f;
 		}
 	}
-}
+		}
 
 // tee kunnon spritesheet manager struct jotain jotain...
 glm::vec4 getUvFromUp(int index, glm::vec2 dims)
