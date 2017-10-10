@@ -236,12 +236,12 @@ int CheckCollisions(SpatialHash* hash)
 void CheckCollision(int start, std::vector<PhysicsBody*>* bodies, PhysicsBody* __restrict body)
 {
 
-	glm::vec2 centerPosA = glm::vec2{ body->x, body->y } + glm::vec2(body->r);
 
 	for (int i = start; i < bodies->size(); i++)
 	{
 		PhysicsBody* body2 = bodies->at(i);
 
+		glm::vec2 centerPosA = glm::vec2{ body->x, body->y } + glm::vec2(body->r);
 		const float MIN_DISTANCE = body->r + body2->r;  // molempiend dist
 		glm::vec2 centerPosB = glm::vec2{ body2->x, body2->y } + glm::vec2(body2->r);
 		glm::vec2 distVec = centerPosA - centerPosB;
