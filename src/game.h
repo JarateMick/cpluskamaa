@@ -91,12 +91,14 @@ struct game_state;
 	auto elapsedTime2(NAME(4) - NAME(3));						\
 	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
 
+
 struct PhysicsBody
 {
 	float x, y;       // 16  ->  20  ->  24 | render id
 	float r;
 	int owner;
 };
+
 
 enum ResourceType
 {
@@ -105,6 +107,7 @@ enum ResourceType
 	Resource_texture,
 	Resource_max,
 };
+
 struct resourceData
 {
 	std::vector<FILETIME> filetimes;
@@ -327,10 +330,10 @@ void FloodFillImage(ImageData* imageData, ImageData* replacement, int startX, in
 		FloodFillImage(imageData, replacement, startX, startY + 1, targetColor, replacementColor);
 		FloodFillImage(imageData, replacement, startX, startY - 1, targetColor, replacementColor);
 	}
-	else
-	{
-		return;
-	}
+//	else
+//	{
+//return;
+//	}
 }
 
 struct WorldMapEditor
@@ -340,6 +343,9 @@ struct WorldMapEditor
 	float inputX;
 	float inputY;
 };
+
+
+
 
 const int mapSizeMultiplier = 30;
 constexpr float NODE_MULTIPLIER = 1.5f;

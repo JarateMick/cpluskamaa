@@ -241,9 +241,9 @@ void CheckCollision(int start, std::vector<PhysicsBody*>* bodies, PhysicsBody* _
 	{
 		PhysicsBody* body2 = bodies->at(i);
 
-		glm::vec2 centerPosA = glm::vec2{ body->x, body->y } + glm::vec2(body->r);
+		glm::vec2 centerPosA = glm::vec2{ body->x, body->y } +glm::vec2(body->r);
 		const float MIN_DISTANCE = body->r + body2->r;  // molempiend dist
-		glm::vec2 centerPosB = glm::vec2{ body2->x, body2->y } + glm::vec2(body2->r);
+		glm::vec2 centerPosB = glm::vec2{ body2->x, body2->y } +glm::vec2(body2->r);
 		glm::vec2 distVec = centerPosA - centerPosB;
 
 		if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
@@ -1261,54 +1261,55 @@ EXPORT void Loop(EngineCore* core)
 	// ENTITY UPDATE
 
 	START_TIMING2()
-		for (int i = gameState->currentEntityCount - 1; i > -1; i--)
+	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
+	{
+		f(&gameState->entities[i], core, gameState->bodies);
+
+		if (!gameState->entities[i].alive)
 		{
-			f(&gameState->entities[i], core, gameState->bodies);
-
-			if (!gameState->entities[i].alive)
-			{
 				// deletefunc
-				const int lastEntityGuid = gameState->currentEntityCount - 1;
+			const int lastEntityGuid = gameState->currentEntityCount - 1;
 
-				printf("delet\n");
+			printf("delet\n");
 
 
-				// Todo: cleanup koodia alkaa olla jo monimutkainen
-				RemoveBodyFromGrid(gridPositions[i].x, gridPositions[i].y, physicsBodies + i, &hash4r);
-				gridPositions[i] = gridPositions[lastEntityGuid];
+			// Todo: cleanup koodia alkaa olla jo monimutkainen
+			RemoveBodyFromGrid(gridPositions[i].x, gridPositions[i].y, physicsBodies + i, &hash4r);
+			gridPositions[i] = gridPositions[lastEntityGuid];
 
-				memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
-					sizeof(Entity));
-				gameState->entities[i].guid = i;
+			memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
+				sizeof(Entity));
+			gameState->entities[i].guid = i;
 
 				// swap all funcy
-				physicsBodies[i] = gameState->bodies[lastEntityGuid];
-				physicsBodies[i].owner = i;
+			physicsBodies[i] = gameState->bodies[lastEntityGuid];
+			physicsBodies[i].owner = i;
 
 				// remove !
 
-				gameState->allSides[i] = gameState->allSides[lastEntityGuid];
-				gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
+			gameState->allSides[i] = gameState->allSides[lastEntityGuid];
+			gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
 
-				SwapAnims(gameState, i, lastEntityGuid);
 
-				--gameState->currentEntityCount;
-			}
 
+			SwapAnims(gameState, i, lastEntityGuid);
+
+			--gameState->currentEntityCount;
+		}
+	}
 			//if (gameState->entities[i].type == Entity_unit)
 			//{
 			//	AddBodyToGrid(physicsBodies + i, &hash4r);
 			//	++currentCount;
 			//}
-		}
+
 	END_TIMING2()
 
-		// Huom atm clear spatial ei voi olla ennen f();
+	// Huom atm clear spatial ei voi olla ennen f();
 	// #define HYPER_OPTIMIZATION 1
 #ifdef HYPER_OPTIMIZATION
 		clearSpatial(&hash4r);
 #endif
-
 	UpdateAnimations(&gameState->unitAnimations, gameState->currentEntityCount);
 
 	//[](int i) { return i; };
@@ -1349,7 +1350,6 @@ EXPORT void Loop(EngineCore* core)
 	// ei clearia
 
 #if 1
-#if 1
 #ifdef HYPER_OPTIMIZATION
 	START_TIMING2()
 		currentCount = 0;
@@ -1365,37 +1365,25 @@ EXPORT void Loop(EngineCore* core)
 	}
 	END_TIMING2()
 #endif
-
-		// END_TIMING2()
-
-#endif
-	// Physics step:
+		// Physics step:
 		UpdateAllGridPosition(gridPositions, physicsBodies, &hash4r, gameState->currentEntityCount);
 
-
-
-	START_TIMING()
+	// START_TIMING()
 	CheckCollisions(&hash4r);
-	END_TIMING()
-		// START_TIMING()
+	// END_TIMING()
 
-		//for (int i = 0; i < currentCount; i++)
-		//{
-		//	PhysicsBody* body = physicsBodies + i;
-		//	Entity* e = &gameState->entities[body->owner];
-		//	e->x = body->x;
-		//	e->y = body->y;
-		//}
+	// for (int i = 0; i < currentCount; i++)
+	// {
+	// 	PhysicsBody* body = physicsBodies + i;
+	// 	Entity* e = &gameState->entities[body->owner];
+	//	e->x = body->x;
+	//	e->y = body->y;
+	// }
 
-		// END_TIMING()
-
-
-		// luoti fysiikat
-
-		gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
-			gameState->bulletStart, gameState->bulletCount);
-
-
+	// END_TIMING()
+	// luoti fysiikat
+	gameState->bulletCount = simulateBullets(gameState->bulletBodies, gameState->BulletAccelerations,
+		gameState->bulletStart, gameState->bulletCount);
 
 	Bullets bullets;
 	bullets.bodies = gameState->bulletBodies;
