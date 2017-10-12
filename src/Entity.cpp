@@ -1,5 +1,4 @@
-#include "Entity.h"
-#include "core.h"
+#include "Entity.h" #include "core.h"
 #include "game.h"
 #include "random.h"
 #include <ResourceManager.h>
@@ -11,6 +10,49 @@
 //	return BreadthFirst(startId, gameState->MapNodes, goalId);
 //}
 
+const float UNIT_SPEED = 1.0f;   // ~ archer speed
+const int   UNIT_BASE_HP = 100;
+const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
+constexpr float SHOTGUN_SPREAD = 15.f;
+constexpr float SHOTGUN_SPREAD_HALF = 15.f / 2.f;
+// one-to-many      many-to-one
+
+Entity* createUnit(float x, float y, EngineCore* core)
+{
+	GetGameState(core);
+	PhysicsBody* physicsBodies = gameState->bodies;
+
+	Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+	(physicsBodies + ee->guid)->r = 15.f;
+	(physicsBodies + ee->guid)->owner = ee->guid;
+	// printf("%f, %f", ee->x, ee->y);
+	ee->unit.attackRange = 250.f;
+	ee->unit.targetX = -1;
+	ee->unit.targetY = -1;
+	ee->unit.originalTargetX = -1;
+	ee->unit.originalTargetY = -1;
+	ee->unit.hp = UNIT_BASE_HP;
+
+	Uint32 side = gameState->worldmap.editor.editorColor;
+	if (side == 0)
+	{
+		ee->unit.side = 0xFFFF00FF;
+		gameState->allSides[ee->guid] = 0xFFFF00FF; // tarkka kenen guid fuck
+		setEntityColor(0xFFFF00FF, gameState, ee->guid);
+	}
+	else
+	{
+		ee->unit.side = side;
+		gameState->allSides[ee->guid] = side;
+		setEntityColor(side, gameState, ee->guid);
+	}
+
+	// olisi varmaan kivempi etta kaikki ottas guiding naaa 
+	AddBodyToGrid2(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
+	InitAnimation(gameState, ee->guid);
+
+	return ee;
+}
 
 UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
 {
@@ -27,10 +69,6 @@ void setEntityColor(Uint32 color, game_state* gameState, int guid)
 	gameState->entityColors[guid] = colr; // drawing color
 }
 
-const float UNIT_SPEED = 1.0f;   // ~ archer speed
-const int   UNIT_BASE_HP = 100;
-const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
-// one-to-many      many-to-one
 
 void dealDamage(Entity* target, int damage)
 {
@@ -92,6 +130,11 @@ void AddBullet(game_state* gameState, const glm::vec2 direction, float x, float 
 	++gameState->bulletCount;
 }
 
+void setArcherShootAnimation(game_state* gameState, glm::vec2 direction, PhysicsBody* body, Entity* playerControlled)
+{
+	Anim_enum animation = (body->x > body->x + direction.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
+	SetAnimation(gameState, playerControlled->guid, animation);
+}
 
 constexpr float playerControlledSpeed = 1.f;
 void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
@@ -118,6 +161,46 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 		dirVector.x = 1.f;
 	}
 
+	if (input->isKeyPressed(SDL_SCANCODE_R))
+	{
+		for (int i = -10; i < 10; i++)
+		{
+			for (int j = -10; j < 10; j++)
+			{
+				glm::vec2 direction{ i, j };
+				direction = glm::normalize(direction);
+				AddBullet(gameState, direction, body->x, body->y, 
+					gameState->allSides[playerControlled->guid], 250.f);
+			}
+		}
+	}
+
+	if (input->isKeyPressed(SDL_SCANCODE_F))
+	{
+		float randomOffsetY = 0.f;
+		float randomOffsetX = 0.f;
+
+		glm::vec2 direction{};
+		for (int i = 0; i < 10; i++)
+		{
+			direction = glm::normalize(input->mouse - glm::vec2{ body->x, body->y });
+			AddBullet(gameState, direction, body->x + randomOffsetX, body->y + randomOffsetY, playerControlled->unit.side, playerControlled->unit.attackRange);
+
+			if (std::abs(direction.x) > std::abs(direction.y))
+			{
+				randomOffsetX = Random::floatInRange(-SHOTGUN_SPREAD, SHOTGUN_SPREAD);
+				randomOffsetY = Random::floatInRange(-SHOTGUN_SPREAD_HALF, SHOTGUN_SPREAD_HALF);
+			}
+			else
+			{
+				randomOffsetX = Random::floatInRange(-SHOTGUN_SPREAD_HALF, SHOTGUN_SPREAD_HALF);
+				randomOffsetY = Random::floatInRange(-SHOTGUN_SPREAD, SHOTGUN_SPREAD);
+			}
+		}
+
+		setArcherShootAnimation(gameState, direction, body, playerControlled);
+	}
+
 	// getBody(playerControlled->guid, body);
 	body->x += dirVector.x;
 	body->y += dirVector.y;
@@ -133,10 +216,10 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 	if (input->isMouseClicked())
 	{
 		glm::vec2 direction = glm::normalize(input->mouse - glm::vec2{ body->x, body->y });
-		// shoot funcy ???
+
 		AddBullet(gameState, direction, body->x, body->y, playerControlled->unit.side, playerControlled->unit.attackRange);
-		Anim_enum animation = (body->x > body->x + direction.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
-		SetAnimation(gameState, playerControlled->guid, animation);
+
+		setArcherShootAnimation(gameState, direction, body, playerControlled);
 	}
 
 	lastFrameX = dirVector.x;
@@ -219,7 +302,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				player->selectionRect.x = input->mouse.x;
 				player->selectionRect.y = input->mouse.y;
 			}
-		}
+	}
 		else if (input->isMouseClicked(3))
 		{
 			player->selectedBuildingType = building_none;
@@ -394,7 +477,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			player->selectionRect = {};
 		}
-	}
+}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		GetGameState(core);
@@ -431,7 +514,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				unit->path.pop_back();
 				printf("pop: ");
 				printf("(%i, %i)\n", unit->targetX, unit->targetY);
-			}
+		}
 			else
 			{
 				//if (unit->path.size() > 1)
@@ -443,7 +526,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				unit->targetY = unit->originalTargetY;
 			}
 			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
-		}
+	}
 		unit->lastFrameProv = mapId;
 
 		// attack logic
@@ -513,7 +596,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				{
 					unit->path.pop_back();
 					printf("pop");
-				}
+			}
 				else if (unit->path.size() > 0)
 				{
 					printf("origninal target (%i, %i)", unit->originalTargetX, unit->originalTargetY);
@@ -547,9 +630,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #endif
 				}
 			}
-			}
-
 		}
+
+			}
 	else if (auto building = GET_ENTITY(e, building))
 	{
 		GetGameState(core);

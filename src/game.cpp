@@ -139,13 +139,39 @@ void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* position
 void RemoveBodyFromGrid(int gridX, int gridY, PhysicsBody* bodyToRemove, SpatialHash* hash)
 {
 	auto* vector = &hash->hashMap[gridY][gridX];
-	vector->erase(std::remove(vector->begin(), vector->end(), bodyToRemove));
+	// vector->erase(std::remove(vector->begin(), vector->end(), bodyToRemove));
+
+	int size = vector->size();
+	for (int i = 0; i < size; i++)
+	{
+		if (vector->at(i) == bodyToRemove)
+		{
+			(*vector)[i] = vector->at(size - 1);
+			vector->pop_back();
+			break;
+		}
+	}
 }
+
+
 
 void SwapBody(int gridX, int gridY, int newGridX, int newGridY, PhysicsBody* bodyToSwap, SpatialHash* hash)
 {
 	auto* vector = &hash->hashMap[gridY][gridX];
+#if 0
 	vector->erase(std::remove(vector->begin(), vector->end(), bodyToSwap), vector->end());
+#else
+	int size = vector->size();
+	for (int i = 0; i < size; i++)
+	{
+		if (vector->at(i) == bodyToSwap)
+		{
+			(*vector)[i] = vector->at(size - 1);
+			vector->pop_back();
+			break;
+		}
+	}
+#endif
 	hash->hashMap[newGridY][newGridX].push_back(bodyToSwap);
 }
 
@@ -1159,37 +1185,13 @@ EXPORT void Loop(EngineCore* core)
 	{
 		for (int i = 0; i < 35; i++)
 		{
-			float x = core->input->mouse.x;
-			float y = core->input->mouse.y;
-			Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
-			(physicsBodies + ee->guid)->r = 15.f;
-			(physicsBodies + ee->guid)->owner = ee->guid;
-			// printf("%f, %f", ee->x, ee->y);
-			ee->unit.attackRange = 250.f;
-			ee->unit.targetX = -1;
-			ee->unit.targetY = -1;
-			ee->unit.originalTargetX = -1;
-			ee->unit.originalTargetY = -1;
-			ee->unit.hp = UNIT_BASE_HP;
-
-			Uint32 side = gameState->worldmap.editor.editorColor;
-			if (side == 0)
-			{
-				ee->unit.side = 0xFFFF00FF;
-				gameState->allSides[ee->guid] = 0xFFFF00FF; // tarkka kenen guid fuck
-				setEntityColor(0xFFFF00FF, gameState, ee->guid);
-			}
-			else
-			{
-				ee->unit.side = side;
-				gameState->allSides[ee->guid] = side;
-				setEntityColor(side, gameState, ee->guid);
-			}
-
-			// olisi varmaan kivempi etta kaikki ottas guiding naaa 
-			AddBodyToGrid2(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
-			InitAnimation(gameState, ee->guid);
+			createUnit(core->input->mouse.x, core->input->mouse.y, core);
 		}
+	}
+
+	if (input->isKeyPressed(SDL_SCANCODE_3))
+	{
+		createUnit(core->input->mouse.x, core->input->mouse.y, core);
 	}
 
 	if (input->isKeyDown(SDL_SCANCODE_4))
@@ -1260,55 +1262,64 @@ EXPORT void Loop(EngineCore* core)
 	/**********************************************************************************************/
 	// ENTITY UPDATE
 
-	START_TIMING2()
 	for (int i = gameState->currentEntityCount - 1; i > -1; i--)
 	{
 		f(&gameState->entities[i], core, gameState->bodies);
 
 		if (!gameState->entities[i].alive)
 		{
-				// deletefunc
+			// deletefunc
 			const int lastEntityGuid = gameState->currentEntityCount - 1;
 
-			printf("delet\n");
 
 
 			// Todo: cleanup koodia alkaa olla jo monimutkainen
+
+			// printf("Killed\n");
+
+			// tämän hetkinen aka poistettava pois gridistä
+
 			RemoveBodyFromGrid(gridPositions[i].x, gridPositions[i].y, physicsBodies + i, &hash4r);
+			RemoveBodyFromGrid(gridPositions[lastEntityGuid].x, gridPositions[lastEntityGuid].y,
+				physicsBodies + lastEntityGuid, &hash4r);
+
 			gridPositions[i] = gridPositions[lastEntityGuid];
 
+
+			// Add
 			memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
 				sizeof(Entity));
 			gameState->entities[i].guid = i;
-
-				// swap all funcy
-			physicsBodies[i] = gameState->bodies[lastEntityGuid];
+			// guid
+			gameState->bodies[i] = gameState->bodies[lastEntityGuid];
 			physicsBodies[i].owner = i;
 
-				// remove !
+			AddBodyToGrid2(physicsBodies + i, &hash4r, gridPositions + i);
+
+			// swap all funcy
+		//  physicsBodies[i] = gameState->bodies[lastEntityGuid];
+
+
+			// remove !
 
 			gameState->allSides[i] = gameState->allSides[lastEntityGuid];
 			gameState->entityColors[i] = gameState->entityColors[lastEntityGuid];
-
-
-
 			SwapAnims(gameState, i, lastEntityGuid);
 
 			--gameState->currentEntityCount;
 		}
 	}
-			//if (gameState->entities[i].type == Entity_unit)
-			//{
-			//	AddBodyToGrid(physicsBodies + i, &hash4r);
-			//	++currentCount;
-			//}
+	//if (gameState->entities[i].type == Entity_unit)
+	//{
+	//	AddBodyToGrid(physicsBodies + i, &hash4r);
+	//	++currentCount;
+	//}
 
-	END_TIMING2()
 
-	// Huom atm clear spatial ei voi olla ennen f();
-	// #define HYPER_OPTIMIZATION 1
+// Huom atm clear spatial ei voi olla ennen f();
+// #define HYPER_OPTIMIZATION 1
 #ifdef HYPER_OPTIMIZATION
-		clearSpatial(&hash4r);
+	clearSpatial(&hash4r);
 #endif
 	UpdateAnimations(&gameState->unitAnimations, gameState->currentEntityCount);
 
@@ -1362,7 +1373,7 @@ EXPORT void Loop(EngineCore* core)
 			AddBodyToGrid(physicsBodies + i, &hash4r);
 			++currentCount;
 		}
-	}
+}
 	END_TIMING2()
 #endif
 		// Physics step:

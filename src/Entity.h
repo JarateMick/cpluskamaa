@@ -95,6 +95,12 @@ enum attack_type
 	// attack_
 };
 
+enum unit_state
+{
+	state_lookingForTarget,
+	state_idle,
+};
+
 // hello
 
 
@@ -148,6 +154,10 @@ struct Entity
 			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht     12_52
 
 			attack_type      attackType;
+			unit_state       unitState;
+
+
+			bool lookingForTarget;
 
 			// attack speed jne...
 			// (instant attacks melee) <-> (type?)
@@ -202,6 +212,8 @@ EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState);
 
 void setEntityColor(Uint32 color, game_state* gameState, int guid);
 
+
+Entity* createUnit(float x, float y, EngineCore* core);
 
 //std::vector<int> findPath(int startId, int goalId, game_state* gameState);
 
