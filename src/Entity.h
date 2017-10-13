@@ -97,8 +97,8 @@ enum attack_type
 
 enum unit_state
 {
-	state_lookingForTarget,
 	state_idle,
+	state_lookingForTarget,
 };
 
 // hello
@@ -214,6 +214,8 @@ void setEntityColor(Uint32 color, game_state* gameState, int guid);
 
 
 Entity* createUnit(float x, float y, EngineCore* core);
+static inline Entity* getEntity(int id, game_state* gameState);
+static inline Uint32 BodyToSide(PhysicsBody* body, game_state* gameState);
 
 //std::vector<int> findPath(int startId, int goalId, game_state* gameState);
 

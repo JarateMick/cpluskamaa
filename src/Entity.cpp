@@ -1,4 +1,5 @@
-#include "Entity.h" #include "core.h"
+#include "Entity.h" 
+#include "core.h"
 #include "game.h"
 #include "random.h"
 #include <ResourceManager.h>
@@ -16,6 +17,16 @@ const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
 constexpr float SHOTGUN_SPREAD = 15.f;
 constexpr float SHOTGUN_SPREAD_HALF = 15.f / 2.f;
 // one-to-many      many-to-one
+
+static inline Uint32 BodyToSide(PhysicsBody* body, game_state* gameState)
+{
+	return gameState->allSides[body->owner];
+}
+
+static inline Entity* getEntity(int id, game_state* gameState)
+{
+	return &gameState->entities[id];
+}
 
 Entity* createUnit(float x, float y, EngineCore* core)
 {
@@ -225,6 +236,8 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 	lastFrameX = dirVector.x;
 }
 
+// meleet pitaa seurata
+
 void f(Entity *e, EngineCore* core, PhysicsBody* body)
 {
 
@@ -410,6 +423,16 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			}
 		}
 
+		if (input->isKeyPressed(SDL_SCANCODE_G))
+		{
+			printf("looking for target");
+			for (int i = 0; i < gameState->selectedCount; i++)
+			{
+				Entity* selected = gameState->selectedEntitys[i];
+				selected->unit.lookingForTarget = state_lookingForTarget;
+			}
+		}
+
 		if (input->isKeyPressed(SDL_SCANCODE_C))
 		{
 			for (int i = 0; i < gameState->currentEntityCount; i++)
@@ -485,6 +508,31 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 		float x = (body + e->guid)->x;
 		float y = (body + e->guid)->y;
+
+
+// paljo nopeampi jos soa muodossa kun voisi laittaa targetit + thredaus
+		if (unit->lookingForTarget == state_lookingForTarget) // set target
+		{
+			auto gPos = gameState->gridPosition[e->guid];
+			auto* grid = gameState->spatialGrid; 
+
+			for (int y = -2; y < 3; y++)
+			{
+				for(int x = -2; x < 3; x++)
+				{
+					auto* bodies = &grid->hashMap[gPos.y + y][gPos.x + x];
+					for (int i = 0; i < bodies->size(); i++)
+					{
+						if (BodyToSide(bodies->at(i), gameState) != gameState->allSides[e->guid])
+						{
+							e->unit.attackTarget = getEntity(bodies->at(i)->owner, gameState);
+							goto afterLoop1;
+						}
+					}
+				}
+			}
+		}
+afterLoop1: 
 
 		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(x, y);
 		if (unit->lastFrameProv == mapId)

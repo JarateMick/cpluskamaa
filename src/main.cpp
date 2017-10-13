@@ -696,7 +696,7 @@ void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiE
 	{
 		PhysicsBody* body = bodies + i;
 		UpiEngine::ColorRGBA8* color = colors + i;
-		static auto ART = UpiEngine::ResourceManager::getTexture("Archer.png").id;
+		static auto ART = UpiEngine::ResourceManager::getTexture("spritesheet.png").id;
 		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, copy->uvs[i], ART, 1.0f, *color);
 	}
 

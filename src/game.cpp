@@ -45,10 +45,6 @@
 void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
-static inline Entity* getEntity(int id, game_state* gameState)
-{
-	return &gameState->entities[id];
-}
 
 static inline PhysicsBody* getBody(int id, PhysicsBody* bodies)
 {
@@ -74,7 +70,7 @@ void initSpatial(SpatialHash* hash)
 	{
 		for (int j = 0; j < CellsX; j++)
 		{
-			hash->hashMap[i][j].reserve(128);
+			hash->hashMap[i][j].reserve(64);
 			// hash->hashMap[i][j].clear();
 		}
 	}
@@ -1078,6 +1074,7 @@ EXPORT void Loop(EngineCore* core)
 
 		gameState->worldmap.editor.editorColor = 0;
 		gameState->spatialGrid = &hash4r;
+		gameState->gridPosition = gridPositions;
 
 		// init some npc's
 		Entity* e = GetFirstAvaibleEntity(gameState);
@@ -1315,6 +1312,8 @@ EXPORT void Loop(EngineCore* core)
 	//	++currentCount;
 	//}
 
+	glm::vec4 uvt = getFrameUv(0, 0, 730, 407, 10, 5, 35.5f, 25.f);
+	printf("%f, %f, %f, %f \n", uvt.x, uvt.y, uvt.z, uvt.w);
 
 // Huom atm clear spatial ei voi olla ennen f();
 // #define HYPER_OPTIMIZATION 1
@@ -1377,11 +1376,16 @@ EXPORT void Loop(EngineCore* core)
 	END_TIMING2()
 #endif
 		// Physics step:
-		UpdateAllGridPosition(gridPositions, physicsBodies, &hash4r, gameState->currentEntityCount);
+	UpdateAllGridPosition(gridPositions, physicsBodies, &hash4r, gameState->currentEntityCount);
 
 	// START_TIMING()
 	CheckCollisions(&hash4r);
 	// END_TIMING()
+
+	// set targets
+	// for (int i = 0; i < gameState->currentEntityCount; i++)
+	// {
+	// }
 
 	// for (int i = 0; i < currentCount; i++)
 	// {
