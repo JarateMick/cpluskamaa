@@ -11,7 +11,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "gl/DebugRenderer.h"
+#include <DebugRenderer.h>
 #define LOG_FILE "error.log"
 
 
@@ -20,7 +20,10 @@
 namespace Debug
 {
 	static UpiEngine::DebugRenderer* _Debugger = 0;
-        static Console* console = 0; // console voi olla null
+
+	void AddToConsole(const char* message)
+	{
+	}
 
 	bool restartLog()
 	{
@@ -107,6 +110,18 @@ namespace Debug
 		_Debugger->drawBox(destRect, color, angle);
 	}
 
+	void drawBox(const glm::vec4& destRect)
+	{
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255); // TODO: default color
+		_Debugger->drawBox(destRect, white, 0);
+	}
+
+	void drawBox(float x, float y, float w, float h)
+	{
+		static UpiEngine::ColorRGBA8 color(255, 255, 255, 255);
+		_Debugger->drawBox({x, y, w, h}, color, 0);
+	}
+
 	void drawLine(glm::vec2& start, glm::vec2 end, const UpiEngine::ColorRGBA8& color)
 	{
 		_Debugger->drawLine(start, end, color);
@@ -124,6 +139,14 @@ namespace Debug
 		glm::vec2 start2{ start.x, start.y };
 		glm::vec2 end2{ end.x, end.y };
 		drawLine(start2, end2, color);
+	}
+
+	void drawLine(v2_d start, v2_d end)
+	{
+		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255); // TODO: default color
+		glm::vec2 start2{ start.x, start.y };
+		glm::vec2 end2{ end.x, end.y };
+		drawLine(start2, end2, white);
 	}
 	
 };

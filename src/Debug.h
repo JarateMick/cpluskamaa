@@ -12,7 +12,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <DebugRenderer.h>
-// #include "gl/DebugRenderer.h"
 #define LOG_FILE "error.log"
 
 

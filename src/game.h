@@ -572,6 +572,8 @@ void SwapAnims(game_state* gameState, int toGuid, int fromGuid)
 	anims->animations[toGuid]            = anims->animations[fromGuid];
 	anims->currentAnimationFrame[toGuid] = anims->currentAnimationFrame[fromGuid];
 	anims->uvs[toGuid]                   = anims->uvs[fromGuid];
+
+    // SetAnimatio
 }
 
 inline int GetColorToId(game_state* state, Uint32 color)
