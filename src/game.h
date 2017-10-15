@@ -527,6 +527,8 @@ introspect("game_state:") struct game_state
 
 	ProvinceData   provinceData;
 
+	ZombieAi       ai;
+
 
 	// TileMap tilemap;
 	// TilemapEditor editor;

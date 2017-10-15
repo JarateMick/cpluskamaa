@@ -914,6 +914,11 @@ EXPORT IMGUIFUNC(Imgui)
 	{
 		gameState->player->player.selectedBuildingType = building_mill;
 	}
+	if (ImGui::Button("build tower"))
+	{
+		gameState->player->player.selectedBuildingType = building_tower;
+	}
+
 	ImGui::End();
 }
 //								______  ______  _____   ______

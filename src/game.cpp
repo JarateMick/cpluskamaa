@@ -21,6 +21,16 @@
 #undef max
 #undef min 
 
+
+// TODO:
+
+// melee, knight    animationit
+// zombie ai
+
+// mappi -> jossa on Uint32 -> arrayseen jossa on kaikki sen puolen id:t
+// laita sieltä kaikile targetit
+
+
 // preprocessor
 // oma lispy> 
 // ota paikkasi auringon alta
@@ -31,8 +41,8 @@
 // 
 // laita kaikki targetit oikein
 // 
-// addbody(      );
-// removebody(   );
+// addbody     ( )  ;
+// removebody  ( )  ;
 // 
 // mahdollisuus raycastata
 
@@ -791,7 +801,7 @@ void LoadNodes()
 		int a = GetNextInt(s, field, "a: ");
 
 		// int break2 = lastSaved * 2;
-		positions[id] = { int(x * NODE_MULTIPLIER), int(y * NODE_MULTIPLIER) };
+		positions[id] = { int(x), int(y) };
 		Uint32 color = createRGBA(r, g, b, a);
 
 		colorToId[color] = id;
@@ -1019,7 +1029,6 @@ EXPORT void Loop(EngineCore* core)
 		LoadNodes();
 		printf("##################################################\n");
 
-
 		gameState->provinceData.maxProvinces = MAX_PROVINCES;
 		gameState->provinceData.currentCount = &nodeCount;
 		gameState->provinceData.positions = positions;
@@ -1100,6 +1109,8 @@ EXPORT void Loop(EngineCore* core)
 		gameState->threadShared.thisFrame = physicsBodies2; // kakkonen ja nolla samoja
 		gameState->threadShared.lastFrame = physicsBodies3;
 
+		initZombieAi(&gameState->ai);
+
 		if (!Debug::restartLog())
 		{
 			printf("log restart failed: %s, %d", __FILE__, __LINE__);
@@ -1108,8 +1119,6 @@ EXPORT void Loop(EngineCore* core)
 		nodes.ClearMarks();
 		//	BreadthFirst(0, &nodes, 7);
 	}
-
-
 
 	// TODO: Nuke this init phase
 	static bool init = false;
@@ -1256,6 +1265,11 @@ EXPORT void Loop(EngineCore* core)
 
 
 	currentCount = 0;
+
+
+	// Zombie update
+	UpdateAi(&gameState->ai, gameState);
+
 	/**********************************************************************************************/
 	// ENTITY UPDATE
 
@@ -1268,12 +1282,8 @@ EXPORT void Loop(EngineCore* core)
 			// deletefunc
 			const int lastEntityGuid = gameState->currentEntityCount - 1;
 
-
-
 			// Todo: cleanup koodia alkaa olla jo monimutkainen
-
 			// printf("Killed\n");
-
 			// tämän hetkinen aka poistettava pois gridistä
 
 			RemoveBodyFromGrid(gridPositions[i].x, gridPositions[i].y, physicsBodies + i, &hash4r);
@@ -1281,7 +1291,6 @@ EXPORT void Loop(EngineCore* core)
 				physicsBodies + lastEntityGuid, &hash4r);
 
 			gridPositions[i] = gridPositions[lastEntityGuid];
-
 
 			// Add
 			memcpy(&gameState->entities[i], &gameState->entities[lastEntityGuid],
@@ -1293,10 +1302,8 @@ EXPORT void Loop(EngineCore* core)
 
 			AddBodyToGrid2(physicsBodies + i, &hash4r, gridPositions + i);
 
-			// swap all funcy
+		// swap all funcy
 		//  physicsBodies[i] = gameState->bodies[lastEntityGuid];
-
-
 			// remove !
 
 			gameState->allSides[i] = gameState->allSides[lastEntityGuid];

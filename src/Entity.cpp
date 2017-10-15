@@ -43,6 +43,7 @@ Entity* createUnit(float x, float y, EngineCore* core)
 	ee->unit.originalTargetX = -1;
 	ee->unit.originalTargetY = -1;
 	ee->unit.hp = UNIT_BASE_HP;
+	ee->unit.movementSpeed = UNIT_SPEED;
 
 	Uint32 side = gameState->worldmap.editor.editorColor;
 	if (side == 0)
@@ -64,6 +65,72 @@ Entity* createUnit(float x, float y, EngineCore* core)
 
 	return ee;
 }
+
+Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack_type type)
+{
+
+	// float x = (body + e->guid)->x;
+	// float y = (body + e->guid)->y;
+	Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
+	PhysicsBody* body = &gameState->bodies[ee->guid];
+	body->r = 15.f;
+	body->owner = ee->guid;
+	ee->unit.attackRange = 250.f;
+	ee->unit.targetX = -1;
+	ee->unit.targetY = -1;
+	ee->unit.originalTargetX = -1;
+	ee->unit.originalTargetY = -1;
+	ee->unit.side = side;
+	ee->unit.hp = UNIT_BASE_HP;
+	ee->unit.attackType = type;
+	ee->unit.movementSpeed = UNIT_SPEED;
+
+	gameState->allSides[ee->guid] = side; // tarkka kenen guid fuck
+	AddBodyToGrid2((body + ee->guid), gameState->spatialGrid, gridPositions + ee->guid);
+
+	// setup color
+	Uint32 ucolor = ee->unit.side;
+	setEntityColor(ucolor, gameState, ee->guid);
+
+
+	InitAnimation(gameState, ee->guid);
+
+	return ee;
+}
+
+
+// keep track of current amount of zombies
+// targetit ja tyypit tableen!
+void UpdateAi(ZombieAi* ai, game_state* gameState)
+{
+	ai->timeToNextSpawn -= (1 / 60.f);
+	if (ai->timeToNextSpawn < 0.f)
+	{
+		ai->timeToNextSpawn = Zombie::spawnTimer;
+
+		printf("Spanwn\n");
+
+		
+		v2 startPos = gameState->provinceData.positions[ai->spawnProvinceId];
+
+		for (int i = 0; i < ai->spawnCount; i++)
+		{
+			Entity* e = createUnit2(startPos.x, startPos.y, gameState, Zombie::zombieSide, attack_ranged); // TODO: meleet toimii viela huonosti mutta jonain paivana!!!!!!!!!!!!!!!!!!!!!!!!
+			e->unit.lookingForTarget = true;
+			// zombeille autoattack paalle niin voivat hyokata
+		}
+	}
+
+		// laita uusille zombeille targetiksi pelaaja tai jotain
+	// kahtele unit listasta, jokin yksikkö ja lähetä sen sijaintiin zombit  jos ei ole vene!
+
+	// zombie veneet ?
+}
+
+
+
+
+
 
 UpiEngine::ColorRGBA8 Uin32ToColor(Uint32 color)
 {
@@ -180,7 +247,7 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 			{
 				glm::vec2 direction{ i, j };
 				direction = glm::normalize(direction);
-				AddBullet(gameState, direction, body->x, body->y, 
+				AddBullet(gameState, direction, body->x, body->y,
 					gameState->allSides[playerControlled->guid], 250.f);
 			}
 		}
@@ -315,7 +382,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				player->selectionRect.x = input->mouse.x;
 				player->selectionRect.y = input->mouse.y;
 			}
-	}
+		}
 		else if (input->isMouseClicked(3))
 		{
 			player->selectedBuildingType = building_none;
@@ -500,7 +567,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			player->selectionRect = {};
 		}
-}
+	}
 	else if (auto unit = GET_ENTITY(e, unit))
 	{
 		GetGameState(core);
@@ -510,15 +577,15 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		float y = (body + e->guid)->y;
 
 
-// paljo nopeampi jos soa muodossa kun voisi laittaa targetit + thredaus
-		if (unit->lookingForTarget == state_lookingForTarget) // set target
+		// paljo nopeampi jos soa muodossa kun voisi laittaa targetit + thredaus
+		if (unit->lookingForTarget == state_lookingForTarget) // set target // types
 		{
 			auto gPos = gameState->gridPosition[e->guid];
-			auto* grid = gameState->spatialGrid; 
+			auto* grid = gameState->spatialGrid;
 
 			for (int y = -2; y < 3; y++)
 			{
-				for(int x = -2; x < 3; x++)
+				for (int x = -2; x < 3; x++)
 				{
 					auto* bodies = &grid->hashMap[gPos.y + y][gPos.x + x];
 					for (int i = 0; i < bodies->size(); i++)
@@ -532,7 +599,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				}
 			}
 		}
-afterLoop1: 
+	afterLoop1:
 
 		Uint32 mapId = gameState->worldmap.GetPixelSideFromWorld(x, y);
 		if (unit->lastFrameProv == mapId)
@@ -562,7 +629,7 @@ afterLoop1:
 				unit->path.pop_back();
 				printf("pop: ");
 				printf("(%i, %i)\n", unit->targetX, unit->targetY);
-		}
+			}
 			else
 			{
 				//if (unit->path.size() > 1)
@@ -574,7 +641,7 @@ afterLoop1:
 				unit->targetY = unit->originalTargetY;
 			}
 			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
-	}
+		}
 		unit->lastFrameProv = mapId;
 
 		// attack logic
@@ -644,7 +711,7 @@ afterLoop1:
 				{
 					unit->path.pop_back();
 					printf("pop");
-			}
+				}
 				else if (unit->path.size() > 0)
 				{
 					printf("origninal target (%i, %i)", unit->originalTargetX, unit->originalTargetY);
@@ -652,10 +719,10 @@ afterLoop1:
 					unit->targetY = unit->originalTargetY;
 					unit->path.pop_back();
 				}
-				}
+			}
 			else
 			{
-				moveVec = glm::normalize(moveVec) * UNIT_SPEED;          // unit->moveSpeed; mitä on tapahtunut move speedille :-(
+				moveVec = glm::normalize(moveVec) * unit->movementSpeed;         
 #if 0
 				e->x += moveVec.x;
 				e->y += moveVec.y;
@@ -680,7 +747,7 @@ afterLoop1:
 			}
 		}
 
-			}
+	}
 	else if (auto building = GET_ENTITY(e, building))
 	{
 		GetGameState(core);
@@ -692,6 +759,9 @@ afterLoop1:
 		{
 			switch (building->type)
 			{
+				// case building_tower:
+				// {
+				// }
 			case building_mill:
 			{
 				// printf("gimme cahs!\n");
@@ -703,31 +773,8 @@ afterLoop1:
 
 				float x = (body + e->guid)->x;
 				float y = (body + e->guid)->y;
-#if 1
-				Entity *ee = newEntity(x + Random::floatInRange(-25.f, 25.f), y + Random::floatInRange(-25.f, 25.f), Entity_unit, gameState);
-				(body + ee->guid)->r = 15.f;
-				(body + ee->guid)->owner = ee->guid;
-#else
-				Entity *ee = newEntity(e->x, e->y - 15.f, Entity_unit, gameState);
-#endif
-				ee->unit.attackRange = 250.f;
-				ee->unit.targetX = -1;
-				ee->unit.targetY = -1;
-				ee->unit.originalTargetX = -1;
-				ee->unit.originalTargetY = -1;
-				ee->unit.side = building->side;
-				ee->unit.hp = UNIT_BASE_HP;
-				ee->unit.attackType = attack_ranged;
 
-				gameState->allSides[ee->guid] = building->side; // tarkka kenen guid fuck
-
-				AddBodyToGrid2((body + ee->guid), gameState->spatialGrid, gridPositions + ee->guid);
-
-				// setup color
-				Uint32 ucolor = ee->unit.side;
-				setEntityColor(ucolor, gameState, ee->guid);
-
-				InitAnimation(gameState, ee->guid);
+				createUnit2(x, y, gameState, building->side, attack_ranged);
 
 			} break;
 			default:
@@ -738,7 +785,7 @@ afterLoop1:
 			building->timer = 0.f;
 		}
 	}
-		}
+}
 
 // tee kunnon spritesheet manager struct jotain jotain...
 glm::vec4 getUvFromUp(int index, glm::vec2 dims)
@@ -843,6 +890,10 @@ EXPORT __declspec(dllexport) Entity* getById(int i, void* gameState)
 }
 
 
+
+constexpr float towerRange = 300.f;
+constexpr float towerDamage = 15;
+
 const glm::vec2 buildingTextureDims{ 2, 2 };
 bool buildBuilding(float x, float  y, building_type type, game_state* state, Uint32 side)
 {
@@ -852,6 +903,17 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 	// map->GetPixelSideFromWorld((float)x, (float)y);
 	// vaativa check voiko rakennuksen rakentaa tahan // rakennus bitmap? // probably tarkistetaan vain ymparisto
 													  // quad tree alkoi kuulostaa kivalta
+
+	if (type == building_tower) 
+	{
+		Entity* e = createUnit2(x, y, state, side, attack_ranged);
+		e->unit.attackRange = towerRange;
+		e->unit.mainAttackCD = 1.0f;
+		e->unit.movementSpeed = 0.f;
+
+		return true;
+	}
+
 	Entity* e = newEntity(x, y, Entity_building, state);
 	e->building.type = type;
 	e->building.side = side;

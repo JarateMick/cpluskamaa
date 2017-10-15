@@ -57,19 +57,19 @@ struct Rect
 	bool Contains(float x, float y)
 	{
 		return (this->x < x &&  this->x + (w) > x &&
-				this->y  < y && this->y + (h) > y);
+			this->y  < y && this->y + (h) > y);
 	}
 
 	void UseLeftBottomAsStart()
 	{
 		if (w < 0)
 		{
-			w  = std::abs(w);
+			w = std::abs(w);
 			x -= w;
 		}
 		if (h < 0)
 		{
-			h  = std::abs(h);
+			h = std::abs(h);
 			y -= h;
 		}
 	}
@@ -85,6 +85,14 @@ enum building_type
 	building_none,
 	building_millitary_factory,
 	building_mill,
+
+	building_tower,
+
+	building_castle,
+
+	// siege?
+
+
 	building_max,
 };
 
@@ -150,6 +158,8 @@ struct Entity
 			float attackRange;     // 4     36
 
 			int hp;                // 4     40
+
+			float movementSpeed;
 
 			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht     12_52
 
@@ -218,6 +228,34 @@ static inline Entity* getEntity(int id, game_state* gameState);
 static inline Uint32 BodyToSide(PhysicsBody* body, game_state* gameState);
 
 //std::vector<int> findPath(int startId, int goalId, game_state* gameState);
+
+
+
+/////////////////////////////////////////////////////// ZOMBIE.h
+namespace Zombie
+{
+	constexpr float spawnTimer = 10.f;
+	constexpr int defaultSpawnCount = 100;
+	constexpr int waves = 10;
+	constexpr int spawnLocationId = 10;     // choose random at start or ???
+	constexpr Uint32 zombieSide = 0xFF00FF00;
+}
+
+struct ZombieAi
+{
+	float timeToNextSpawn;
+	int spawnCount;
+	int spawnProvinceId;
+};
+void UpdateAi(ZombieAi* ai, game_state* gameState);
+void initZombieAi(ZombieAi* ai);
+/////////////////////////////////////////////////////// ZOMBIE.h
+void initZombieAi(ZombieAi* ai)
+{
+	ai->timeToNextSpawn = Zombie::spawnTimer;
+	ai->spawnCount = Zombie::defaultSpawnCount;
+	ai->spawnProvinceId = Zombie::spawnLocationId;
+}
 
 
 
