@@ -498,6 +498,16 @@ static GridPosition gridPositions[MAX_ENTITY_COUNT];
 // BODY
 void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* positions);
 
+struct UnitStructure
+{
+	// typet
+	// target
+	Entity* attackTargets[MAX_ENTITY_COUNT];
+	attack_type attackTypes[MAX_ENTITY_COUNT];
+};
+
+
+
 #define I
 introspect("game_state:") struct game_state
 {
@@ -528,6 +538,8 @@ introspect("game_state:") struct game_state
 	ProvinceData   provinceData;
 
 	ZombieAi       ai;
+	UnitStructure  unitStructure;
+
 
 
 	// TileMap tilemap;
@@ -547,6 +559,23 @@ introspect("game_state:") struct game_state
 	I std::vector<int>(*getAllProvinceNeighbours)(int);
 	I void(*newNode)(int index, int id, float x, float y);
 };
+
+//#define GetTarget(int id, game_state* gameState) gameState->unitStructure.attackTargets[id]
+//
+static inline Entity* getTargets(int id, game_state* gameState)
+{
+	return gameState->unitStructure.attackTargets[id];
+}
+
+static inline void setTargets(int id, game_state* gameState, Entity* target)
+{
+	gameState->unitStructure.attackTargets[id] = target;
+}
+
+static inline attack_type getAttackType(int id, game_state* gameState)
+{
+	return gameState->unitStructure.attackTypes[id];
+}
 
 void SetAnimation(game_state* gameState, int guid, Anim_enum animType);
 void InitAnimation(game_state* gameState, int guid)

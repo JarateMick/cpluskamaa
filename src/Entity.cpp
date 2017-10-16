@@ -63,7 +63,16 @@ Entity* createUnit(float x, float y, EngineCore* core)
 	AddBodyToGrid2(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
 	InitAnimation(gameState, ee->guid);
 
+	UnitStructure* unitdata = &gameState->unitStructure;
+	unitdata->attackTargets[ee->guid] = nullptr;
+	unitdata->attackTypes[ee->guid] = attack_ranged;
+
 	return ee;
+}
+
+void setAttackTarget(int id, game_state* gameState, attack_type type)
+{
+	gameState->unitStructure.attackTypes[id] = type;
 }
 
 Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack_type type)
@@ -82,7 +91,8 @@ Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack
 	ee->unit.originalTargetY = -1;
 	ee->unit.side = side;
 	ee->unit.hp = UNIT_BASE_HP;
-	ee->unit.attackType = type;
+	// ee->unit.attackType = type;
+	setAttackTarget(ee->guid, gameState, type);
 	ee->unit.movementSpeed = UNIT_SPEED;
 
 	gameState->allSides[ee->guid] = side; // tarkka kenen guid fuck
@@ -92,9 +102,15 @@ Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack
 	Uint32 ucolor = ee->unit.side;
 	setEntityColor(ucolor, gameState, ee->guid);
 
-
 	InitAnimation(gameState, ee->guid);
 
+
+	UnitStructure* unitdata = &gameState->unitStructure;
+	unitdata->attackTargets[ee->guid] = nullptr;
+	unitdata->attackTypes[ee->guid] = attack_ranged;
+
+	// Entity* attackTargets[MAX_ENTITY_COUNT];
+	// attack_type attackTypes[MAX_ENTITY_COUNT];
 	return ee;
 }
 
@@ -110,7 +126,7 @@ void UpdateAi(ZombieAi* ai, game_state* gameState)
 
 		printf("Spanwn\n");
 
-		
+
 		v2 startPos = gameState->provinceData.positions[ai->spawnProvinceId];
 
 		for (int i = 0; i < ai->spawnCount; i++)
@@ -121,10 +137,10 @@ void UpdateAi(ZombieAi* ai, game_state* gameState)
 		}
 	}
 
-		// laita uusille zombeille targetiksi pelaaja tai jotain
+	// laita uusille zombeille targetiksi pelaaja tai jotain
 	// kahtele unit listasta, jokin yksikkö ja lähetä sen sijaintiin zombit  jos ei ole vene!
 
-	// zombie veneet ?
+// zombie veneet ?
 }
 
 
@@ -484,7 +500,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				for (int i = 0; i < gameState->selectedCount; i++)
 				{
 					// nullaa jos kuollut target
-					gameState->selectedEntitys[i]->unit.attackTarget = targetEntity;
+					// gameState->selectedEntitys[i]->unit.attackTarget = targetEntity;
+					Entity* selected = gameState->selectedEntitys[i];
+					setTargets(selected->guid, gameState, targetEntity);
 				}
 				printf("target set\n");
 			}
@@ -509,7 +527,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				entity->unit.originalTargetX = -1;
 				entity->unit.targetY = -1;
 				entity->unit.originalTargetY = -1;
-				entity->unit.attackTarget = nullptr;
+
+				// entity->unit.attackTarget = nullptr;
+				setTargets(entity->guid, gameState, 0);
 			}
 		}
 
@@ -585,14 +605,20 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			for (int y = -2; y < 3; y++)
 			{
+				if (gPos.y + y < 0)
+					continue;
 				for (int x = -2; x < 3; x++)
 				{
+					if (gPos.x + x < 0)
+						continue;
+
 					auto* bodies = &grid->hashMap[gPos.y + y][gPos.x + x];
 					for (int i = 0; i < bodies->size(); i++)
 					{
 						if (BodyToSide(bodies->at(i), gameState) != gameState->allSides[e->guid])
 						{
-							e->unit.attackTarget = getEntity(bodies->at(i)->owner, gameState);
+							//e->unit.attackTarget = getEntity(bodies->at(i)->owner, gameState);
+							setTargets(e->guid, gameState, getEntity(bodies->at(i)->owner, gameState));
 							goto afterLoop1;
 						}
 					}
@@ -646,7 +672,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 		// attack logic
 		unit->mainAttackCD -= core->deltaTime;
-		auto attackTarget = unit->attackTarget;
+
+		auto attackTarget = getTargets(e->guid, gameState);
 
 		if (attackTarget && unit->mainAttackCD < 0.f) // shoot // attack // Shoot 
 		{
@@ -666,7 +693,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				// TODO: tuohon direction/koko offset niin tulee piipusta
 				glm::vec2 direction = glm::normalize(targetVector);
 
-				if (unit->attackType == attack_ranged)
+				if (getAttackType(e->guid, gameState) == attack_ranged)
 				{
 					AddBullet(gameState, direction, x, y, unit->side, unit->attackRange);
 
@@ -674,7 +701,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 					SetAnimation(gameState, e->guid, animation);
 				}
-				else if (unit->attackType == attack_melee && attackTarget->unit.side != unit->side)
+				else if (getAttackType(e->guid, gameState) == attack_melee && attackTarget->unit.side != unit->side)
 				{
 					// melee ?						
 					dealDamage(attackTarget, 10);
@@ -722,7 +749,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			}
 			else
 			{
-				moveVec = glm::normalize(moveVec) * unit->movementSpeed;         
+				moveVec = glm::normalize(moveVec) * unit->movementSpeed;
 #if 0
 				e->x += moveVec.x;
 				e->y += moveVec.y;
@@ -904,7 +931,7 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 	// vaativa check voiko rakennuksen rakentaa tahan // rakennus bitmap? // probably tarkistetaan vain ymparisto
 													  // quad tree alkoi kuulostaa kivalta
 
-	if (type == building_tower) 
+	if (type == building_tower)
 	{
 		Entity* e = createUnit2(x, y, state, side, attack_ranged);
 		e->unit.attackRange = towerRange;

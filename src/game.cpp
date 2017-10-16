@@ -1065,7 +1065,9 @@ EXPORT void Loop(EngineCore* core)
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
 		setEntityColor(0xFFFF0000, gameState, 2);
 		gameState->entities[2].unit.attackRange = 50.f;
-		gameState->entities[2].unit.attackType = attack_melee;
+
+		// gameState->entities[2].unit.attackType = attack_melee;
+		gameState->unitStructure.attackTypes[2] = attack_melee;
 
 
 		// gameState->entities[2].unit.mainAttackCD = 
@@ -1425,7 +1427,11 @@ EXPORT void Loop(EngineCore* core)
 
 
 		// Ammu takisin randomia lähellä olevaa
-		Entity** target = &gameState->entities[id].unit.attackTarget;
+		Entity** target = &gameState->unitStructure.attackTargets[id];
+			//getTargets(id, gameState);
+			// &gameState->entities[id].unit.attackTarget;
+
+		
 		if (!(*target))
 		{
 			PhysicsBody* body = getBody(id, physicsBodies);

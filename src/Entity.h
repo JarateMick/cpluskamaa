@@ -100,7 +100,8 @@ enum attack_type
 {
 	attack_ranged,
 	attack_melee,
-	// attack_
+	attack_zombie,
+	// attack_zombie xD -> zombiet erikseen ???
 };
 
 enum unit_state
@@ -152,7 +153,7 @@ struct Entity
 			int targetX, targetY; // 4 // 4             16
 			int originalTargetX, originalTargetY; // 4 // 4  24
 
-			Entity* attackTarget;     // 4     28
+			// Entity* attackTarget;     // 4     28
 
 			float mainAttackCD;     // 4    32
 			float attackRange;     // 4     36
@@ -163,7 +164,7 @@ struct Entity
 
 			std::vector<int> path; // TODO PATH: provinsseille <--> provinsseille pathiht     12_52
 
-			attack_type      attackType;
+			// attack_type      attackType;
 			unit_state       unitState;
 
 
