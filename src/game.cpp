@@ -452,7 +452,6 @@ void circleCollision(PhysicsBody* __restrict a, PhysicsBody* __restrict b)
 		b->x -= bResolution.x;
 		b->y -= bResolution.y;
 
-		// printf("%f\n", collisionDepthVec.x);
 		// agent->_position -= collisionDepthVec / 2.0f;
 #endif
 	}
@@ -600,7 +599,6 @@ ImageData::ImageData(const char* filename)
 //	file = al_fopen(fileName, "wb");
 //	if (!file)
 //	{
-//		printf("couldn't not open file");
 //		ASSERT(false);
 //	}
 //
@@ -1187,7 +1185,7 @@ EXPORT void Loop(EngineCore* core)
 	glm::vec2 mxy = gameState->worldmap.GetMouse(&input->mouse);
 	float mx = mxy.x;
 	float my = mxy.y;
-	Debug::drawBox(mx, my, 3.f, 3.f);
+	// Debug::drawBox(mx, my, 3.f, 3.f);
 
 	if (input->isKeyDown(SDL_SCANCODE_2))
 	{
@@ -1321,8 +1319,8 @@ EXPORT void Loop(EngineCore* core)
 	//	++currentCount;
 	//}
 
-	glm::vec4 uvt = getFrameUv(0, 0, 730, 407, 10, 5, 35.5f, 25.f);
-	printf("%f, %f, %f, %f \n", uvt.x, uvt.y, uvt.z, uvt.w);
+	// glm::vec4 uvt = getFrameUv(0, 0, 730, 407, 10, 5, 35.5f, 25.f);
+	// printf("%f, %f, %f, %f \n", uvt.x, uvt.y, uvt.z, uvt.w);
 
 // Huom atm clear spatial ei voi olla ennen f();
 // #define HYPER_OPTIMIZATION 1
@@ -1456,6 +1454,18 @@ EXPORT void Loop(EngineCore* core)
 		}
 	}
 #endif
+
+#if 0
+	for (int i = 0; i < gameState->currentEntityCount; i++)
+	{
+		float x = gameState->bodies[i].x;
+		float y = gameState->bodies[i].y;
+		Uint32 side = gameState->worldmap.GetCurrentHolder(x, y);
+		// gameState->provinces[i].side = 
+	}
+#endif
+
+
 	// luoti fysiikat
 	// END_TIMING()
 

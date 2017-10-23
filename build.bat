@@ -1,6 +1,8 @@
 @echo off
 rem ctime -begin engine.ctm
 
+echo "builf"
+
 if not defined DEV_ENV_DIR (
     	rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
     call "H:\Visual Studio\VC\vcvarsall.bat" x64 
@@ -9,7 +11,8 @@ if not defined DEV_ENV_DIR (
 set DEV_ENV_DIR= ???
 
 rem eHa -O2 -Oi 
-set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -openmp
+set CFLAGS= -Zi -nologo -EHs -Gm-  -GR-  -fp:fast -wd4311 -wd4312 -openmp 
+rem -O2 -Oi 
 set LFLAGS= -incremental:no opengl32.lib  
 set LIBS= lua51.lib luajit.lib SDL2.lib SDL2main.lib SDL2_image.lib SDL2_TTF.lib Raknet.lib Graphics.lib
 REM set INCLUDE=

@@ -507,6 +507,11 @@ struct UnitStructure
 };
 
 
+struct Province
+{
+	Uint32 side;
+};
+
 
 #define I
 introspect("game_state:") struct game_state
@@ -536,6 +541,7 @@ introspect("game_state:") struct game_state
 	int            currentEntityCount;
 
 	ProvinceData   provinceData;
+	Province       provinces[MAX_ENTITY_COUNT];
 
 	ZombieAi       ai;
 	UnitStructure  unitStructure;

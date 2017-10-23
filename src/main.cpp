@@ -409,10 +409,11 @@ void ImguiTest(ImVec4 clear_color, EngineCore* core)
 
 		static bool entityFound = false;
 		static Entity* selected = nullptr;
-		if (core->input->isKeyDown(SDL_SCANCODE_Y))
+			ImGui::Text("Current Entity count: %i", gameState->currentEntityCount);
+
+		if (core->input->isKeyDown(SDL_SCANCODE_I))
 		{
 			// looppaa kaikki läpi katso onko lähistöllä entityä
-			ImGui::Text("Current Entity count: %i", gameState->currentEntityCount);
 			for (int i = 0; i < gameState->currentEntityCount; i++)
 			{
 				Entity* e = &gameState->entities[i];
@@ -644,6 +645,7 @@ std::mutex logicMutex;
 std::condition_variable cond;
 volatile bool logicThreadRunning = true;
 
+static bool debugDraw = false;
 void LogicThreadUpdate(EngineCore* core)
 {
 	while (logicThreadRunning)
@@ -652,6 +654,12 @@ void LogicThreadUpdate(EngineCore* core)
 		cond.wait(locker);
 
 		LoopPtr(core);
+
+
+		if (core->input->isKeyPressed(SDL_SCANCODE_Y))
+		{
+			debugDraw = !debugDraw;
+		}
 
 		core->input->mouse = camera2D.convertScreenToWorld(core->input->rawMouse);
 		core->input->update(); // TODO: maybe poll for input
@@ -681,6 +689,8 @@ struct gameStateCopy
 	glm::vec4     uvs[MAX_ENTITY_COUNT];
 
 	Entity        player;
+
+	int mouseX, mouseY;
 };
 
 void SyncBullets(Bullets* bullets, game_state* state)
@@ -690,7 +700,7 @@ void SyncBullets(Bullets* bullets, game_state* state)
 }
 
 static UpiEngine::ColorRGBA8 colorCopies[MAX_ENTITY_COUNT]{};
-void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch, gameStateCopy* copy)
+void threadedDraw(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiEngine::SpriteBatch* spriteBatch, gameStateCopy* copy)
 {
 	for (int i = 0; i < count; i++)
 	{
@@ -708,6 +718,20 @@ void mtDraw2(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count, UpiE
 		static auto yellow = UpiEngine::ColorRGBA8(255, 255, 0, 255);
 		spriteBatch->draw(glm::vec4{ pos.x - 3.f, pos.y - 3.f, 6.f, 6.f }, glm::vec4{ 0.f, 0.f, 1.f, 1.f },
 			notWorking, 1.0f, yellow); // depth !
+	}
+
+	if (debugDraw)
+	{
+		int startI = copy->mouseY / cellSize;
+		int startJ = copy->mouseX / cellSize;
+		for (int i = startI - 50; i < startI + 50; i++)
+		{
+			for (int j = startJ - 50; j < startJ + 50; j++)
+			{
+				glm::vec4 box(j * cellSize, i * cellSize, cellSize, cellSize);
+				Debug::drawBox(box);
+			}
+		}
 	}
 
 	copy->player.player.selectionRect.DrawRect();
@@ -885,7 +909,6 @@ int main(int argc, char* argv[])
 
 
 	// Lua Scripting Init****************************************
-	static bool init1 = false;
 	static lua_State *L = luaL_newstate();
 	core.script.L = L;
 	static const char* lua_main_filename = "lua/main2.lua";
@@ -1028,7 +1051,7 @@ int main(int argc, char* argv[])
 						// endplayBack(&inputState);
 						inputState.playing = false;
 						inputManager.reset();
-					}
+				}
 					else
 					{
 						inputState.playing = true;
@@ -1038,7 +1061,7 @@ int main(int argc, char* argv[])
 					inputState.playing = !inputState.playing;
 					inputManager.reset();
 #endif
-				}
+			}
 			} break;
 			case SDL_KEYUP:
 			{
@@ -1049,13 +1072,13 @@ int main(int argc, char* argv[])
 					nesInput.buttons &= ~(1 << ev.key.keysym.scancode);
 				}
 			} break;
-			}
-		} // POLL EvENTS
+		}
+	} // POLL EvENTS
 
-				// number |= 1 << x;   // setting bit 
-				// number &= ~(1 << x); // clear 
+			// number |= 1 << x;   // setting bit 
+			// number &= ~(1 << x); // clear 
 
-				// nesInput.buttons = 0xFF;
+			// nesInput.buttons = 0xFF;
 
 		if (inputManager.isKeyPressed(SDL_SCANCODE_ESCAPE))
 		{
@@ -1171,7 +1194,7 @@ int main(int argc, char* argv[])
 				core.AddToConsole(buffer);
 				debugBreak();
 			}
-		}
+}
 #endif
 		// fprintf(stderr, "%s\n", lua_tostring(L, -1));
 
@@ -1352,7 +1375,7 @@ int main(int argc, char* argv[])
 		GLint textureLocation = textureProgram.getUniformLocation("enemySampler");
 		glUniform1i(textureLocation, 0);
 
-	https://www.latex-project.org/
+		https://www.latex-project.org/
 	// httpss://www.latex-project.org2/
 
 		GLint plocation = textureProgram.getUniformLocation("P");
@@ -1366,7 +1389,7 @@ int main(int argc, char* argv[])
 		if (copy->bodiesCopy)
 		{
 			spriteBatch.draw(copy->dimensions, glm::vec4{ 0.f, 0.f, 1.f, 1.f }, copy->mapCopy, 1.0f); // map draw
-			mtDraw2(copy->bodiesCopy, colorCopies, copy->copiesCount, &spriteBatch, copy);
+			threadedDraw(copy->bodiesCopy, colorCopies, copy->copiesCount, &spriteBatch, copy);
 		}
 
 		spriteBatch.end();
@@ -1387,7 +1410,7 @@ int main(int argc, char* argv[])
 		textureProgram.unuse();
 
 
-		 debugger.render(cameraMatrix, 2.0f);
+		debugger.render(cameraMatrix, 2.0f);
 		debugger.end();
 #endif
 		ImGui::Render();
@@ -1426,7 +1449,9 @@ int main(int argc, char* argv[])
 				memcpy(&copy->player, gameState->player, sizeof(Entity));
 			}
 
-			
+			copy->mouseX = core.input->mouse.x;
+			copy->mouseY = core.input->mouse.y;
+
 			if (gameState->player && gameState->player->player.selectingTroops)
 				gameState->player->player.selectionRect.DrawRect();
 		}

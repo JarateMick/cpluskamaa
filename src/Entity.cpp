@@ -126,21 +126,43 @@ void UpdateAi(ZombieAi* ai, game_state* gameState)
 
 		printf("Spanwn\n");
 
-
 		v2 startPos = gameState->provinceData.positions[ai->spawnProvinceId];
 
 		for (int i = 0; i < ai->spawnCount; i++)
 		{
-			Entity* e = createUnit2(startPos.x, startPos.y, gameState, Zombie::zombieSide, attack_ranged); // TODO: meleet toimii viela huonosti mutta jonain paivana!!!!!!!!!!!!!!!!!!!!!!!!
+			Entity* e = createUnit2(startPos.x, startPos.y, gameState, Zombie::zombieSide, attack_zombie); // TODO: meleet toimii viela huonosti mutta jonain paivana!!!!!!!!!!!!!!!!!!!!!!!!
 			e->unit.lookingForTarget = true;
 			// zombeille autoattack paalle niin voivat hyokata
 		}
 	}
-
 	// laita uusille zombeille targetiksi pelaaja tai jotain
 	// kahtele unit listasta, jokin yksikkö ja lähetä sen sijaintiin zombit  jos ei ole vene!
 
-// zombie veneet ?
+	// zombie veneet ?
+
+	Entity* target = 0;
+	for (int i = 0; i < gameState->currentEntityCount; i++)
+	{
+		if (gameState->unitStructure.attackTypes[i] != attack_zombie)
+		{
+			target = &gameState->entities[i];
+			break;
+		}
+	}
+
+	if (target)
+	{
+		for (int i = 0; i < gameState->currentEntityCount; i++)
+		{
+			if (gameState->unitStructure.attackTypes[i] == attack_zombie && !gameState->unitStructure.attackTargets[i])
+			{
+				gameState->unitStructure.attackTargets[i] = target;
+			}
+			// Entity* attackTargets[MAX_ENTITY_COUNT];
+			// attack_type attackTypes[MAX_ENTITY_COUNT];
+		}
+	}
+
 }
 
 
@@ -617,7 +639,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					{
 						if (BodyToSide(bodies->at(i), gameState) != gameState->allSides[e->guid])
 						{
-							//e->unit.attackTarget = getEntity(bodies->at(i)->owner, gameState);
+							// e->unit.attackTarget = getEntity(bodies->at(i)->owner, gameState);
 							setTargets(e->guid, gameState, getEntity(bodies->at(i)->owner, gameState));
 							goto afterLoop1;
 						}
@@ -643,7 +665,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			// float y = (body + e->guid)->y;
 			Uint32 side = gameState->worldmap.GetCurrentHolder(x, y);
 #endif
-
 			if (side != unit->side)
 			{
 				gameState->worldmap.changeSideWorld(x, y, unit->side, core); // jou
@@ -685,7 +706,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #endif
 
 			// laske suunta targettiin
-			glm::vec2 targetVector{ (body + attackTarget->guid)->x - x, (body + attackTarget->guid)->y - y };
+			float enemyX = (body + attackTarget->guid)->x;
+			float enemyY = (body + attackTarget->guid)->y;
+			glm::vec2 targetVector{ enemyX - x, enemyY - y };
 			float lengthSquared = targetVector.x * targetVector.x + targetVector.y * targetVector.y;
 
 			if (lengthSquared < unit->attackRange * unit->attackRange) // Attack
@@ -693,7 +716,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				// TODO: tuohon direction/koko offset niin tulee piipusta
 				glm::vec2 direction = glm::normalize(targetVector);
 
-				if (getAttackType(e->guid, gameState) == attack_ranged)
+				const auto attackType = getAttackType(e->guid, gameState);
+				if (attackType == attack_ranged || attackType == attack_zombie)
 				{
 					AddBullet(gameState, direction, x, y, unit->side, unit->attackRange);
 
@@ -701,7 +725,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 					SetAnimation(gameState, e->guid, animation);
 				}
-				else if (getAttackType(e->guid, gameState) == attack_melee && attackTarget->unit.side != unit->side)
+				else if (attackType == attack_melee && attackTarget->unit.side != unit->side)
 				{
 					// melee ?						
 					dealDamage(attackTarget, 10);
@@ -713,10 +737,16 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
 					SetAnimation(gameState, e->guid, animation);
 
+
 					printf("melee! \n");
 				}
 
 				unit->mainAttackCD = 1.5f;  // lista odottajistaa ?   TODO: CDCDCD!
+			}
+			else
+			{
+				unit->originalTargetX = unit->targetX = enemyX;
+				unit->originalTargetY = unit->targetY = enemyY;
 			}
 		}
 

@@ -17,6 +17,8 @@
     <ClCompile Include="..\src\simple_preprocessor.cpp" />
     <ClCompile Include="..\src\meta.cpp" />
     <ClCompile Include="Batch.cpp" />
+    <ClCompile Include="..\src\Physics.cpp" />
+    <ClCompile Include="..\src\Zombie.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\game.h" />
@@ -41,5 +43,7 @@
     <ClInclude Include="..\src\array.h" />
     <ClInclude Include="..\src\stretchy_buffer.h" />
     <ClInclude Include="Batch.h" />
+    <ClInclude Include="..\src\Physics.h" />
+    <ClInclude Include="..\src\Zombie.h" />
   </ItemGroup>
 </Project>
