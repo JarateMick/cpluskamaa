@@ -264,3 +264,5 @@ void initZombieAi(ZombieAi* ai)
 #define GET_ENTITY(e, entity_type) ((e)->type == Entity_##entity_type ? &(e)->entity_type : 0)
 #define ENT(e, entity_type)        &((e)->entity_type)
 
+
+void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x);

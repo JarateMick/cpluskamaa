@@ -118,9 +118,9 @@
     <NMakeOutput>$(SolutionDir)../bin/main.exe</NMakeOutput>
     <NMakeReBuildCommandLine>$(SolutionDir)./build.bat</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\algorytmeja\cpluskamaa\Include;I:\Dev\SDL\allegro vanhat\Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;C:\Users\EetuKer\Desktop\Lua\cpluskamaa\Include;I:\Dev\SDL\allegro vanhat\Graphics\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;$(SolutionDir)..\Graphics\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <IncludePath>$(IncludePath)</IncludePath>
-    <NMakeForcedIncludes>I:\Dev\Allegro\allegro\Include\sol\sol2;I:\Dev\Allegro\allegro\Include;I:\Dev\SDL\allegro vanhat\Graphics\include;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeForcedIncludes>$(NMakeForcedIncludes)</NMakeForcedIncludes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <NMakeBuildCommandLine>$(SolutionDir)/build.bat</NMakeBuildCommandLine>
@@ -135,7 +135,7 @@
     <NMakeOutput>W:\hotload – Allegro\C-Hotloading-master\bin\main.exe</NMakeOutput>
     <NMakeReBuildCommandLine>$(SolutionDir)./build.bat</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>W:\hotload – Allegro\C-Hotloading-master\Include;W:\hotload – Allegro\C-Hotloading-master\Include\Imgui;$(SolutionDir)..\Graphics\include;I:\Dev\SDL\allegro vanhat\Graphics\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>W:\hotload – Allegro\C-Hotloading-master\Include;W:\hotload – Allegro\C-Hotloading-master\Include\Imgui;$(SolutionDir)..\Graphics\include;I:\Dev\SDL\allegro vanhat\Graphics\include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Graphics\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>

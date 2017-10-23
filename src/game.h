@@ -37,23 +37,12 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
-
-struct v2 { int x, y; };
-
-
 #include <lua.hpp>
-// #include <SDL2\SDL_image.h>
-struct SpatialHash;
-struct PhysicsBody;
-
-inline v2 HashPoint(int x, int y);
-void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, PhysicsBody* bodiesOut[], int outSize);
-static inline PhysicsBody* getBody(int id, PhysicsBody* bodies);
+#include "Physics.h"
 
 #include <cstdint>
 #include <vector>
 #include <functional>
-// #include <math.h>
 #define CLAMP(x, upper, lower) (std::min(upper, std::max(x, lower)))
 
 #include "TextureHolder.h"
@@ -62,7 +51,6 @@ static inline PhysicsBody* getBody(int id, PhysicsBody* bodies);
 // #include "Hex.h"
 #define Internal static
 
-typedef glm::vec2 vec2f;
 struct game_state;
 
 // TODO: Vec2  -> typedeffaa vec jne....
@@ -90,15 +78,6 @@ struct game_state;
 	auto NAME(4)(std::chrono::high_resolution_clock::now());	\
 	auto elapsedTime2(NAME(4) - NAME(3));						\
 	printf("Time: %f\n", std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(elapsedTime2).count()  );
-
-
-struct PhysicsBody
-{
-	float x, y;       // 16  ->  20  ->  24 | render id
-	float r;
-	int owner;
-};
-
 
 enum ResourceType
 {
@@ -347,8 +326,6 @@ struct WorldMapEditor
 
 
 
-const int mapSizeMultiplier = 30;
-constexpr float NODE_MULTIPLIER = 1.5f;
 struct WorldMap
 {
 	GLuint temptextureid;
@@ -450,27 +427,14 @@ struct PathFindingUi
 
 std::vector<int> getAllProvinceNeighbours(int id);
 
-introspect("hello") struct MapNode
+introspect("testi") struct MapNode
 {
 	int   id;
 	float x, y; // for rendering and debugging 
 };
 // Graph<MapNode, int> nodes(64);
 
-struct BulletBody
-{
-	vec2f      position;       // 16  ->  20  ->  24 | render id
-	float   r;
-	Uint32  side;
-};
 
-struct BulletStart
-{
-	vec2f    position;
-	float rangeSqrt;
-};
-
-constexpr int maxiumBullets = 10000;
 
 // resolve collision -> damages -> bullets
 
@@ -484,19 +448,11 @@ struct ThreadSharedData
 #include "Animation.h"
 
 
-constexpr int cellSize = 48;      // 590 x 480        5900        x        4800
-constexpr int CellsX = 2 * (int(5900 * NODE_MULTIPLIER) / cellSize) + 1 + 3;
-constexpr int CellsY = 2 * (int(4800 * NODE_MULTIPLIER) / cellSize) + 1 + 3;
-struct SpatialHash            // map width = textureW * 10, textureH * 10
-{
-	// hash map :(
-	std::vector<PhysicsBody*> hashMap[CellsY][CellsX];
-} hash4r;
 
 struct GridPosition { int x, y; };
 static GridPosition gridPositions[MAX_ENTITY_COUNT];
 // BODY
-void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* positions);
+void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash, GridPosition* positions);
 
 struct UnitStructure
 {
@@ -526,9 +482,9 @@ introspect("game_state:") struct game_state
 	PhysicsBody*   bodies;
 	GridPosition*  gridPosition;
 	Uint32         allSides[MAX_ENTITY_COUNT];
-	BulletBody     bulletBodies[maxiumBullets];
-	BulletStart    bulletStart[maxiumBullets];
-	vec2f          BulletAccelerations[maxiumBullets];
+	BulletBody     bulletBodies[MAXIUM_BULLETS];
+	BulletStart    bulletStart[MAXIUM_BULLETS];
+	vec2f          BulletAccelerations[MAXIUM_BULLETS];
 
 	ThreadSharedData threadShared;
 	Animations       unitAnimations;

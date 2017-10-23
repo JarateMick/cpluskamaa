@@ -16,7 +16,10 @@ const int   UNIT_BASE_HP = 100;
 const float BULLET_BASE_SIZE = 5.f;    //   sqrt(18) = 4.2
 constexpr float SHOTGUN_SPREAD = 15.f;
 constexpr float SHOTGUN_SPREAD_HALF = 15.f / 2.f;
-// one-to-many      many-to-one
+constexpr float MELEE_RANGE = 60.f;
+constexpr float RANGED_RANGE = 250.f;
+
+//  one-to-many      many-to-one
 
 static inline Uint32 BodyToSide(PhysicsBody* body, game_state* gameState)
 {
@@ -60,7 +63,7 @@ Entity* createUnit(float x, float y, EngineCore* core)
 	}
 
 	// olisi varmaan kivempi etta kaikki ottas guiding naaa 
-	AddBodyToGrid2(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
+	AddBodyToGrid(physicsBodies + ee->guid, &hash4r, gridPositions + ee->guid);
 	InitAnimation(gameState, ee->guid);
 
 	UnitStructure* unitdata = &gameState->unitStructure;
@@ -70,12 +73,12 @@ Entity* createUnit(float x, float y, EngineCore* core)
 	return ee;
 }
 
-void setAttackTarget(int id, game_state* gameState, attack_type type)
+void setAttackType(int id, game_state* gameState, attack_type type)
 {
 	gameState->unitStructure.attackTypes[id] = type;
 }
 
-Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack_type type)
+Entity* createUnit(float x, float y, game_state* gameState, Uint32 side, attack_type type, float attackRange)
 {
 
 	// float x = (body + e->guid)->x;
@@ -84,7 +87,7 @@ Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack
 	PhysicsBody* body = &gameState->bodies[ee->guid];
 	body->r = 15.f;
 	body->owner = ee->guid;
-	ee->unit.attackRange = 250.f;
+	ee->unit.attackRange = attackRange;
 	ee->unit.targetX = -1;
 	ee->unit.targetY = -1;
 	ee->unit.originalTargetX = -1;
@@ -92,11 +95,11 @@ Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack
 	ee->unit.side = side;
 	ee->unit.hp = UNIT_BASE_HP;
 	// ee->unit.attackType = type;
-	setAttackTarget(ee->guid, gameState, type);
+	setAttackType(ee->guid, gameState, type);
 	ee->unit.movementSpeed = UNIT_SPEED;
 
 	gameState->allSides[ee->guid] = side; // tarkka kenen guid fuck
-	AddBodyToGrid2((body + ee->guid), gameState->spatialGrid, gridPositions + ee->guid);
+	AddBodyToGrid((body), gameState->spatialGrid, gridPositions + ee->guid);
 
 	// setup color
 	Uint32 ucolor = ee->unit.side;
@@ -104,16 +107,51 @@ Entity* createUnit2(float x, float y, game_state* gameState, Uint32 side, attack
 
 	InitAnimation(gameState, ee->guid);
 
-
 	UnitStructure* unitdata = &gameState->unitStructure;
 	unitdata->attackTargets[ee->guid] = nullptr;
-	unitdata->attackTypes[ee->guid] = attack_ranged;
 
 	// Entity* attackTargets[MAX_ENTITY_COUNT];
 	// attack_type attackTypes[MAX_ENTITY_COUNT];
 	return ee;
 }
 
+void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x)
+{
+	if (path.size() > 2)
+	{
+		int targetId = path[path.size() - 2]; // eka on maali
+		auto v2 = gameState->provinceData.positions[targetId];
+		gameState->selectedEntitys[i]->unit.targetX = v2.x;
+		gameState->selectedEntitys[i]->unit.targetY = v2.y;
+
+		gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
+		gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
+
+		// printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
+		printf("matka\n"); // seuraa reittiä
+	}
+	else  // mee viereiseen // @cleanup
+	{
+		int targetId = path[0];
+		auto v2 = gameState->provinceData.positions[targetId];
+		gameState->selectedEntitys[i]->unit.targetX = v2.x;
+		gameState->selectedEntitys[i]->unit.targetY = v2.y;
+
+		gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
+
+		gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
+		gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
+		gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
+
+		int guid = gameState->selectedEntitys[i]->guid;
+
+		Anim_enum animation = (input->mouse.x < x) ? Anim_Archer_Run_Left : Anim_Archer_Run_Right;
+		SetAnimation(gameState, guid, animation);
+
+		// printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
+	}
+	// printf("target set");
+}
 
 // keep track of current amount of zombies
 // targetit ja tyypit tableen!
@@ -130,7 +168,16 @@ void UpdateAi(ZombieAi* ai, game_state* gameState)
 
 		for (int i = 0; i < ai->spawnCount; i++)
 		{
-			Entity* e = createUnit2(startPos.x, startPos.y, gameState, Zombie::zombieSide, attack_zombie); // TODO: meleet toimii viela huonosti mutta jonain paivana!!!!!!!!!!!!!!!!!!!!!!!!
+			startPos.x++;
+
+			if (i % 25 == 0)
+			{
+				startPos.y++;
+				startPos.x -= 25.f;
+			}
+
+			Entity* e = createUnit(startPos.x, startPos.y, gameState, Zombie::zombieSide, attack_zombie, MELEE_RANGE); // TODO: meleet toimii viela huonosti mutta jonain paivana!!!!!!!!!!!!!!!!!!!!!!!!
+
 			e->unit.lookingForTarget = true;
 			// zombeille autoattack paalle niin voivat hyokata
 		}
@@ -158,14 +205,9 @@ void UpdateAi(ZombieAi* ai, game_state* gameState)
 			{
 				gameState->unitStructure.attackTargets[i] = target;
 			}
-			// Entity* attackTargets[MAX_ENTITY_COUNT];
-			// attack_type attackTypes[MAX_ENTITY_COUNT];
 		}
 	}
-
 }
-
-
 
 
 
@@ -184,7 +226,6 @@ void setEntityColor(Uint32 color, game_state* gameState, int guid)
 	auto colr = Uin32ToColor(color);
 	gameState->entityColors[guid] = colr; // drawing color
 }
-
 
 void dealDamage(Entity* target, int damage)
 {
@@ -286,7 +327,7 @@ void controlUnit(Entity* playerControlled, EngineCore* core, PhysicsBody* body)
 				glm::vec2 direction{ i, j };
 				direction = glm::normalize(direction);
 				AddBullet(gameState, direction, body->x, body->y,
-					gameState->allSides[playerControlled->guid], 250.f);
+					gameState->allSides[playerControlled->guid], RANGED_RANGE);
 			}
 		}
 	}
@@ -431,6 +472,12 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 			// move or attack here !!!
 
+			std::map<int, std::vector<int>> cachedPaths;
+
+			Uint32 side = gameState->worldmap.GetSideUnderMouse(&input->mouse);
+			auto mouseIter = gameState->provinceData.colorToId->find(side);
+
+			int cachedUsed = 0;
 			for (int i = 0; i < gameState->selectedCount; i++)
 			{
 #if 0
@@ -440,61 +487,34 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				float x = (body + gameState->selectedEntitys[i]->guid)->x; // used later!!!!
 				float y = (body + gameState->selectedEntitys[i]->guid)->y;
 #endif
-
-				Uint32 side = gameState->worldmap.GetSideUnderMouse(&input->mouse);
 				Uint32 current = gameState->worldmap.GetPixelSideFromWorld(x, y);
-				auto mouseIter = gameState->provinceData.colorToId->find(side);
 				auto goaliter = gameState->provinceData.colorToId->find(current);
 
-				if (mouseIter != gameState->provinceData.colorToId->end() && goaliter != gameState->provinceData.colorToId->end())
+				if (cachedPaths.count(goaliter->second) > 0)
 				{
-					std::vector<int> path = BreadthFirst(goaliter->second, gameState->MapNodes, mouseIter->second);
-
-					gameState->selectedEntitys[i]->unit.path = path;
-					if (path.size() > 2)
-					{
-						int targetId = path[path.size() - 2]; // eka on maali
-						auto v2 = gameState->provinceData.positions[targetId];
-						gameState->selectedEntitys[i]->unit.targetX = v2.x;
-						gameState->selectedEntitys[i]->unit.targetY = v2.y;
-
-						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
-						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
-
-						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
-						printf("matka\n"); // seuraa reittiä
-					}
-					else  // mee viereiseen // @cleanup
-					{
-						int targetId = path[0];
-						auto v2 = gameState->provinceData.positions[targetId];
-						gameState->selectedEntitys[i]->unit.targetX = v2.x;
-						gameState->selectedEntitys[i]->unit.targetY = v2.y;
-
-						gameState->selectedEntitys[i]->unit.targetX = input->mouse.x;
-
-						gameState->selectedEntitys[i]->unit.targetY = input->mouse.y;
-						gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
-						gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
-
-						int guid = gameState->selectedEntitys[i]->guid;
-
-						Anim_enum animation = (input->mouse.x < x) ? Anim_Archer_Run_Left : Anim_Archer_Run_Right;
-						SetAnimation(gameState, guid, animation);
-
-						printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
-					}
-
-					printf("target set");
+					setPathfindTarget(gameState, cachedPaths.at(goaliter->second), input, i, x);
+					++cachedUsed;
 				}
 				else
 				{
-					printf("can't set target");
-					// ASSERT(false); // why you can pathfind here
+					if (mouseIter != gameState->provinceData.colorToId->end() && goaliter != gameState->provinceData.colorToId->end())
+					{
+						std::vector<int> path = BreadthFirst(goaliter->second, gameState->MapNodes, mouseIter->second);
+
+						gameState->selectedEntitys[i]->unit.path = path;
+						cachedPaths.insert(std::make_pair(goaliter->second, path));
+
+						setPathfindTarget(gameState, path, input, i, x);
+						printf("target set");
+					}
+					else
+					{
+						printf("can't set target");
+						// ASSERT(false); // why you can pathfind here
+					}
 				}
 			}
-
-
+			printf("cached paths used %i\n", cachedUsed);
 		}
 
 		// CONTROLSSSS
@@ -577,7 +597,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				gameState->selectedEntitys[i] = nullptr;
 			}
 
-
 			PhysicsBody* selectedBodies[1000]{}; // TODO: tarkista max selected
 			allUniques(TopLeft.y, BottomRigth.y, TopLeft.x, BottomRigth.x, gameState->spatialGrid, selectedBodies, 1000);
 
@@ -622,7 +641,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		// paljo nopeampi jos soa muodossa kun voisi laittaa targetit + thredaus
 		if (unit->lookingForTarget == state_lookingForTarget) // set target // types
 		{
-			auto gPos = gameState->gridPosition[e->guid];
+			auto gPos  = gameState->gridPosition[e->guid];
 			auto* grid = gameState->spatialGrid;
 
 			for (int y = -2; y < 3; y++)
@@ -660,11 +679,17 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #if 0
 			Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
 #else
-
 			// float x = (body + e->guid)->x;
 			// float y = (body + e->guid)->y;
 			Uint32 side = gameState->worldmap.GetCurrentHolder(x, y);
 #endif
+
+			if (mapId == 0) // yksikkö tippui veteen
+			{
+				e->alive = false;
+				return;
+			}
+
 			if (side != unit->side)
 			{
 				gameState->worldmap.changeSideWorld(x, y, unit->side, core); // jou
@@ -684,6 +709,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				//	// SetTarget(e, unit->path, 1, &gameState->provinceData);
 				//	// liiku vapaasti target locatioon?
 				//}
+
 				unit->targetX = unit->originalTargetX;
 				unit->targetY = unit->originalTargetY;
 			}
@@ -730,15 +756,10 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 					// melee ?						
 					dealDamage(attackTarget, 10);
 
-					//attackTarget->unit.hp -= 10;					// TODO: DAMAGES
-					//if (attackTarget->unit.hp < 0)
-					//	attackTarget->alive = false;
-
 					Anim_enum animation = (x > x + targetVector.x) ? Anim_Archer_Shooting_Left : Anim_Archer_Shooting_Rigth;
 					SetAnimation(gameState, e->guid, animation);
 
-
-					printf("melee! \n");
+					printf("melee ");
 				}
 
 				unit->mainAttackCD = 1.5f;  // lista odottajistaa ?   TODO: CDCDCD!
@@ -816,9 +837,6 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		{
 			switch (building->type)
 			{
-				// case building_tower:
-				// {
-				// }
 			case building_mill:
 			{
 				// printf("gimme cahs!\n");
@@ -831,7 +849,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				float x = (body + e->guid)->x;
 				float y = (body + e->guid)->y;
 
-				createUnit2(x, y, gameState, building->side, attack_ranged);
+				createUnit(x, y, gameState, building->side, attack_ranged, RANGED_RANGE);
 
 			} break;
 			default:
@@ -963,7 +981,7 @@ bool buildBuilding(float x, float  y, building_type type, game_state* state, Uin
 
 	if (type == building_tower)
 	{
-		Entity* e = createUnit2(x, y, state, side, attack_ranged);
+		Entity* e = createUnit(x, y, state, side, attack_ranged, RANGED_RANGE);
 		e->unit.attackRange = towerRange;
 		e->unit.mainAttackCD = 1.0f;
 		e->unit.movementSpeed = 0.f;

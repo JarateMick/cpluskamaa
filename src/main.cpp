@@ -668,12 +668,12 @@ void LogicThreadUpdate(EngineCore* core)
 	}
 }
 
-struct Bullets
+struct Bulletst
 {
 	int count;
 
 	// Uint32         allSides[60000];
-	BulletBody     bulletBodies[maxiumBullets];
+	BulletBody     bulletBodies[MAXIUM_BULLETS];
 };
 
 struct gameStateCopy
@@ -684,7 +684,7 @@ struct gameStateCopy
 	unsigned int  mapCopy;
 	glm::ivec4    dimensions{};
 
-	Bullets       bullets;
+	Bulletst       bullets;
 
 	glm::vec4     uvs[MAX_ENTITY_COUNT];
 
@@ -693,7 +693,7 @@ struct gameStateCopy
 	int mouseX, mouseY;
 };
 
-void SyncBullets(Bullets* bullets, game_state* state)
+void SyncBullets(Bulletst* bullets, game_state* state)
 {
 	memcpy(bullets->bulletBodies, state->bulletBodies, state->bulletCount * sizeof(BulletBody));
 	bullets->count = state->bulletCount;
@@ -710,7 +710,7 @@ void threadedDraw(PhysicsBody* bodies, UpiEngine::ColorRGBA8* colors, int count,
 		spriteBatch->draw(glm::vec4{ body->x - 20, body->y - 20, 40, 40 }, copy->uvs[i], ART, 1.0f, *color);
 	}
 
-	Bullets* bullets = &copy->bullets;
+	Bulletst* bullets = &copy->bullets;
 	for (int i = 0; i < bullets->count; i++)
 	{
 		const auto& pos = (bullets->bulletBodies + i)->position;

@@ -12,6 +12,7 @@
 #include "util/collection_types.h"
 #include "util/array.h"
 #include "util/memory.cpp"
+#include "Physics.cpp"
 
 #include <lua.hpp>
 #include <SDL2/SDL_image.h>
@@ -52,14 +53,9 @@
 //   * 
 
 
-void circleCollision(PhysicsBody* a, PhysicsBody* b);
 // 
 
 
-static inline PhysicsBody* getBody(int id, PhysicsBody* bodies)
-{
-	return (bodies + id);
-}
 
 
 void debugDraw(SpatialHash* hash)
@@ -97,17 +93,7 @@ void clearSpatial(SpatialHash* hash)
 	}
 }
 
-inline v2 HashPoint(int x, int y)
-{
-	return{ x / cellSize, y / cellSize };
-}
 
-inline v2 HashPoint(v2 v)
-{
-	return{ v.x / cellSize, v.y / cellSize };
-}
-
-// sinä nilkki ole nopeampi
 void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 {
 	v2 min{ (int)body->x - (int)body->r, (int)body->y - (int)body->r };
@@ -133,13 +119,13 @@ void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash)
 	//                                                  sourituskyky ^^^^^^^^
 }
 
-void AddBodyToGrid2(PhysicsBody* body, SpatialHash* hash, GridPosition* positions)
-{
-	auto v2 = HashPoint(body->x, body->y);
-	hash->hashMap[v2.y][v2.x].push_back(body);
-	positions->x = v2.x;
-	positions->y = v2.y;
-}
+//void AddBodyToGrid(PhysicsBody* body, SpatialHash* hash, GridPosition* positions)
+//{
+//	auto v2 = HashPoint(body->x, body->y);
+//	hash->hashMap[v2.y][v2.x].push_back(body);
+//	positions->x = v2.x;
+//	positions->y = v2.y;
+//}
 
 
 void RemoveBodyFromGrid(int gridX, int gridY, PhysicsBody* bodyToRemove, SpatialHash* hash)
@@ -155,77 +141,6 @@ void RemoveBodyFromGrid(int gridX, int gridY, PhysicsBody* bodyToRemove, Spatial
 			(*vector)[i] = vector->at(size - 1);
 			vector->pop_back();
 			break;
-		}
-	}
-}
-
-
-
-void SwapBody(int gridX, int gridY, int newGridX, int newGridY, PhysicsBody* bodyToSwap, SpatialHash* hash)
-{
-	auto* vector = &hash->hashMap[gridY][gridX];
-#if 0
-	vector->erase(std::remove(vector->begin(), vector->end(), bodyToSwap), vector->end());
-#else
-	int size = vector->size();
-	for (int i = 0; i < size; i++)
-	{
-		if (vector->at(i) == bodyToSwap)
-		{
-			(*vector)[i] = vector->at(size - 1);
-			vector->pop_back();
-			break;
-		}
-	}
-#endif
-	hash->hashMap[newGridY][newGridX].push_back(bodyToSwap);
-}
-
-//void InsertEntityToGrid()
-//{
-//}
-//void RemoveEntityFromGrid(SpatialHash)
-//{
-//}
-
-void UpdateAllGridPosition(GridPosition* positions, PhysicsBody* bodies, SpatialHash* hasher, const int count)
-{
-	for (int i = 5; i < count; i++)
-	{
-		auto v2 = HashPoint((bodies + i)->x, (bodies + i)->y);
-		if (v2.x != positions[i].x || v2.y != positions[i].y)
-		{
-			SwapBody(positions[i].x, positions[i].y, v2.x, v2.y, bodies + i, hasher);
-			positions[i].x = v2.x;
-			positions[i].y = v2.y;
-		}
-	}
-}
-
-// sortista  eroon 
-// uniquesta eroon
-// erasesta  eroon
-
-void allUniques(int startY, int endY, int startX, int endX, SpatialHash* hash, PhysicsBody* bodiesOut[], int outSize)
-{
-	int count = 0;
-	for (int i = startY; i < endY && count != outSize; i++)
-	{
-		for (int j = startX; j < endX; j++)
-		{
-			std::vector<PhysicsBody*>* v = &hash->hashMap[i][j];
-			std::sort(v->begin(), v->end()); // 1 1 2 2 3 3 3 4 4 5 5 6 7 
-			const auto last = std::unique(v->begin(), v->end());
-			v->erase(last, v->end()); // vain samoja
-
-			for (PhysicsBody* value : *v)
-			{
-				if (count < outSize)
-				{
-					bodiesOut[count] = value;
-					count++;
-				}
-			}
 		}
 	}
 }
@@ -265,231 +180,23 @@ int CheckCollisions(SpatialHash* hash)
 #else
 
 
-void CheckCollision(int start, std::vector<PhysicsBody*>* bodies, PhysicsBody* __restrict body)
-{
-
-
-	for (int i = start; i < bodies->size(); i++)
-	{
-		PhysicsBody* body2 = bodies->at(i);
-
-		glm::vec2 centerPosA = glm::vec2{ body->x, body->y } +glm::vec2(body->r);
-		const float MIN_DISTANCE = body->r + body2->r;  // molempiend dist
-		glm::vec2 centerPosB = glm::vec2{ body2->x, body2->y } +glm::vec2(body2->r);
-		glm::vec2 distVec = centerPosA - centerPosB;
-
-		if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
-		{
-			const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 7.5f; // test
-			const glm::vec2 aResolution = collisionDepthVec / 2.f; // +=
-			body->x += aResolution.x;
-			body->y += aResolution.y;
-
-			const glm::vec2 bResolution = collisionDepthVec / 2.0f;  // -=
-			body2->x -= bResolution.x;
-			body2->y -= bResolution.y;
-		}
-	}
-}
 
 // passaa bodyt arrayna
 // tee koko arraylle tarkastelut
 
-static inline bool isLeft(int x, float positionX)
-{
-	return (positionX - (x * cellSize) < 7.5f);
-}
-
-int CheckCollisions(SpatialHash* hash)
-{
-	int count = 0;
-
-#pragma omp parallel for schedule(dynamic, 2) num_threads(3)
-	for (int i = 0; i < CellsY; i++) // y
-	{
-		// #pragma omp paraller for schedule(dynamic)
-		for (int j = 0; j < CellsX; j++) // x
-		{
-			std::vector<PhysicsBody*>* bodies = &hash->hashMap[i][j];
-			for (int k = 0; k < bodies->size(); k++)
-			{
-				auto* body = hash->hashMap[i][j].at(k);
-				CheckCollision(k + 1, &hash->hashMap[i][j], body);
-
-				if (j > 0)
-				{
-					//if (isLeft(j, body->x))
-					CheckCollision(0, &hash->hashMap[i][j - 1], body);
-
-					if (i > 0)
-					{
-						CheckCollision(0, &hash->hashMap[i - 1][j - 1], body);
-					}
-
-					if (i < CellsY - 1)
-					{
-						CheckCollision(0, &hash->hashMap[i + 1][j - 1], body);
-					}
-				}
-				if (i > 0)
-				{
-					CheckCollision(0, &hash->hashMap[i - 1][j], body);
-				}
-			}
-		}
-	}
-	return count;
-}
 #endif
 
 void AddToBucket(v2 pos, float w)
 {
 }
 
-void insertObject(SpatialHash* hash, PhysicsBody* body, v2 point)
-{
-	v2 p = HashPoint((int)body->x, (int)body->y);
-	hash->hashMap[p.y][p.x].push_back(body);
-}
-
-void InsertBox(SpatialHash* hash, PhysicsBody* body, v2 point)
-{
-}
-
-
-struct PhysicsOut
-{
-	float x, y;
-	float w, h;
-	int textureId;
-};
-
-
 PhysicsBody  physicsBodies2[MAX_ENTITY_COUNT];
 PhysicsBody  physicsBodies3[MAX_ENTITY_COUNT];
 PhysicsBody* physicsBodies = physicsBodies2;
-
 int currentCount = 0;
-//void addBody(float x, float y, float r, int id)
-//{
-//	physicsBodies[currentCount++] = PhysicsBody{ x, y, r, id };
-//}
-
 
 // onko luoti Bodyn päällä
-bool circleCollision(BulletBody* __restrict a, PhysicsBody* __restrict b)
-{
-	const float MIN_DISTANCE = a->r + b->r;
 
-	glm::vec2 centerPosA = glm::vec2{ a->position.x, a->position.y } +glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
-	glm::vec2 distVec = centerPosA - centerPosB;
-
-	const float distance = glm::length(distVec);
-	const float collisionDepth = MIN_DISTANCE - distance;
-
-	return (collisionDepth > 0);
-}
-
-
-void circleCollision(PhysicsBody* __restrict a, PhysicsBody* __restrict b)
-{
-#if 0
-	const float MIN_DISTANCE = a->r * 2.0f;
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
-	glm::vec2 distVec = centerPosA - centerPosB;
-
-
-	// const float distance = glm::length(distVec);
-	const float collisionDepth = MIN_DISTANCE - distance;
-#else
-	const float MIN_DISTANCE = a->r + b->r;  // molempiend dist
-	glm::vec2 centerPosA = glm::vec2{ a->x, a->y } +glm::vec2(a->r);
-	glm::vec2 centerPosB = glm::vec2{ b->x, b->y } +glm::vec2(b->r);
-	glm::vec2 distVec = centerPosA - centerPosB;
-
-	// const float distance = glm::length(distVec);
-	// const float collisionDepth = MIN_DISTANCE - distance;
-#endif
-	if (distVec.x * distVec.x + distVec.y * distVec.y < MIN_DISTANCE * MIN_DISTANCE)
-	{
-		//	iconst float collisionDepth = 6.f;
-		// const float distance = 2.f;
-		/*if (distance == 0.f)
-		{
-			a->x += 30.f;
-			a->y += 30.f;
-			b->x -= 30.f;
-			b->y -= 30.f;
-			return;
-		}*/
-		// const float collisionDepth =  MIN_DISTANCE - glm::length(distVec);
-		const glm::vec2 collisionDepthVec = glm::normalize(distVec) * 7.5f; // test
-
-#if 0
-		if (std::max(distVec.x, 0.0f) < std::max(distVec.y, 0.0f))
-		{
-			if (distVec.x < 0)
-				b->x -= collisionDepthVec.x;
-			else
-				b->x += collisionDepthVec.x;
-		}
-		else
-		{
-			if (distVec.y < 0)
-				b->y += collisionDepthVec.y;
-			else
-				b->y -= collisionDepthVec.y;
-		}
-		// b->y += collisionDepthVec.y;
-#else
-		const glm::vec2 aResolution = collisionDepthVec / 2.f; // +=
-		a->x += aResolution.x;
-		a->y += aResolution.y;
-
-		const glm::vec2 bResolution = collisionDepthVec / 2.0f;  // -=
-		b->x -= bResolution.x;
-		b->y -= bResolution.y;
-
-		// agent->_position -= collisionDepthVec / 2.0f;
-#endif
-	}
-}
-
-void removeBody(int id)
-{
-	for (int i = 0; i < currentCount; i++)
-	{
-		if (physicsBodies[i].owner == id)
-		{
-			// physicsBodies[i].
-		}
-	}
-}
-
-void updateCollision(PhysicsBody* bodies, int count)
-{
-	for (int i = 0; i < count; i++)
-	{
-		PhysicsBody* current = bodies + i;
-		for (int j = i + 1; j < count; j++)
-		{
-			PhysicsBody* target = bodies + j;
-			circleCollision(current, target);
-		}
-	}
-}
-
-void renderPhysicsBodies(PhysicsBody* bodies, int count)
-{
-	for (int i = 0; i < count; i++)
-	{
-		PhysicsBody* current = bodies + i;
-		static UpiEngine::ColorRGBA8 white(255, 255, 255, 255);
-		Debug::drawCircle(glm::vec2{ current->x, current->y }, white, current->r);
-	}
-}
 
 //void circleCircleCollision(Entity &ball, Entity &pin) noexcept
 //	{
@@ -534,55 +241,38 @@ void renderPhysicsBodies(PhysicsBody* bodies, int count)
 //  entity[0]  =  entity[2]
 //  entity[1]  =  entity[5] 
 
-struct IndexValue
-{
-	int index, type;
-};
-
-static Entity* temp = new Entity;
-void SortAllEntitys(Entity* entities, int count)
-{
-	//temp = new Entity;
-	IndexValue* currentOrder = new IndexValue[count];
-
-	for (int i = 0; i < count; i++)
-	{
-		currentOrder[i] = { i, entities[i].type };
-	}
-
-	std::sort(currentOrder, currentOrder + count, [](IndexValue& a, IndexValue& b) {
-		return a.type < b.type;
-	});
-
-	for (int i = 0; i < count; i++)
-	{
-		memcpy(&temp, (entities + i), sizeof(Entity));
-		memcpy(entities + i, entities + currentOrder[i].index, sizeof(Entity));
-		memcpy(entities + currentOrder[i].index, &temp, sizeof(Entity));
-	}
-
-	delete[] currentOrder;
-}
-
-
-void SortAll(Entity* entities, int count) // 
-{
-	//std::sort(entities, entities + size, [](Entity& first, Entity& second)
-	//{
-	//	return first.type < second.type;
-	//});
-}
-
-
-game_state* luasgamestate = nullptr;
-EXPORT __declspec(dllexport) void* getGameState()
-{
-	return luasgamestate;
-}
+//struct IndexValue
+//{
+//	int index, type;
+//};
+//static Entity* temp = new Entity;
+//void SortAllEntitys(Entity* entities, int count)
+//{
+//	//temp = new Entity;
+//	IndexValue* currentOrder = new IndexValue[count];
+//
+//	for (int i = 0; i < count; i++)
+//	{
+//		currentOrder[i] = { i, entities[i].type };
+//	}
+//
+//	std::sort(currentOrder, currentOrder + count, [](IndexValue& a, IndexValue& b) {
+//		return a.type < b.type;
+//	});
+//
+//	for (int i = 0; i < count; i++)
+//	{
+//		memcpy(&temp, (entities + i), sizeof(Entity));
+//		memcpy(entities + i, entities + currentOrder[i].index, sizeof(Entity));
+//		memcpy(entities + currentOrder[i].index, &temp, sizeof(Entity));
+//	}
+//
+//	delete[] currentOrder;
+//}
+//
 
 using namespace std;
 StackAllocator g_singleFrameAllocator;
-
 ImageData::ImageData(const char* filename)
 {
 	surface = IMG_Load(filename);
@@ -640,22 +330,6 @@ ImageData::ImageData(const char* filename)
 //	}
 //	gameState->currentEntityCount = (int)((float)nb_read_total / (float)sizeof(Entity));
 //}
-
-
-
-void RemoveEntity(const int index, game_state* state)
-{
-#if 1
-	state->entities[index].type = Entity_Invalid;
-#else // meh
-	state->currentEntityCount--;
-	Entity* array = state->entities;
-	memcpy(array + index, array + state->currentEntityCount, sizeof(Entity));
-	(array + index)->guid = index;
-#endif
-	// state->entities[state->currentEntityCount] = 0;
-}
-
 
 // Game:
 //   * 
@@ -822,6 +496,7 @@ void LoadNodes()
 	}
 
 	printf("Adding Arcs!\n");
+
 	// set the arcs!
 	for (int id = 0; id < lastSaved + 1; id++)
 	{
@@ -925,80 +600,6 @@ void newNode(int index, int id, float x, float y)
 	nodes.AddNode(newNode, index);
 }
 
-int simulateBullets(BulletBody* bodies, vec2f* bulletAcceceration, BulletStart* start, int count)
-{
-	for (int i = count - 1; i > -1; i--)
-	{
-		bodies[i].position += bulletAcceceration[i] * 4.f; // TODO: MIKA ON LUODIN NOPEUS JOUJOUJOU!!!
-
-		// printf("bullet (%f, %f)\n", bodies[i].position.x, bodies[i].position.y);
-
-		float x = bodies[i].position.x - start[i].position.x;
-		float y = bodies[i].position.y - start[i].position.y;
-
-		if (abs(x * x + y * y) > start[i].rangeSqrt)
-		{
-			// luoti kuoli! poista kaikki kerralla?
-			bodies[i] = bodies[count - 1];
-			start[i] = start[count - 1];
-			bulletAcceceration[i] = bulletAcceceration[count - 1];
-			--count;
-		}
-	}
-	return count;
-}
-
-struct Bullets
-{
-	BulletStart* start;
-	vec2f*       accelerations;
-	BulletBody*  bodies;
-};
-
-void swapAll(int i, int count, Bullets* bullets)
-{
-	BulletBody*  bodies = bullets->bodies;
-	BulletStart* start = bullets->start;
-	vec2f*       acc = bullets->accelerations;
-
-	bodies[i] = bodies[count - 1];
-	start[i] = start[count - 1];
-	acc[i] = acc[count - 1];
-}
-
-
-// struct BulletDmgOut { int targetId, attackerId; };
-int collideBullets(SpatialHash* hash, BulletBody* bulletBodies, Uint32* sides, int size, Bullets* bullets, std::vector<int>* damageOut)
-{
-	for (int i = size - 1; i > -1; i--)
-	{
-		BulletBody* body = bulletBodies + i;
-
-		auto point = HashPoint(body->position.x, body->position.y);
-
-		if (point.x > 0)
-		{
-			auto* bodies = &hash->hashMap[point.y][point.x];
-			for (int j = 0; j < bodies->size(); j++)
-			{
-				PhysicsBody* physicsBody = bodies->at(j);
-				if (sides[physicsBody->owner] != body->side)
-				{
-					if (circleCollision(body, physicsBody))
-					{
-						damageOut->push_back(physicsBody->owner);
-						swapAll(i, size, bullets);
-
-						--size;
-						break;
-					}
-				}
-			}
-		}
-	}
-	return size;
-}
-
 
 lua_State* L;
 EXPORT void Loop(EngineCore* core)
@@ -1009,8 +610,6 @@ EXPORT void Loop(EngineCore* core)
 		gameState->arena.InitalizeArena(core->memory->permanentStorageSize - sizeof(game_state),
 			(uint8_t *)core->memory->permanentStorage + sizeof(game_state));
 		memory_arena* arena = &gameState->arena;
-
-		luasgamestate = gameState; // game_state -> lua
 
 		core->memory->isInitialized = true;
 
@@ -1057,7 +656,7 @@ EXPORT void Loop(EngineCore* core)
 		physicsBodies[2].y = 2400.f;
 		physicsBodies[2].r = 15.f;
 		physicsBodies[2].owner = 2;
-		AddBodyToGrid2(physicsBodies + 2, &hash4r, gridPositions);
+		AddBodyToGrid(physicsBodies + 2, &hash4r, gridPositions);
 
 
 		gameState->entities[2].unit.side = 0xFFFF0000; // ABGR
@@ -1137,46 +736,11 @@ EXPORT void Loop(EngineCore* core)
 		SaveAllGameState(gameState);
 	}
 
-
-	if (input->isKeyPressed(SDL_SCANCODE_5))
-	{
-		//for (int i = 0; i < gameState->currentEntityCount; i++)
-		//{
-		//	if ()
-		//	gameState->entities[i].guid
-		//}
-	}
-
-	// static char *saveFile = "testailu.data";
-	//if (input->isKeyPressed(SDL_SCANCODE_1))
-	//{
-	//	// SaveAllEntitys(gameState, "entity.sav");
-	//}
-	//else if (input->isKeyPressed(SDL_SCANCODE_2))
-	//{
-	//	// LoadAllEntity(gameState, "entity.sav");
-	//	//lua_State* L = core->script.L;
-	//	//lua_getglobal(L, "LoadTileMap");
-	//	//lua_pushnumber(L, 100);
-
-	//	//if (lua_pcall(L, 1, 0, 0) != 0)
-	//	//{
-	//	//	Debug::logError("what the fuck!");
-	//	//	Debug::logError(lua_tostring(L, -1));
-	//	//	fprintf(stderr, "%s\n", lua_tostring(L, -1));
-	//	//	debugBreak();
-	//	//}
-	//	//lua_pop(L, 1);
-	//}
-
 	static bool initted = false;
 	static GLuint tid;
 	if (!initted)
 	{
 		initted = true;
-		// showToPlayer
-		// tid = core->resources.SurfaceToGlTexture(gameState->worldmap.visual.surface);
-		// FreeTexture(&tid);
 	}
 
 	// MOUSE debug code
@@ -1194,6 +758,16 @@ EXPORT void Loop(EngineCore* core)
 			createUnit(core->input->mouse.x, core->input->mouse.y, core);
 		}
 	}
+	if (input->isKeyDown(SDL_SCANCODE_1))
+	{
+		Uint32 side = gameState->worldmap.editor.editorColor;
+		for (int i = 0; i < 35; i++)
+		{
+			createUnit(core->input->mouse.x, core->input->mouse.y, gameState, side, attack_melee, MELEE_RANGE);
+		}
+	}
+
+
 
 	if (input->isKeyPressed(SDL_SCANCODE_3))
 	{
@@ -1258,10 +832,6 @@ EXPORT void Loop(EngineCore* core)
 		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
 	}
 
-	if (input->isKeyPressed(SDL_SCANCODE_H))
-	{
-		SortAllEntitys(gameState->entities, gameState->currentEntityCount);
-	}
 
 
 	currentCount = 0;
@@ -1300,7 +870,7 @@ EXPORT void Loop(EngineCore* core)
 			gameState->bodies[i] = gameState->bodies[lastEntityGuid];
 			physicsBodies[i].owner = i;
 
-			AddBodyToGrid2(physicsBodies + i, &hash4r, gridPositions + i);
+			AddBodyToGrid(physicsBodies + i, &hash4r, gridPositions + i);
 
 		// swap all funcy
 		//  physicsBodies[i] = gameState->bodies[lastEntityGuid];
