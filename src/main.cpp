@@ -97,7 +97,6 @@ void* LoadAndCheckFunction(HMODULE* dll, const char* functionName)
 	return functionPtr;
 }
 
-// TODO: dll latauksesta kivempi k�ytt�� 
 internal2 void LoadGameDLL()
 {
 	WIN32_FILE_ATTRIBUTE_DATA unused;

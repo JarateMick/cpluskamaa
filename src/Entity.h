@@ -169,6 +169,7 @@ struct Entity
 
 
 			bool lookingForTarget;
+			Uint32 nextProv;
 
 			// attack speed jne...
 			// (instant attacks melee) <-> (type?)
@@ -265,4 +266,4 @@ void initZombieAi(ZombieAi* ai)
 #define ENT(e, entity_type)        &((e)->entity_type)
 
 
-void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x);
+void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x, Entity* e);

@@ -115,11 +115,12 @@ Entity* createUnit(float x, float y, game_state* gameState, Uint32 side, attack_
 	return ee;
 }
 
-void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x)
+static void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManager* input, int i, int x, Entity* e)
 {
+	int targetId;
 	if (path.size() > 2)
 	{
-		int targetId = path[path.size() - 2]; // eka on maali
+		targetId = path[path.size() - 2]; // eka on maali
 		auto v2 = gameState->provinceData.positions[targetId];
 		gameState->selectedEntitys[i]->unit.targetX = v2.x;
 		gameState->selectedEntitys[i]->unit.targetY = v2.y;
@@ -127,12 +128,11 @@ void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManag
 		gameState->selectedEntitys[i]->unit.originalTargetX = input->mouse.x;
 		gameState->selectedEntitys[i]->unit.originalTargetY = input->mouse.y;
 
-		// printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 		printf("matka\n"); // seuraa reittiä
 	}
 	else  // mee viereiseen // @cleanup
 	{
-		int targetId = path[0];
+		targetId = path[0];
 		auto v2 = gameState->provinceData.positions[targetId];
 		gameState->selectedEntitys[i]->unit.targetX = v2.x;
 		gameState->selectedEntitys[i]->unit.targetY = v2.y;
@@ -147,10 +147,11 @@ void setPathfindTarget(game_state* gameState, std::vector<int>& path, InputManag
 
 		Anim_enum animation = (input->mouse.x < x) ? Anim_Archer_Run_Left : Anim_Archer_Run_Right;
 		SetAnimation(gameState, guid, animation);
-
-		// printf("lyhy (%i, %i)\n", (int)input->mouse.x, (int)input->mouse.y);
 	}
-	// printf("target set");
+
+	e->unit.nextProv = IdToColor(targetId, gameState);
+
+	printf("%i next province \n", targetId);
 }
 
 // keep track of current amount of zombies
@@ -242,17 +243,25 @@ inline void SetTarget(Entity* unit, std::vector<int>& path, int id, ProvinceData
 	unit->unit.targetY = v2.y;
 }
 
-bool FollowPath(Entity* entityUnit, game_state* gameState)
+static bool SetNextPathNode(Entity* e, game_state* gameState)
 {
-	std::vector<int>& path = entityUnit->unit.path;
+	std::vector<int>& path = e->unit.path;
 	if (path.size() > 2)
 	{
-		// int targetId = path[path.size() - 2]; // eka on maali
-		// auto v2 = gameState->provinceData.positions[targetId];
-		// entityUnit->unit.targetX = v2.x;
-		// entityUnit->unit.targetY = v2.y;
+		SetTarget(e, path, path.size() - 2, &gameState->provinceData);
+		return true;
+	}
+	return false;
+}
 
+bool FollowPath(Entity* entityUnit, game_state* gameState, Uint32 currentSide)
+{
+	std::vector<int>& path = entityUnit->unit.path;
+	if (path.size() > 2 && currentSide == entityUnit->unit.nextProv)
+	{
 		SetTarget(entityUnit, path, path.size() - 2, &gameState->provinceData);
+		entityUnit->unit.nextProv = IdToColor(path.size() - 2, gameState);
+
 		return true;
 	}
 	return false;
@@ -492,7 +501,8 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 
 				if (cachedPaths.count(goaliter->second) > 0)
 				{
-					setPathfindTarget(gameState, cachedPaths.at(goaliter->second), input, i, x);
+					setPathfindTarget(gameState, cachedPaths.at(goaliter->second), input, i, x, gameState->selectedEntitys[i]);
+					gameState->selectedEntitys[i]->unit.path = cachedPaths.find(goaliter->second)->second;
 					++cachedUsed;
 				}
 				else
@@ -504,7 +514,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 						gameState->selectedEntitys[i]->unit.path = path;
 						cachedPaths.insert(std::make_pair(goaliter->second, path));
 
-						setPathfindTarget(gameState, path, input, i, x);
+						setPathfindTarget(gameState, path, input, i, x, gameState->selectedEntitys[i]);
 						printf("target set");
 					}
 					else
@@ -641,7 +651,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		// paljo nopeampi jos soa muodossa kun voisi laittaa targetit + thredaus
 		if (unit->lookingForTarget == state_lookingForTarget) // set target // types
 		{
-			auto gPos  = gameState->gridPosition[e->guid];
+			auto gPos = gameState->gridPosition[e->guid];
 			auto* grid = gameState->spatialGrid;
 
 			for (int y = -2; y < 3; y++)
@@ -676,13 +686,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 		}
 		else
 		{   // Provinssi on vaihtunut
-#if 0
-			Uint32 side = gameState->worldmap.GetCurrentHolder((int)e->x, (int)e->y);
-#else
 			// float x = (body + e->guid)->x;
 			// float y = (body + e->guid)->y;
 			Uint32 side = gameState->worldmap.GetCurrentHolder(x, y);
-#endif
 
 			if (mapId == 0) // yksikkö tippui veteen
 			{
@@ -695,24 +701,29 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 				gameState->worldmap.changeSideWorld(x, y, unit->side, core); // jou
 			}
 
-			if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
-			{
-				// kauas pois
-				unit->path.pop_back();
-				printf("pop: ");
-				printf("(%i, %i)\n", unit->targetX, unit->targetY);
-			}
-			else
-			{
-				//if (unit->path.size() > 1)
-				//{
-				//	// SetTarget(e, unit->path, 1, &gameState->provinceData);
-				//	// liiku vapaasti target locatioon?
-				//}
+			//if (FollowPath(e, gameState, side)) // laittaa targetin seuraavaan
+			//{
+			//	// kauas pois
+			//	unit->path.pop_back();
 
-				unit->targetX = unit->originalTargetX;
-				unit->targetY = unit->originalTargetY;
-			}
+			//	printf("pop: ");
+			//	printf("(%i, %i)\n", unit->targetX, unit->targetY);
+
+			//}
+			//else if (unit->path.size() < 2)
+			//{
+			//	//if (unit->path.size() > 1)
+			//	//{
+			//	//	// SetTarget(e, unit->path, 1, &gameState->provinceData);
+			//	//	// liiku vapaasti target locatioon?
+			//	//}
+
+			//	unit->targetX = unit->originalTargetX;
+			//	unit->targetY = unit->originalTargetY;
+
+			//	printf("original \n");
+			//}
+
 			// laske path uudestaan jos vaihtuu provinssi muilla tavoilla / ei knockeja!
 		}
 		unit->lastFrameProv = mapId;
@@ -779,25 +790,35 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			// float length = glm::length(moveVec);
 			// korjaa
 			float length = /* sqrt */((moveVec.x * moveVec.x + moveVec.y * moveVec.y));
-			if (length < 2.f)
+			if (length < 10.f)
 			{
 				unit->targetX = -1;
 				unit->targetY = -1;
 
 				// kauas pois
-				if (FollowPath(e, gameState)) // laittaa targetin seuraavaan
+				// if ( /* FollowPath(e, gameState, mapId) */) 
+				if (SetNextPathNode(e, gameState))
 				{
+					// auto vec2 = 
 					unit->path.pop_back();
-					printf("pop");
+					printf("pop k");
+					//if (unit->path.size() < 2)
+					//{
+					//	unit->targetX = unit->originalTargetX;
+					//	unit->targetY = unit->originalTargetY;
+					//}
 				}
-				else if (unit->path.size() > 0)
+				else if (unit->path.size() == 2) // ONKO OIKEIN
 				{
 					printf("origninal target (%i, %i)", unit->originalTargetX, unit->originalTargetY);
 					unit->targetX = unit->originalTargetX;
 					unit->targetY = unit->originalTargetY;
-					unit->path.pop_back();
+					// unit->path.pop_back();
+					unit->path.clear();
+
+					printf("original \n");
 				}
-			}
+				}
 			else
 			{
 				moveVec = glm::normalize(moveVec) * unit->movementSpeed;
@@ -823,9 +844,9 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 #endif
 				}
 			}
-		}
+			}
 
-	}
+		}
 	else if (auto building = GET_ENTITY(e, building))
 	{
 		GetGameState(core);
@@ -860,7 +881,7 @@ void f(Entity *e, EngineCore* core, PhysicsBody* body)
 			building->timer = 0.f;
 		}
 	}
-}
+	}
 
 // tee kunnon spritesheet manager struct jotain jotain...
 glm::vec4 getUvFromUp(int index, glm::vec2 dims)

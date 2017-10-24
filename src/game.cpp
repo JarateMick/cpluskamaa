@@ -829,16 +829,13 @@ EXPORT void Loop(EngineCore* core)
 		SaveNodes();
 		// new nodes
 		// nodes.nodes[gameState->provinceEditor.selectedProvinceId]->;
-		gameState->dirtyFlag = false; //FUUUUUUUUUUUUUCKKCKUFFUUUUUUUUUUUUUUUUUCK FUUCK FUCK
+		gameState->dirtyFlag = false;
 	}
-
-
 
 	currentCount = 0;
 
-
 	// Zombie update
-	UpdateAi(&gameState->ai, gameState);
+//	UpdateAi(&gameState->ai, gameState);
 
 	/**********************************************************************************************/
 	// ENTITY UPDATE

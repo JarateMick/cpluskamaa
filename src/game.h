@@ -522,6 +522,11 @@ introspect("game_state:") struct game_state
 	I void(*newNode)(int index, int id, float x, float y);
 };
 
+static Uint32 IdToColor(int id, game_state* state)
+{
+	return state->provinceData.idToColor[id];
+}
+
 //#define GetTarget(int id, game_state* gameState) gameState->unitStructure.attackTargets[id]
 //
 static inline Entity* getTargets(int id, game_state* gameState)
