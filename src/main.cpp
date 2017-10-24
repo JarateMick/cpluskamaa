@@ -929,7 +929,6 @@ int main(int argc, char* argv[])
 			printf("Lua file: %s loaded succesfully!\n", lua_main_filename);
 		}
 		else
-
 		{
 			fprintf(stderr, "%s\n", lua_tostring(L, -1));
 			debugBreak();

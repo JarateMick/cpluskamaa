@@ -542,7 +542,7 @@ static inline attack_type getAttackType(int id, game_state* gameState)
 void SetAnimation(game_state* gameState, int guid, Anim_enum animType);
 void InitAnimation(game_state* gameState, int guid)
 {
-	SetAnimation(gameState, guid, Anim_Archer_Run_Right);
+	SetAnimation(gameState, guid, Anim_Melee_Run_Rigth);
 }
 
 void SetAnimation(game_state* gameState, int guid, Anim_enum animation)

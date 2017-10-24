@@ -118,7 +118,7 @@
     <NMakeOutput>$(SolutionDir)../bin/main.exe</NMakeOutput>
     <NMakeReBuildCommandLine>$(SolutionDir)./build.bat</NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
-    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;$(SolutionDir)..\Graphics\include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>$(ProjectDir)Include;$(SolutionDir)Include\glm;$(SolutionDir)Include\glad;$(SolutionDir)Raknet/Include;C:\Users\EetuKer\Desktop\Kamaa2\cpluskamaa\Include;$(SolutionDir)..\Graphics\include;I:\Dev\SDL\allegro vanhat\Include;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <IncludePath>$(IncludePath)</IncludePath>
     <NMakeForcedIncludes>$(NMakeForcedIncludes)</NMakeForcedIncludes>
   </PropertyGroup>

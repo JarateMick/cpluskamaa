@@ -9,6 +9,11 @@ enum Anim_enum
 
 	Anim_Archer_default,
 	Anim_Archer_looping,
+
+	Anim_Melee_Run_Left,
+	Anim_Melee_Attack_Left,
+	Anim_Melee_Run_Rigth,
+	Anim_Melee_Attack_Rigth,
 };
 
 enum Anim_types
@@ -92,7 +97,7 @@ constexpr float SIZE_Y = 4;
 
 #define getFrameUv(indexX, indexY, textureW, textureH, offsetX, offsetY, perOneWidth, perOneHeight) \
 	{ (((offsetX) + ((indexX) * (perOneWidth)))    / (float)(textureW)), \
-	   1.0f - ((offsetY + perOneHeight * (indexY)) / (float)(textureH)), \
+	   1.0f - ((offsetY + (perOneHeight) * (indexY)) / (float)(textureH)), \
 	  ((perOneWidth) / (textureW)), \
 	  ((perOneHeight) / (textureH)) \
 	}
@@ -176,7 +181,7 @@ constexpr float meleeTexH = 21.f;
 constexpr float meleeTexW = 36.f;
 static glm::vec4 archerRunRight[12] = {
 
-	 getFrameUv( 11,  -2, 730, 407, 10.f, 105.f, 36.f, 25.f),
+	getFrameUv( 11,  -2, 730, 407, 10.f, 105.f, 36.f, 25.f),
 	 getFrameUv( 0, -1, 730, 407, 10.f, 105.f, 36.f, 25.f),
 	 getFrameUv( 1, -1, 730, 407, 10.f, 105.f, 36.f, 25.f),
 	 getFrameUv( 2, -1, 730, 407, 10.f, 105.f, 36.f, 25.f),
@@ -189,67 +194,36 @@ static glm::vec4 archerRunRight[12] = {
 	 getFrameUv( 9, -1, 730, 407, 10.f, 105.f, 36.f, 25.f),
 	 getFrameUv( 10, -1, 730, 407, 10.f, 105.f, 36.f, 25.f),
 
-	// getFrameUv( 7.f, -1.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 3.f, -1.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 2.f, 0.f, 730.f, 407.f, 11.f, 199.f, meleeTexW, meleeTexH),
-
-    //getFrameUv( 8.f, -1.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
-	//getFrameUv( 0.f, -3.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 3.f, 0.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 7.f, -1.f, 730.f, 407.f,  11.f, 199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 3.f, -1.f, 730.f, 407.f,  11.f, 199.f, meleeTexW, meleeTexH),
-
-	// getFrameUv( 7.f, -1.f, 730.f, 407.f,  11.f, 199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 3.f, -1.f, 730.f, 407.f,  11.f, 199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 2.f,  0.f, 730.f, 407.f, 11.f, 199.f, meleeTexW, meleeTexH),
-
-	// getFrameUv( 8.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 4.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-
-	// getFrameUv( 8.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-	// // getFrameUv( 4.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-
-	// getFrameUv( 8.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-// getFrameUv( 4.f, -1.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH),
-	// getFrameUv( 3.f, 0.f, 730, 407, 11.f,  199.f, meleeTexW, meleeTexH)
-
-	//getFrameUv( 1, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 2, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 3, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 4, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 5, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 6, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 7, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 8, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 9, -2, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-	//getFrameUv( 10, -2, 730.f, 407.f, 12.f, 199.f, 36.f, meleeTexH),
-	//getFrameUv( 11, -2, 730.f, 407.f, 12.f, 199.f, 36.f, meleeTexH),
-	//getFrameUv( 0, -1, 730.f, 407.f, 12.f, 199.f, 36.f,  meleeTexH),
-
 };
 
 
 // melee attackit ^^
-static glm::vec4 meleeAttackLeft[2] = {
+static glm::vec4 meleeAttackLeft[2] = 
+{
+    getFrameUv( 4.f, -1.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH - 0.5f),
+	getFrameUv( 0.f, -3.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH),
 };
 
-static glm::vec4 meleeAttackRigth[2] = {
+static glm::vec4 meleeAttackRigth[2] = 
+{
+    getFrameUv( 3.f, -1.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH - 1.f),
+	getFrameUv( 4.f, -0.f, 730.f, 407.f, 11.f,  199.f, meleeTexW, meleeTexH - 1.f),
 };
 
 // meleeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 static glm::vec4 meleeRunningRight[12] = {
-	getFrameUv( 1, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 2, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 3, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 4, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 5, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 6, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 7, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 8, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 9, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
-	getFrameUv( 10, -2, 730, 407, 12.f, 198.f, 36.f, meleeTexH),
-	getFrameUv( 11, -2, 730, 407, 12.f, 198.f, 36.f, meleeTexH),
-	getFrameUv( 0, -1, 730, 407, 12.f, 198.f, 36.f,  meleeTexH),
+	getFrameUv( 1, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 2, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 3, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 4, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 5, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 6, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 7, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 8, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 9, -2, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
+	getFrameUv( 10, -2, 730, 407, 12.f, 198.f, 36.f, meleeTexH - 0.5f),
+	getFrameUv( 11, -2, 730, 407, 12.f, 198.f, 36.f, meleeTexH - 0.5f),
+	getFrameUv( 0, -1, 730, 407, 12.f, 198.f, 36.f,  meleeTexH - 0.5f),
 };
 
 static glm::vec4 meleeRunningLeft[12] = {
@@ -288,12 +262,20 @@ static glm::vec4 archerShootingRigth[2] =
 //	getFrameUvsm(6), getFrameUvsm(8),
 };
 
-static glm::vec4 meleeRunRight[12] = {
-	
-};
 //static glm::vec4 meleeRunRight[12]
 //static glm::vec4 meleeRunRight[12]
 // static glm::vec4 meleeRunRight[12]
+
+//#define ImplementAnimation(arrayName, frame) \
+//	if (*frame == ArrayCount(arrayName)) \
+//	{ \
+//		*frame = 0; \
+//    } \
+//
+//#define ImplementAnimationNext(arrayName, AnimationFrame, nextAnim) \
+//	ImplementAnimation(arrayName, AnimationFrame) \
+//    
+    
 
 glm::vec4 GetNextAnim(Anim_enum* type, int* AnimationFrame) // muuttaa jos tarvii seuraavaan ei looppaaaavaan animaation
 {
@@ -330,6 +312,40 @@ glm::vec4 GetNextAnim(Anim_enum* type, int* AnimationFrame) // muuttaa jos tarvi
 			(*AnimationFrame) = 0;
 		}
 		return archerShootingLeft[*AnimationFrame];
+	}
+	else if (*type == Anim_Melee_Run_Left)
+	{
+		if (*AnimationFrame == ArrayCount(meleeRunningLeft))
+		{
+			(*AnimationFrame) = 0;
+		}
+		return meleeRunningLeft[*AnimationFrame];
+	}
+	else if (*type == Anim_Melee_Attack_Left)
+	{
+		if (*AnimationFrame == ArrayCount(meleeAttackLeft))
+		{
+			(*AnimationFrame) = 0;
+			*type = Anim_Melee_Run_Left;
+		}
+		return meleeAttackLeft[*AnimationFrame];
+	}
+	else if (*type == Anim_Melee_Run_Rigth)
+	{
+		if (*AnimationFrame == ArrayCount(meleeRunningRight))
+		{
+			(*AnimationFrame) = 0;
+		}
+		return meleeRunningRight[*AnimationFrame];
+	}
+	else if (*type == Anim_Melee_Attack_Rigth)
+	{
+		if (*AnimationFrame == ArrayCount(meleeAttackRigth))
+		{
+			(*AnimationFrame) = 0;
+			*type = Anim_Melee_Run_Rigth;
+		}
+		return meleeAttackRigth[*AnimationFrame];
 	}
 
 	*AnimationFrame = 0;

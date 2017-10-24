@@ -4,8 +4,8 @@ rem ctime -begin engine.ctm
 echo "build"
 
 if not defined DEV_ENV_DIR (
-    	call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-    rem call "H:\Visual Studio\VC\vcvarsall.bat" x64 
+    rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+    call "H:\Visual Studio\VC\vcvarsall.bat" x64 
 	rem call "I:\VisualStudio\VC\Auxiliary\Build\vcvarsall.bat" x64
 )
 set DEV_ENV_DIR= ???
